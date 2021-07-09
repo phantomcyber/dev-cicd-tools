@@ -11,15 +11,27 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    env:
+      CI_TOOLS_REPO: phantomcyber/dev-cicd-tools
+      CI_TOOLS_BRANCH: main
+      CI_TOOLS_DIR: dev-cicd-tools
+      LINT_CONFIG: dev-cicd-tools/lint-configs/tox.ini
     strategy:
       fail-fast: false
       matrix:
         python-version: [3.6]
 
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Checkout tools repo
+      uses: actions/checkout@v2
+      with:
+        repository: ${{ env.CI_TOOLS_REPO }}
+        path: ${{ env.CI_TOOLS_DIR }}
+        ref: ${{ env.CI_TOOLS_BRANCH }}
+        token: ${{ secrets.JD_PAT }}
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
@@ -31,6 +43,5 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Lint with flake8 and isort
       run: |
-        # TODO - Pull lint config file(s) from https://github.com/phantomcyber/dev-cicd-tools/tree/main/lint-configs
-        flake8 . --config lint-configs/tox.ini 
-        isort . --check-only --settings-path lint-configs/tox.ini 
+        flake8 . --config $LINT_CONFIG
+        isort . --check-only --settings-path $LINT_CONFIG
