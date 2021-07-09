@@ -31,5 +31,6 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Lint with flake8 and isort
       run: |
-        flake8 . --max-line-length=130
-        isort . --check-only
+        # TODO - Pull lint config file(s) from https://github.com/phantomcyber/dev-cicd-tools/tree/main/lint-configs
+        flake8 . --config lint-configs/tox.ini 
+        isort . --check-only --settings-path lint-configs/tox.ini 
