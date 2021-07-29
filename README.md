@@ -4,7 +4,7 @@ This repo contains tools and scripts to standardize and simplify CI/CD pipelines
 
 
 # Local developer tools setup
-It might be beneficial to clone this repo to be adjacent to your apps folders, though not stricly required:
+It might be beneficial to clone this repo to be adjacent to your apps folders, though not strictly required:
 ```
 .
 ├── app1
