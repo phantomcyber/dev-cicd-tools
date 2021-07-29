@@ -4,7 +4,7 @@ This repo contains tools and scripts to standardize and simplify CI/CD pipelines
 
 
 # Local developer tools setup
-Clone this repo to be adjacent to your apps folders:
+It might be beneficial to clone this repo to be adjacent to your apps folders, though not stricly required:
 ```
 .
 ├── app1
@@ -22,10 +22,10 @@ make install
 ```
 
 # Running developer tools
-Most of the targets in the Makefile expect the name of the app folder to operate on, specified with `APP_FOLDER`.
+Most of the targets in the Makefile expect the path of the app folder to operate on, specified with `APP_FOLDER`.
 
 Take a look in the Makefile for the complete list of targets. Some useful commands:
 ```
-make lint APP_FOLDER=app1
-make lint-fix APP_FOLDER=app1
+make lint APP_FOLDER=/path/to/app1
+make lint-fix APP_FOLDER=/path/to/app1
 ```
