@@ -28,4 +28,5 @@ Take a look in the Makefile for the complete list of targets. Some useful comman
 ```
 make lint APP_FOLDER=/path/to/app1
 make lint-fix APP_FOLDER=/path/to/app1
+make semgrep APP_FOLDER=/path/to/app1
 ```

@@ -1,0 +1,27 @@
+name: 'Semgrep'
+description: 'Runs semgrep on the target app repository'
+inputs:
+  SEMGREP_DEPLOYMENT_ID:
+    description: Semgrep account ID
+    required: true
+  SEMGREP_APP_TOKEN:
+    description: Semgrep account token to access configured rules
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout App Repo
+      uses: actions/checkout@v2
+      with:
+        ref: ${{ github.ref }}
+    - name: Copy .semgrepignore to workspace
+      run: |
+        if [ ! -f ${{ github.workspace}}/.semgrepignore ]; then
+          cp ${{ github.action_path }}/.semgrepignore ${{ github.workspace }}
+        fi
+      shell: bash
+    - name: 'Semgrep scan'
+      uses: returntocorp/semgrep-action@v1   
+      with:
+        # Fetches configured rules from Semgrep account
+        publishDeployment: ${{ inputs.SEMGREP_DEPLOYMENT_ID }}
+        publishToken: ${{ inputs.SEMGREP_APP_TOKEN }}
