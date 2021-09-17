@@ -12,7 +12,8 @@ runs:
     - name: Checkout App Repo
       uses: actions/checkout@v2
       with:
-        ref: ${{ github.ref }}
+        ref: ${{ inputs.REF }}
+        repository: ${{ inputs.REPOSITORY }}
     - name: Copy .semgrepignore to workspace
       run: |
         if [ ! -f ${{ github.workspace}}/.semgrepignore ]; then
