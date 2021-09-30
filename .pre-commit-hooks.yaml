@@ -1,0 +1,5 @@
+-   id: org-hook
+    name: org-wide hooks
+    language: script
+    entry: pre-commit/run-org-hooks
+    verbose: true
