@@ -1,0 +1,36 @@
+name: 'Start Release'
+description: 'Starts the app release process by 1) generating release notes from next, and 2) submitting a PR merging next to main.'
+inputs:
+  GITHUB_TOKEN:
+    description: 'PAT used to write to the target repo'
+    required: true
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.9'
+    - name: 'Check PIP Cache'
+      uses: actions/cache@v2
+      id: cache
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-soar-app-ci
+    - name: 'Install Dependencies'
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r ${{ github.action_path }}/requirements.txt
+      shell: bash
+    - name: Checkout App Repo
+      uses: actions/checkout@v2
+      with:
+        ref: ${{ github.ref }}
+    - name: 'Start Release'
+      env:
+        GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
+        APP_REPO: ${{ github.repository }}
+      run: |
+        cd ${{ github.action_path }}
+        python start_release.py
+      shell: bash
