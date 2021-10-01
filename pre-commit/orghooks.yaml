@@ -15,4 +15,3 @@ repos:
     hooks:
     -   id: flake8
         args: [--append-config, .hook_configs/tox.ini]
-        additional_dependencies: [flake8-quotes]
