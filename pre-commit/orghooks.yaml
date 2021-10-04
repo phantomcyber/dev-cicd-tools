@@ -10,6 +10,11 @@ repos:
     -   id: requirements-txt-fixer
     -   id: check-json
     -   id: check-yaml
+-   repo: https://github.com/pycqa/isort
+    rev: 5.9.3
+    hooks:
+    -   id: isort
+        args: [--settings-path, .hook_configs/tox.ini]
 -   repo: https://github.com/pycqa/flake8
     rev: 3.9.2
     hooks:
