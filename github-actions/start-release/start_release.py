@@ -7,6 +7,8 @@ import os
 import re
 from distutils.version import LooseVersion
 
+from requests import HTTPError
+
 from api.github import GitHubApiSession
 
 RELEASE_NOTES_DIR = 'release_notes'
@@ -14,7 +16,7 @@ UNRELEASED_MD = '{}/unreleased.md'.format(RELEASE_NOTES_DIR)
 UNRELEASED_MD_HEADER = '**Unreleased**'
 RELEASE_NOTES_MD = RELEASE_NOTES_DIR + '/{}.md'
 RELEASE_NOTES_TOP_HEADER = '**{} Release Notes - Published by {} {}**\n\n'
-RELEASE_NOTES_VERSION_HEADER = '**Version {} - Released <INSERT_RELEASE_DATE>**\n'
+RELEASE_NOTES_VERSION_HEADER = '**Version {} - Released {}**\n'
 RELEASE_NOTES_DATE_FORMAT = '%B %d, %Y'
 RELEASE_NOTE_PATTERN = re.compile('^\\* .+$')
 
@@ -27,6 +29,8 @@ COMMIT_AUTHOR = {
     'name': 'root',
     'email': 'root@splunksoar'
 }
+
+FIRST_VERSION = '1.0.0'
 
 
 def deserialize_app_json(app_json):
@@ -54,7 +58,7 @@ def build_release_notes(release_version, unreleased_notes, app_json):
     publish_date = datetime.date.today().strftime(RELEASE_NOTES_DATE_FORMAT)
     release_notes = [
         RELEASE_NOTES_TOP_HEADER.format(app_json['name'], app_json['publisher'], publish_date),
-        RELEASE_NOTES_VERSION_HEADER.format(release_version)
+        RELEASE_NOTES_VERSION_HEADER.format(release_version, publish_date)
     ]
     for note in unreleased_notes[1:]:
         if not note or not note.strip():
@@ -76,7 +80,7 @@ def load_main_pr_body():
 def start_release(session):
     # Fetch repo contents and find the app json file - which we
     # expect to be the only json file
-    repo_files = session.get('contents?ref={}'.format('next'))
+    repo_files = session.get('contents?ref=next')
     json_files = [f['name'] for f in repo_files if f['name'].lower().endswith('.json')]
 
     if len(json_files) != 1:
@@ -87,10 +91,15 @@ def start_release(session):
     # greater than main, if it already isn't.
     app_json_file = json_files[-1]
     app_json_next, app_json_indent = deserialize_app_json(session.get('contents/{}?ref=next'.format(app_json_file)))
-    app_json_main, _ = deserialize_app_json(session.get('contents/{}?ref=main'.format(app_json_file)))
-
     app_version_next = app_json_next['app_version']
-    app_version_main = app_json_main['app_version']
+
+    try:
+        app_json_main, _ = deserialize_app_json(session.get('contents/{}?ref=main'.format(app_json_file)))
+        app_version_main = app_json_main['app_version']
+    except HTTPError as ex:
+        if ex.response.status != 404:
+            raise ex
+        app_version_main = FIRST_VERSION
 
     if LooseVersion(app_version_next) <= LooseVersion(app_version_main):
         logging.warning('Detected the app version in next %s to be <= the app version in main %s',

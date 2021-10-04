@@ -4,12 +4,13 @@ import json
 import logging
 import datetime
 from distutils.version import LooseVersion
-from unittest.mock import MagicMock, call
+from unittest.mock import MagicMock, call, Mock
 
 import pytest
+from requests import HTTPError
 
 from start_release import start_release, RELEASE_NOTES_DATE_FORMAT, DEFAULT_ENCODING, UNRELEASED_MD_HEADER, \
-    RELEASE_NOTE_COMMIT_MSG, COMMIT_AUTHOR, load_main_pr_body, MAIN_PR_TITLE, deserialize_app_json
+    RELEASE_NOTE_COMMIT_MSG, COMMIT_AUTHOR, load_main_pr_body, MAIN_PR_TITLE, deserialize_app_json, FIRST_VERSION
 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -31,9 +32,9 @@ def next_version(request):
     return request.param
 
 
-@pytest.fixture(scope='function')
-def main_version():
-    return MAIN_VERSION
+@pytest.fixture(scope='function', params=[MAIN_VERSION, None])
+def main_version(request):
+    return request.param
 
 
 def mock_app_json(version):
@@ -59,7 +60,8 @@ def test_start_release_happy_path(session, next_version, main_version):
     session.get = MagicMock()
 
     app_json_next = mock_app_json(next_version)
-    session.get.side_effect = [[{'name': '{}.json'.format(APP_NAME)}], app_json_next, mock_app_json(main_version),
+    app_json_main = mock_app_json(main_version) if main_version else HTTPError(response=Mock(status=404))
+    session.get.side_effect = [[{'name': '{}.json'.format(APP_NAME)}], app_json_next, app_json_main,
                                mock_unreleased_md(), {'object': {'sha': base_sha}}]
 
     session.post = MagicMock()
@@ -69,6 +71,7 @@ def test_start_release_happy_path(session, next_version, main_version):
 
     start_release(session)
 
+    main_version = main_version or FIRST_VERSION
     if LooseVersion(next_version) <= LooseVersion(main_version):
         expected_next_version = main_version[:-1] + str(int(main_version[-1]) + 1)
         app_json, indent = deserialize_app_json(app_json_next)
