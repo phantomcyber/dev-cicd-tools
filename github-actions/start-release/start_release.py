@@ -58,6 +58,7 @@ def build_release_notes(release_version, unreleased_notes, app_json):
         RELEASE_NOTES_TOP_HEADER.format(app_json['name'], app_json['publisher'], publish_date),
         RELEASE_NOTES_VERSION_HEADER.format(release_version, publish_date)
     ]
+    new_notes_added = False
     for note in unreleased_notes[1:]:
         if not note or not note.strip():
             continue
@@ -66,8 +67,9 @@ def build_release_notes(release_version, unreleased_notes, app_json):
             raise ValueError('Detected incorrectly formatted release note: \'{}\''
                              .format(note))
         release_notes.append(match.group())
+        new_notes_added = True
 
-    if len(release_notes) == 2:
+    if not new_notes_added:
         return None
 
     return '\n'.join(release_notes)
