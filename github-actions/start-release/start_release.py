@@ -52,14 +52,13 @@ def build_release_notes(release_version, unreleased_notes, app_json):
     if unreleased_notes[0] != UNRELEASED_MD_HEADER:
         raise ValueError('Expected the first line of {} to be the header {}'
                          .format(UNRELEASED_MD, UNRELEASED_MD_HEADER))
-    elif len(unreleased_notes) == 1:
-        return None
 
     publish_date = datetime.date.today().strftime(RELEASE_NOTES_DATE_FORMAT)
     release_notes = [
         RELEASE_NOTES_TOP_HEADER.format(app_json['name'], app_json['publisher'], publish_date),
         RELEASE_NOTES_VERSION_HEADER.format(release_version, publish_date)
     ]
+    new_notes_added = False
     for note in unreleased_notes[1:]:
         if not note or not note.strip():
             continue
@@ -68,6 +67,10 @@ def build_release_notes(release_version, unreleased_notes, app_json):
             raise ValueError('Detected incorrectly formatted release note: \'{}\''
                              .format(note))
         release_notes.append(match.group())
+        new_notes_added = True
+
+    if not new_notes_added:
+        return None
 
     return '\n'.join(release_notes)
 
@@ -101,12 +104,14 @@ def start_release(session):
             raise ex
         app_version_main = FIRST_VERSION
 
+    updates = []
     if LooseVersion(app_version_next) <= LooseVersion(app_version_main):
         logging.warning('Detected the app version in next %s to be <= the app version in main %s',
                         app_version_next, app_version_main)
 
         app_json_next['app_version'] = app_version_next = app_version_main[:-1] + str(int(app_version_main[-1]) + 1)
         logging.info('Updated the app version in next to be %s', app_version_next)
+        updates.append((json.dumps(app_json_next, indent=app_json_indent), app_json_file))
 
     # Generate release notes for the new app version from the entries
     # in unreleased.md, then truncate unreleased.md
@@ -118,16 +123,16 @@ def start_release(session):
 
     if not release_notes:
         logging.info('%s is empty! Assuming there is nothing to release.', release_notes)
-        return
-    logging.info('Generated release notes for version %s:', app_version_next)
-    logging.info(release_notes)
+    else:
+        logging.info('Generated release notes for version %s:', app_version_next)
+        logging.info(release_notes)
+        updates.append((release_notes, RELEASE_NOTES_MD.format(app_version_next)))
+        updates.append((unreleased_notes, UNRELEASED_MD))
 
     # Build a commit from the head of next including the version and
     # release note updates
     tree = []
-    for content, path in ((json.dumps(app_json_next, indent=app_json_indent), app_json_file),
-                          (release_notes, RELEASE_NOTES_MD.format(app_version_next)),
-                          (unreleased_notes, UNRELEASED_MD)):
+    for content, path in updates:
         tree.append({
             'sha': session.post('git/blobs',
                                 content=content,
@@ -137,20 +142,21 @@ def start_release(session):
             'type': 'blob'
             })
 
-    latest_commit_next = session.get('git/ref/heads/next')['object']['sha']
-    tree = session.post('git/trees', tree=tree, base_tree=latest_commit_next)
-    commit = session.post('git/commits',
-                          tree=tree['sha'],
-                          parents=[latest_commit_next],
-                          message=RELEASE_NOTE_COMMIT_MSG.format(app_version_next),
-                          author=COMMIT_AUTHOR)
-    logging.info('Created commit %s', commit['sha'])
+    if tree:
+        latest_commit_next = session.get('git/ref/heads/next')['object']['sha']
+        tree = session.post('git/trees', tree=tree, base_tree=latest_commit_next)
+        commit = session.post('git/commits',
+                              tree=tree['sha'],
+                              parents=[latest_commit_next],
+                              message=RELEASE_NOTE_COMMIT_MSG.format(app_version_next),
+                              author=COMMIT_AUTHOR)
+        logging.info('Created commit %s', commit['sha'])
 
-    # Commit changes to next, we fail at this step if we're
-    # unable to do a fast-forward merge, which would mean there
-    # were new commit(s) to next since when we checked.
-    session.patch('git/refs/heads/next', sha=commit['sha'])
-    logging.info('Committed changes to next')
+        # Commit changes to next, we fail at this step if we're
+        # unable to do a fast-forward merge, which would mean there
+        # were new commit(s) to next since when we checked.
+        session.patch('git/refs/heads/next', sha=commit['sha'])
+        logging.info('Committed changes to next')
 
     # Submit a PR to merge next to main
     pr = session.post('pulls',
