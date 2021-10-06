@@ -52,8 +52,6 @@ def build_release_notes(release_version, unreleased_notes, app_json):
     if unreleased_notes[0] != UNRELEASED_MD_HEADER:
         raise ValueError('Expected the first line of {} to be the header {}'
                          .format(UNRELEASED_MD, UNRELEASED_MD_HEADER))
-    elif len(unreleased_notes) == 1:
-        return None
 
     publish_date = datetime.date.today().strftime(RELEASE_NOTES_DATE_FORMAT)
     release_notes = [
@@ -68,6 +66,9 @@ def build_release_notes(release_version, unreleased_notes, app_json):
             raise ValueError('Detected incorrectly formatted release note: \'{}\''
                              .format(note))
         release_notes.append(match.group())
+
+    if len(release_notes) == 2:
+        return None
 
     return '\n'.join(release_notes)
 
