@@ -15,10 +15,10 @@ flake8-check:
 	cd $(APP_FOLDER) && python3 -m flake8 . --config $(LINT_CONFIG)
 
 isort-check:
-	cd $(APP_FOLDER) && python3 -m isort . --check-only --settings-path $(LINT_CONFIG)
+	cd $(APP_FOLDER) && python3 -m isort . --src . --settings-path $(LINT_CONFIG) --diff
 
 isort-fix:
-	cd $(APP_FOLDER) && python3 -m isort . --settings-path $(LINT_CONFIG)
+	cd $(APP_FOLDER) && python3 -m isort . --src . --settings-path $(LINT_CONFIG)
 
 autopep8-fix:
 	cd $(APP_FOLDER) && python3 -m autopep8 . --recursive --in-place --global-config $(LINT_CONFIG)
@@ -27,9 +27,9 @@ autopep8-fix-aggressive:
 	cd $(APP_FOLDER) && python3 -m autopep8 . --aggressive --recursive --in-place --global-config $(LINT_CONFIG)
 
 lint: flake8-check isort-check
-	
+
 lint-fix: autopep8-fix isort-fix
-		
+
 lint-fix-aggressive: autopep8-fix-aggressive isort-fix
 
 semgrep:
