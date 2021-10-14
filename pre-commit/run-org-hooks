@@ -11,23 +11,22 @@ import sys
 from pathlib import Path
 
 
-REPO_HOOK_CONFIGS_DIRNAME = '.hook_configs'
-
 orghooks_dir = os.path.dirname(os.path.realpath(__file__))
+
+LINT_CONFIG_FILE = 'tox.ini'
 
 
 def copy_configs(dest_dir):
     """ Make a copy of configurations for hooks if one doesn't exist. """
     dev_tools_dir = Path(orghooks_dir).parents[0]
     lint_configs_dir = dev_tools_dir / 'lint-configs'
-    repo_hook_configs_dir = Path(dest_dir) / REPO_HOOK_CONFIGS_DIRNAME
-    shutil.copytree(lint_configs_dir, repo_hook_configs_dir, dirs_exist_ok=True)
+    shutil.copyfile(lint_configs_dir / LINT_CONFIG_FILE, dest_dir / LINT_CONFIG_FILE)
 
 
 def main():
     """ Main entrypoint. """
     repo_dir = os.getcwd()
-    copy_configs(repo_dir)
+    copy_configs(Path(repo_dir))
     cfg = os.path.join(orghooks_dir, 'orghooks.yaml')
     cmd = ['pre-commit', 'run', '--config', cfg, '--files'] + sys.argv[1:]
     os.execvp(cmd[0], cmd)
