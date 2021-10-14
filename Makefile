@@ -15,7 +15,7 @@ flake8-check:
 	cd $(APP_FOLDER) && python3 -m flake8 . --config $(LINT_CONFIG)
 
 isort-check:
-	cd $(APP_FOLDER) && python3 -m isort . --src . --settings-path $(LINT_CONFIG) --diff
+	cd $(APP_FOLDER) && python3 -m isort . --src . --settings-path $(LINT_CONFIG) --check-only --diff
 
 isort-fix:
 	cd $(APP_FOLDER) && python3 -m isort . --src . --settings-path $(LINT_CONFIG)
