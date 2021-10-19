@@ -95,11 +95,9 @@ def update_app_json(app_json, app_dir):
         'input_file': 'wheels/{}'.format(f)
     } for f in sorted(os.listdir(os.path.join(app_dir, 'wheels')))]
 
-    app_py_version = app_json.content.get('python_version', '2.7')
-    if app_py_version == '3' and 'pip3_dependencies' in app_json.content:
+    app_json.content['pip_dependencies'] = {'wheel': wheel_paths}
+    if 'pip3_dependencies' in app_json.content:
         app_json.content['pip3_dependencies'] = {'wheel': wheel_paths}
-    else:
-        app_json.content['pip_dependencies'] = {'wheel': wheel_paths}
 
     with open(os.path.join(app_dir, app_json.file_name), 'w') as out:
         json.dump(app_json.content, out, indent=app_json.indent)
