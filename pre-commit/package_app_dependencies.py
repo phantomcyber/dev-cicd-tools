@@ -24,7 +24,7 @@ PLATFORM = 'manylinux2014_x86_64'
 REPAIRED_WHEELS_REL_PATH = 'repaired-wheels'
 
 WHEEL_PATTERN = re.compile(
-    '^(?P<distribution>([A-Z0-9][A-Z0-9._-]*[A-Z0-9]))-([0-9]+\\.[0-9]+\\.[0-9]+|[0-9]+\\.[0-9]+)-.+\\.whl$',
+    '^(?P<distribution>([A-Z0-9][A-Z0-9._-]*[A-Z0-9]))-([0-9]+\\.?)+-.+\\.whl$',
     re.IGNORECASE)
 
 AppJson = namedtuple('AppJson', ['file_name', 'indent', 'content'])
@@ -124,9 +124,15 @@ def main(app_dir):
         logging.warning(build_result.stderr.decode())
 
     if build_result.returncode != 0:
-        logging.error('Failed to build wheels from requirements.txt')
+        logging.error('Failed to build wheels from requirements.txt. '
+                      'This typically occurs when you have a version conflict in requirements.txt or '
+                      'you depend on a library requiring external development libraries (eg, python-ldap). '
+                      'In the former case, please resolve any version conflicts before re-running this script. '
+                      'In the latter case, please manually build the library in a manylinux https://github.com/pypa/manylinux '
+                      'container, making sure to first install any required development libraries. If you are unable '
+                      'to build a required dependency for your app, please raise an issue in the app repo for further assistance.')
         shutil.rmtree(temp_dir)
-        return build_result.returncode
+        return 0
 
     app_json = load_app_json(app_dir)
     app_py_version = app_json.content.get('python_version', '2.7')
