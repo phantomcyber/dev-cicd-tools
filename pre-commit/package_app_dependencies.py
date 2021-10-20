@@ -27,7 +27,8 @@ WHEEL_PATTERN = re.compile(
     '^(?P<distribution>([A-Z0-9][A-Z0-9._-]*[A-Z0-9]))-([0-9]+\\.?)+-.+\\.whl$',
     re.IGNORECASE)
 
-AppJson = namedtuple('AppJson', ['file_name', 'indent', 'content'])
+AppJson = namedtuple('AppJson', ['file_name', 'content'])
+APP_JSON_INDENT = 4
 
 
 def load_app_json(app_dir):
@@ -40,14 +41,7 @@ def load_app_json(app_dir):
         raise ValueError(error_msg)
 
     with open(os.path.join(app_dir, json_files[0])) as f:
-        json_str = f.read()
-
-    start = idx = json_str.find('\n') + 2
-    while json_str[idx] != '"':
-        idx += 1
-    indent = idx - start + 1
-
-    return AppJson(json_files[0], indent, json.loads(json_str))
+        return AppJson(json_files[0], json.load(f))
 
 
 def repair_wheels(wheels_to_repair, wheels_dir, app_py_version):
@@ -100,7 +94,7 @@ def update_app_json(app_json, app_dir):
         app_json.content['pip3_dependencies'] = {'wheel': wheel_paths}
 
     with open(os.path.join(app_dir, app_json.file_name), 'w') as out:
-        json.dump(app_json.content, out, indent=app_json.indent)
+        json.dump(app_json.content, out, indent=APP_JSON_INDENT)
         out.write('\n')
 
 
