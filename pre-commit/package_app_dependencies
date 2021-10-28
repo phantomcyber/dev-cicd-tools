@@ -9,7 +9,8 @@ if ! jq --help &> /dev/null; then
   exit 1
 fi
 
-app_py_version="$(jq .python_version "$(find ./*.json | head -n 1)")"
+app_py_version="$(jq .python_version "$(find ./*.json ! -name '*.postman_collection.json'| head -n 1)")"
+echo $app_py_version
 if [[ "$app_py_version" == 'null' ]]; then
   app_py_version='"2.7"'
 fi
