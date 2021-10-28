@@ -3,6 +3,26 @@
 APP_DIR=$(pwd)
 SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
+
+if ! jq --help &> /dev/null; then
+  echo 'Please ensure jq is installed (eg, brew install jq)'
+  exit 1
+fi
+
+app_py_version="$(jq .python_version "$(find ./*.json | head -n 1)")"
+if [[ "$app_py_version" == 'null' ]]; then
+  app_py_version='"2.7"'
+fi
+
+if [[ "$app_py_version" == '"2.7"' ]]; then
+  if ! pip2 --version &> /dev/null; then
+    echo 'Please ensure pip2 is installed'
+    exit 1
+  fi
+  python "$SCRIPT_DIR/package_app_dependencies.py" "$APP_DIR" pip2
+  exit $?
+fi
+
 if ! docker info &> /dev/null; then
   echo 'Please ensure Docker is installed and running on your machine'
   exit 1
@@ -10,4 +30,5 @@ fi
 
 docker run --rm -v "$APP_DIR":/src -v "$SCRIPT_DIR":/pre-commit/ -w "$SCRIPT_DIR" \
   quay.io/pypa/manylinux2014_x86_64 /bin/bash -c \
-   "/opt/python/cp39-cp39/bin/python /pre-commit/package_app_dependencies.py /src"
+   "/opt/python/cp39-cp39/bin/python /pre-commit/package_app_dependencies.py \
+   /src /opt/python/cp36-cp36m/bin/pip --repair_wheels"
