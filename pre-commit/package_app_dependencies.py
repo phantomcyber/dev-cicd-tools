@@ -3,11 +3,10 @@ Builds wheel files for the dependencies of an app, specified in requirements.txt
 folder of the app repo, and updates the app's JSON config specifying any generated wheels as pip
 dependencies.
 
-NOTE: This script is meant to be executed from a manylinux2014_x86_64 container to ensure that any
-wheels built with pre-compiled binaries will be compatible on a CentOS 7/RHEL 7 system running Phantom.
-
-https://github.com/pypa/manylinux
+NOTE: If running this script with the --repair_wheels flag, make sure the script is executed from
+a manylinux2014_x86_64 container https://github.com/pypa/manylinux
 """
+import argparse
 import json
 import logging
 import os
@@ -19,7 +18,6 @@ import subprocess
 import sys
 from collections import namedtuple
 
-PIP_3_6_PATH = '/opt/python/cp36-cp36m/bin/pip'
 PLATFORM = 'manylinux2014_x86_64'
 REPAIRED_WHEELS_REL_PATH = 'repaired-wheels'
 
@@ -44,7 +42,7 @@ def load_app_json(app_dir):
         return AppJson(json_files[0], json.load(f))
 
 
-def repair_wheels(wheels_to_repair, wheels_dir, app_py_version):
+def _repair_wheels(wheels_to_repair, wheels_dir, app_py_version):
     """
     Uses auditwheel to 1) check for platform wheels depending on external binary dependencies
     and 2) bundle external binary dependencies into the platform wheels in necessary. Repaired
@@ -53,6 +51,11 @@ def repair_wheels(wheels_to_repair, wheels_dir, app_py_version):
 
     https://github.com/pypa/auditwheel
     """
+    if subprocess.run(['auditwheel', '-V']).returncode != 0:
+        logging.warning('auditwheel is not installed or is not supported on the given platform. '
+                        'Skipping wheel repairs.')
+        return
+
     repaired_wheels_dir = os.path.join(wheels_dir, REPAIRED_WHEELS_REL_PATH)
     for whl in wheels_to_repair:
         logging.info('Checking %s', whl)
@@ -98,17 +101,19 @@ def update_app_json(app_json, app_dir):
         out.write('\n')
 
 
-def main(app_dir):
+def main(args):
     """
     Main entrypoint.
     """
+    app_dir, pip_path, repair_wheels = args.app_dir, args.pip_path, args.repair_wheels
+
     wheels_dir, requirements_file = '{}/wheels'.format(app_dir), '{}/requirements.txt'.format(app_dir)
     logging.info('Building wheels for dependencies in %s into %s', requirements_file, wheels_dir)
 
     temp_dir = os.path.join(app_dir, ''.join(random.choices(string.digits, k=10)))
     os.mkdir(temp_dir)
 
-    build_result = subprocess.run([PIP_3_6_PATH, 'wheel',
+    build_result = subprocess.run([pip_path, 'wheel',
                                    '-f', wheels_dir,
                                    '-w', temp_dir,
                                    '-r', requirements_file], capture_output=True)
@@ -131,12 +136,13 @@ def main(app_dir):
     app_json = load_app_json(app_dir)
     app_py_version = app_json.content.get('python_version', '2.7')
 
-    logging.info('Repairing new platform wheels...')
-    new_wheels = set(os.listdir(temp_dir))
-    if os.path.exists(wheels_dir):
-        new_wheels -= set(os.listdir(wheels_dir))
+    if repair_wheels:
+        logging.info('Repairing new platform wheels...')
+        new_wheels = set(os.listdir(temp_dir))
+        if os.path.exists(wheels_dir):
+            new_wheels -= set(os.listdir(wheels_dir))
 
-    repair_wheels(new_wheels, temp_dir, app_py_version)
+        _repair_wheels(new_wheels, temp_dir, app_py_version)
 
     if os.path.exists(wheels_dir):
         shutil.rmtree(wheels_dir)
@@ -148,6 +154,16 @@ def main(app_dir):
     return 0
 
 
+def parse_args():
+    help_str = ' '.join(line.strip() for line in __doc__.strip().splitlines())
+    parser = argparse.ArgumentParser(description=help_str)
+    parser.add_argument('app_dir', help='Path to the target app directory'),
+    parser.add_argument('pip_path', help='Path to the pip installation to use')
+    parser.add_argument('--repair_wheels', action='store_true',
+                        help='Whether to repair platform wheels with auditwheel'),
+    return parser.parse_args()
+
+
 if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
-    sys.exit(main(sys.argv[1]))
+    sys.exit(main(parse_args()))
