@@ -1,4 +1,3 @@
-import argparse
 import base64
 import datetime
 import json
@@ -13,12 +12,13 @@ from api.github import GitHubApiSession
 
 RELEASE_NOTES_DIR = 'release_notes'
 UNRELEASED_MD = '{}/unreleased.md'.format(RELEASE_NOTES_DIR)
+RELEASE_NOTES_HTML = '{}/release_notes.html'.format(RELEASE_NOTES_DIR)
 UNRELEASED_MD_HEADER = '**Unreleased**'
 RELEASE_NOTES_MD = RELEASE_NOTES_DIR + '/{}.md'
 RELEASE_NOTES_TOP_HEADER = '**{} Release Notes - Published by {} {}**\n\n'
 RELEASE_NOTES_VERSION_HEADER = '**Version {} - Released {}**\n'
 RELEASE_NOTES_DATE_FORMAT = '%B %d, %Y'
-RELEASE_NOTE_PATTERN = re.compile('^\\* .+$')
+RELEASE_NOTE_PATTERN = re.compile(r'^\* (?P<note>.+)$')
 
 DEFAULT_ENCODING = 'utf-8'
 
@@ -43,12 +43,12 @@ def deserialize_app_json(app_json):
     return json.loads(json_str), indent
 
 
-def deserialize_unreleased_md(unreleased_md):
+def deserialize_text_file(unreleased_md):
     return base64.b64decode(unreleased_md['content'])\
         .decode(DEFAULT_ENCODING).split('\n')
 
 
-def build_release_notes(release_version, unreleased_notes, app_json):
+def build_release_notes_md(release_version, unreleased_notes, app_json):
     if unreleased_notes[0] != UNRELEASED_MD_HEADER:
         raise ValueError('Expected the first line of {} to be the header {}'
                          .format(UNRELEASED_MD, UNRELEASED_MD_HEADER))
@@ -73,6 +73,59 @@ def build_release_notes(release_version, unreleased_notes, app_json):
         return None
 
     return '\n'.join(release_notes)
+
+
+def update_release_notes_html(release_notes_html, release_version, unreleased_notes, app_json):
+    """
+    Updates the app's HTML release notes with the latest notes from unreleased.md
+    first converting from Markdown to HTML.
+
+    HTML release notes are cumulative and sorted by revision in descending order, the new
+    release notes are added at the top of the file after the first header.
+
+    TODO: This code can be removed once Phantom Portal is retired
+          https://jira.splunk.com/browse/PAPP-21215
+    """
+    # Prepend a top level header with updated publish date, and a version header
+    # for the new release notes
+    publish_date = datetime.date.today().strftime(RELEASE_NOTES_DATE_FORMAT)
+    new_notes_html = [
+        '<b>{} Release Notes - Published by {} {}</b>'.format(
+            app_json['name'], app_json['publisher'], publish_date),
+        '<br><br>',
+        '<b>Version {} - Released {}</b>'.format(release_version, publish_date)
+    ]
+
+    # Write the new release notes, converting bulleted lists in Markdown to HTML
+    if unreleased_notes[0] != UNRELEASED_MD_HEADER:
+        raise ValueError('Expected the first line of {} to be the header {}'
+                         .format(UNRELEASED_MD, UNRELEASED_MD_HEADER))
+
+    new_notes_html.append('<ul>')
+    for note_md in unreleased_notes[1:]:
+        if not note_md.strip():
+            continue
+        note = RELEASE_NOTE_PATTERN.match(note_md)
+        if not note:
+            raise ValueError('Detected incorrectly formatted release note: \'{}\''.format(note_md))
+
+        new_notes_html.append('<li>{}</li>'.format(note.group('note')))
+    new_notes_html.append('</ul>')
+
+    # Read the previous release notes to find the linebreak separating the
+    # top header from the release notes, then copy the previous release notes
+    # into the new release notes
+    line_break_idx = -1
+    while True:
+        line_break_idx += 1
+        if line_break_idx >= len(release_notes_html):
+            raise ValueError('Could not find expected linebreak in HTML release notes')
+        elif release_notes_html[line_break_idx] == '<br><br>':
+            break
+
+    new_notes_html.extend(release_notes_html[line_break_idx + 1:])
+
+    return '\n'.join(new_notes_html)
 
 
 def load_main_pr_body():
@@ -115,18 +168,29 @@ def start_release(session):
 
     # Generate release notes for the new app version from the entries
     # in unreleased.md, then truncate unreleased.md
-    unreleased_notes = deserialize_unreleased_md(
+    unreleased_notes_md = deserialize_text_file(
         session.get('contents/{}?ref=next'.format(UNRELEASED_MD)))
 
-    release_notes = build_release_notes(app_version_next, unreleased_notes, app_json_next)
+    release_notes_md = build_release_notes_md(app_version_next,
+                                              unreleased_notes_md,
+                                              app_json_next)
+
+    old_release_notes_html = deserialize_text_file(
+        session.get('contents/{}?ref=next'.format(RELEASE_NOTES_HTML)))
+
+    new_release_notes_html = update_release_notes_html(old_release_notes_html,
+                                                       app_version_next,
+                                                       unreleased_notes_md,
+                                                       app_json_next)
     unreleased_notes = UNRELEASED_MD_HEADER + '\n'
 
-    if not release_notes:
-        logging.info('%s is empty! Assuming there is nothing to release.', release_notes)
+    if not release_notes_md:
+        logging.info('%s is empty! Assuming there is nothing to release.', release_notes_md)
     else:
         logging.info('Generated release notes for version %s:', app_version_next)
-        logging.info(release_notes)
-        updates.append((release_notes, RELEASE_NOTES_MD.format(app_version_next)))
+        logging.info(release_notes_md)
+        updates.append((release_notes_md, RELEASE_NOTES_MD.format(app_version_next)))
+        updates.append((new_release_notes_html, RELEASE_NOTES_HTML))
         updates.append((unreleased_notes, UNRELEASED_MD))
 
     # Build a commit from the head of next including the version and
