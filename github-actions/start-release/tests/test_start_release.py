@@ -1,5 +1,4 @@
 import base64
-import itertools
 import json
 import logging
 import datetime
@@ -49,20 +48,29 @@ def mock_app_json(version):
 
 
 def mock_unreleased_md():
-    with open('tests/data/unreleased.md') as f:
+    return encode_text_file('tests/data/unreleased.md')
+
+
+def mock_release_notes_html():
+    return encode_text_file('tests/data/old_release_notes.html')
+
+
+def encode_text_file(file_path):
+    with open(file_path) as f:
         return {
             'content': base64.b64encode(f.read().encode(DEFAULT_ENCODING))
         }
 
 
 def test_start_release_happy_path(session, next_version, main_version):
-    base_sha, json_sha, release_note_sha, unreleased_sha, tree_sha, commit_sha = (i for i in range(6))
+    base_sha, json_sha, release_note_md_sha, \
+        release_note_html_sha, unreleased_sha, tree_sha, commit_sha = (i for i in range(7))
     session.get = MagicMock()
 
     app_json_next = mock_app_json(next_version)
     app_json_main = mock_app_json(main_version) if main_version else HTTPError(response=Mock(status=404))
     session.get.side_effect = [[{'name': '{}.json'.format(APP_NAME)}], app_json_next, app_json_main,
-                               mock_unreleased_md(), {'object': {'sha': base_sha}}]
+                               mock_unreleased_md(), mock_release_notes_html(), {'object': {'sha': base_sha}}]
 
     main_version = main_version or FIRST_VERSION
     if LooseVersion(next_version) <= LooseVersion(main_version):
@@ -73,12 +81,12 @@ def test_start_release_happy_path(session, next_version, main_version):
         app_json_next = app_json_next.copy()
         app_json_next['content'] = base64.b64encode(json.dumps(app_json, indent=indent).encode(DEFAULT_ENCODING))
 
-        post_blob_sha_l = [json_sha, release_note_sha, unreleased_sha, tree_sha, commit_sha]
+        post_blob_sha_l = [json_sha, release_note_md_sha, release_note_html_sha, unreleased_sha, tree_sha, commit_sha]
         expected_blobs = [base64.b64decode(app_json_next['content']).decode(DEFAULT_ENCODING)]
         expected_tree = [('{}.json'.format(APP_NAME), json_sha)]
     else:
         expected_next_version = next_version
-        post_blob_sha_l = [release_note_sha, unreleased_sha, tree_sha, commit_sha]
+        post_blob_sha_l = [release_note_md_sha, release_note_html_sha, unreleased_sha, tree_sha, commit_sha]
         expected_blobs = []
         expected_tree = []
 
@@ -88,23 +96,33 @@ def test_start_release_happy_path(session, next_version, main_version):
 
     start_release(session)
 
-    assert session.get.call_count == 5
+    assert session.get.call_count == 6
     assert session.get.call_args_list[0] == call('contents?ref=next')
     assert session.get.call_args_list[1] == call('contents/{}.json?ref=next'.format(APP_NAME))
     assert session.get.call_args_list[2] == call('contents/{}.json?ref=main'.format(APP_NAME))
     assert session.get.call_args_list[3] == call('contents/release_notes/unreleased.md?ref=next')
-    assert session.get.call_args_list[4] == call('git/ref/heads/next')
+    assert session.get.call_args_list[4] == call('contents/release_notes/release_notes.html?ref=next')
+    assert session.get.call_args_list[5] == call('git/ref/heads/next')
 
     assert session.post.call_count == len(post_l)
     with open('tests/data/expected_release_notes.md') as f:
-        expected_blobs.append(f.read()\
-                               .replace('<APP_NAME>', 'App')\
-                               .replace('<PUBLISHER>', 'Splunk')\
-                               .replace('<PUBLISH_DATE>', DATE)\
-                               .replace('<VERSION>', expected_next_version))
+        expected_blobs.append(f.read() \
+                              .replace('<APP_NAME>', 'App') \
+                              .replace('<PUBLISHER>', 'Splunk') \
+                              .replace('<PUBLISH_DATE>', DATE) \
+                              .replace('<VERSION>', expected_next_version))
+
+    with open('tests/data/expected_new_release_notes.html') as f:
+        expected_blobs.append(f.read() \
+                              .replace('APP_NAME', 'App') \
+                              .replace('PUBLISHER', 'Splunk') \
+                              .replace('PUBLISH_DATE', DATE) \
+                              .replace('VERSION', expected_next_version))
+
     expected_blobs.append('{}\n'.format(UNRELEASED_MD_HEADER))
 
-    expected_tree.append(('release_notes/{}.md'.format(expected_next_version), release_note_sha))
+    expected_tree.append(('release_notes/{}.md'.format(expected_next_version), release_note_md_sha))
+    expected_tree.append(('release_notes/release_notes.html', release_note_html_sha))
     expected_tree.append(('release_notes/unreleased.md', unreleased_sha))
 
     for i, blob in enumerate(expected_blobs):
@@ -160,7 +178,7 @@ def test_start_release_nothing_to_release(session):
     session.get = MagicMock()
     empty_unreleased_md = base64.b64encode(UNRELEASED_MD_HEADER.encode(DEFAULT_ENCODING))
     session.get.side_effect = [[{'name': '{}.json'.format(APP_NAME)}], mock_app_json('1.1'), mock_app_json('1.0'),
-                               {'content': empty_unreleased_md}]
+                               {'content': empty_unreleased_md}, mock_release_notes_html()]
 
     start_release(session)
     assert session.patch.call_count == 0
