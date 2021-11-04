@@ -135,9 +135,11 @@ def load_main_pr_body():
 
 def start_release(session):
     # Fetch repo contents and find the app json file - which we
-    # expect to be the only json file
+    # expect to be the only json file other than a potential postman collection
     repo_files = session.get('contents?ref=next')
-    json_files = [f['name'] for f in repo_files if f['name'].lower().endswith('.json')]
+    json_files = [f['name'] for f in repo_files if
+                  not f['name'].lower().endswith('.postman_collection.json')
+                  and f['name'].lower().endswith('.json')]
 
     if len(json_files) != 1:
         raise ValueError('Expected a single json file in the repo but got {}'.format(json_files))

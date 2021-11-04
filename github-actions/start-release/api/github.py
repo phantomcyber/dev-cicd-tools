@@ -1,6 +1,5 @@
 from http import HTTPStatus
 
-from requests import HTTPError
 from requests.adapters import Retry, HTTPAdapter
 from requests_toolbelt import sessions
 
