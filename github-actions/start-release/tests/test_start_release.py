@@ -69,7 +69,8 @@ def test_start_release_happy_path(session, next_version, main_version):
 
     app_json_next = mock_app_json(next_version)
     app_json_main = mock_app_json(main_version) if main_version else HTTPError(response=Mock(status=404))
-    session.get.side_effect = [[{'name': '{}.json'.format(APP_NAME)}], app_json_next, app_json_main,
+    session.get.side_effect = [[{'name': '{}.json'.format(APP_NAME)}, {'name': '{}.postman_collection.json'.format(APP_NAME)}],
+                               app_json_next, app_json_main,
                                mock_unreleased_md(), mock_release_notes_html(), {'object': {'sha': base_sha}}]
 
     main_version = main_version or FIRST_VERSION
