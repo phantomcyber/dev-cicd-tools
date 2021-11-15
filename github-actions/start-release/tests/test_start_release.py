@@ -62,16 +62,22 @@ def encode_text_file(file_path):
         }
 
 
-def test_start_release_happy_path(session, next_version, main_version):
+@pytest.fixture(scope='function', params=[mock_release_notes_html(), None])
+def release_notes(request):
+    return request.param
+
+
+def test_start_release_happy_path(session, next_version, main_version, release_notes):
     base_sha, json_sha, release_note_md_sha, \
         release_note_html_sha, unreleased_sha, tree_sha, commit_sha = (i for i in range(7))
     session.get = MagicMock()
 
     app_json_next = mock_app_json(next_version)
     app_json_main = mock_app_json(main_version) if main_version else HTTPError(response=Mock(status=404))
+    release_notes_result = release_notes if release_notes else HTTPError(response=Mock(status=404))
     session.get.side_effect = [[{'name': '{}.json'.format(APP_NAME)}, {'name': '{}.postman_collection.json'.format(APP_NAME)}],
                                app_json_next, app_json_main,
-                               mock_unreleased_md(), mock_release_notes_html(), {'object': {'sha': base_sha}}]
+                               mock_unreleased_md(), release_notes_result, {'object': {'sha': base_sha}}]
 
     main_version = main_version or FIRST_VERSION
     if LooseVersion(next_version) <= LooseVersion(main_version):
@@ -113,12 +119,20 @@ def test_start_release_happy_path(session, next_version, main_version):
                               .replace('<PUBLISH_DATE>', DATE) \
                               .replace('<VERSION>', expected_next_version))
 
-    with open('tests/data/expected_new_release_notes.html') as f:
-        expected_blobs.append(f.read() \
-                              .replace('APP_NAME', 'App') \
-                              .replace('PUBLISHER', 'Splunk') \
-                              .replace('PUBLISH_DATE', DATE) \
-                              .replace('VERSION', expected_next_version))
+    if release_notes:
+        with open('tests/data/expected_new_release_notes.html') as f:
+            expected_blobs.append(f.read() \
+                                  .replace('APP_NAME', 'App') \
+                                  .replace('PUBLISHER', 'Splunk') \
+                                  .replace('PUBLISH_DATE', DATE) \
+                                  .replace('VERSION', expected_next_version))
+    else:
+        with open('tests/data/expected_new_release_notes_no_history.html') as f:
+            expected_blobs.append(f.read() \
+                                  .replace('APP_NAME', 'App') \
+                                  .replace('PUBLISHER', 'Splunk') \
+                                  .replace('PUBLISH_DATE', DATE) \
+                                  .replace('VERSION', expected_next_version))
 
     expected_blobs.append('{}\n'.format(UNRELEASED_MD_HEADER))
 

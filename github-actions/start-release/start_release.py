@@ -4,8 +4,9 @@ import json
 import logging
 import os
 import re
-from distutils.version import LooseVersion
+from http import HTTPStatus
 
+from distutils.version import LooseVersion
 from requests import HTTPError
 
 from api.github import GitHubApiSession
@@ -75,7 +76,7 @@ def build_release_notes_md(release_version, unreleased_notes, app_json):
     return '\n'.join(release_notes)
 
 
-def update_release_notes_html(release_notes_html, release_version, unreleased_notes, app_json):
+def update_release_notes_html(old_release_notes_html, release_version, unreleased_notes, app_json):
     """
     Updates the app's HTML release notes with the latest notes from unreleased.md
     first converting from Markdown to HTML.
@@ -112,18 +113,19 @@ def update_release_notes_html(release_notes_html, release_version, unreleased_no
         new_notes_html.append('<li>{}</li>'.format(note.group('note')))
     new_notes_html.append('</ul>')
 
-    # Read the previous release notes to find the linebreak separating the
-    # top header from the release notes, then copy the previous release notes
-    # into the new release notes
-    line_break_idx = -1
-    while True:
-        line_break_idx += 1
-        if line_break_idx >= len(release_notes_html):
-            raise ValueError('Could not find expected linebreak in HTML release notes')
-        elif release_notes_html[line_break_idx] == '<br><br>':
-            break
+    if old_release_notes_html:
+        # Read the previous release notes to find the linebreak separating the
+        # top header from the release notes, then copy the previous release notes
+        # into the new release notes
+        line_break_idx = -1
+        while True:
+            line_break_idx += 1
+            if line_break_idx >= len(old_release_notes_html):
+                raise ValueError('Could not find expected linebreak in HTML release notes')
+            elif old_release_notes_html[line_break_idx] == '<br><br>':
+                break
 
-    new_notes_html.extend(release_notes_html[line_break_idx + 1:])
+        new_notes_html.extend(old_release_notes_html[line_break_idx + 1:])
 
     return '\n'.join(new_notes_html)
 
@@ -177,8 +179,13 @@ def start_release(session):
                                               unreleased_notes_md,
                                               app_json_next)
 
-    old_release_notes_html = deserialize_text_file(
-        session.get('contents/{}?ref=next'.format(RELEASE_NOTES_HTML)))
+    try:
+        old_release_notes_html = deserialize_text_file(
+            session.get('contents/{}?ref=next'.format(RELEASE_NOTES_HTML)))
+    except HTTPError as ex:
+        if ex.response.status != HTTPStatus.NOT_FOUND:
+            raise ex
+        old_release_notes_html = None
 
     new_release_notes_html = update_release_notes_html(old_release_notes_html,
                                                        app_version_next,
