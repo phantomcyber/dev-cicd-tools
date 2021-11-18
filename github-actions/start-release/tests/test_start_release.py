@@ -2,6 +2,7 @@ import base64
 import json
 import logging
 import datetime
+import shutil
 from distutils.version import LooseVersion
 from unittest.mock import MagicMock, call, Mock
 
@@ -67,9 +68,28 @@ def release_notes(request):
     return request.param
 
 
-def test_start_release_happy_path(session, next_version, main_version, release_notes):
+@pytest.fixture(scope='function', params=[
+    'tests/data/build_docs/has_no_readme'
+])
+def app_dir(request):
+    def copy_test_dir():
+        shutil.copytree(app_dir, app_dir_copy)
+
+    def remove_test_dir_copy():
+        shutil.rmtree(app_dir_copy, ignore_errors=True)
+
+    app_dir = request.param
+    app_dir_copy = app_dir + '_copy'
+
+    copy_test_dir()
+    request.addfinalizer(remove_test_dir_copy)
+
+    return app_dir_copy
+
+
+def test_start_release_happy_path(session, next_version, main_version, release_notes, app_dir):
     base_sha, json_sha, release_note_md_sha, \
-        release_note_html_sha, unreleased_sha, tree_sha, commit_sha = (i for i in range(7))
+        release_note_html_sha, unreleased_sha, readme_sha, tree_sha, commit_sha = (i for i in range(8))
     session.get = MagicMock()
 
     app_json_next = mock_app_json(next_version)
@@ -88,12 +108,12 @@ def test_start_release_happy_path(session, next_version, main_version, release_n
         app_json_next = app_json_next.copy()
         app_json_next['content'] = base64.b64encode(json.dumps(app_json, indent=indent).encode(DEFAULT_ENCODING))
 
-        post_blob_sha_l = [json_sha, release_note_md_sha, release_note_html_sha, unreleased_sha, tree_sha, commit_sha]
+        post_blob_sha_l = [json_sha, release_note_md_sha, release_note_html_sha, unreleased_sha, readme_sha, tree_sha, commit_sha]
         expected_blobs = [base64.b64decode(app_json_next['content']).decode(DEFAULT_ENCODING)]
         expected_tree = [('{}.json'.format(APP_NAME), json_sha)]
     else:
         expected_next_version = next_version
-        post_blob_sha_l = [release_note_md_sha, release_note_html_sha, unreleased_sha, tree_sha, commit_sha]
+        post_blob_sha_l = [release_note_md_sha, release_note_html_sha, unreleased_sha, readme_sha, tree_sha, commit_sha]
         expected_blobs = []
         expected_tree = []
 
@@ -101,7 +121,7 @@ def test_start_release_happy_path(session, next_version, main_version, release_n
     post_l = [{'sha': s} for s in post_blob_sha_l] + [{'html_url': 'url'}]
     session.post.side_effect = post_l
 
-    start_release(session)
+    start_release(session, app_dir)
 
     assert session.get.call_count == 6
     assert session.get.call_args_list[0] == call('contents?ref=next')
@@ -139,6 +159,7 @@ def test_start_release_happy_path(session, next_version, main_version, release_n
     expected_tree.append(('release_notes/{}.md'.format(expected_next_version), release_note_md_sha))
     expected_tree.append(('release_notes/release_notes.html', release_note_html_sha))
     expected_tree.append(('release_notes/unreleased.md', unreleased_sha))
+    expected_tree.append(('readme.md', readme_sha))
 
     for i, blob in enumerate(expected_blobs):
         assert session.post.call_args_list[i] == call('git/blobs', content=blob, encoding=DEFAULT_ENCODING)
@@ -181,21 +202,21 @@ def _session_invalid_data(session, request):
     return session
 
 
-def test_start_release_invalid_data(session_invalid_data):
+def test_start_release_invalid_data(session_invalid_data, app_dir):
     with pytest.raises(ValueError):
-        start_release(session_invalid_data)
+        start_release(session_invalid_data, app_dir)
 
     assert session_invalid_data.post.call_count == 0
     assert session_invalid_data.patch.call_count == 0
 
 
-def test_start_release_nothing_to_release(session):
+def test_start_release_nothing_to_release(session, app_dir):
     session.get = MagicMock()
     empty_unreleased_md = base64.b64encode(UNRELEASED_MD_HEADER.encode(DEFAULT_ENCODING))
     session.get.side_effect = [[{'name': '{}.json'.format(APP_NAME)}], mock_app_json('1.1'), mock_app_json('1.0'),
                                {'content': empty_unreleased_md}, mock_release_notes_html()]
 
-    start_release(session)
+    start_release(session, app_dir)
     assert session.patch.call_count == 0
     assert session.post.call_count == 1
     assert session.post.call_args_list[0] == call('pulls', head='next', base='main',
