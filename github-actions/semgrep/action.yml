@@ -23,6 +23,7 @@ runs:
     - name: 'Semgrep scan'
       uses: returntocorp/semgrep-action@v1   
       with:
+        config: p/python
         # Fetches configured rules from Semgrep account
-        publishDeployment: ${{ inputs.SEMGREP_DEPLOYMENT_ID }}
-        publishToken: ${{ inputs.SEMGREP_APP_TOKEN }}
+        # publishDeployment: ${{ inputs.SEMGREP_DEPLOYMENT_ID }}
+        # publishToken: ${{ inputs.SEMGREP_APP_TOKEN }}
