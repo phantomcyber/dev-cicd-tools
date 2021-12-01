@@ -1,4 +1,4 @@
-Jinja2==2.11.2
+Jinja2==2.11.3
 Pygments==2.7.4
 beautifulsoup4==4.9.3
 gh-md-to-html==1.21.1
