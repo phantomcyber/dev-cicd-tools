@@ -10,6 +10,7 @@ from distutils.version import LooseVersion
 from requests import HTTPError
 
 from api.github import GitHubApiSession
+from build_docs import build_docs_from_html
 
 RELEASE_NOTES_DIR = 'release_notes'
 UNRELEASED_MD = '{}/unreleased.md'.format(RELEASE_NOTES_DIR)
@@ -135,7 +136,7 @@ def load_main_pr_body():
         return f.read()
 
 
-def start_release(session):
+def start_release(session, app_dir=os.getenv('GITHUB_WORKSPACE')):
     # Fetch repo contents and find the app json file - which we
     # expect to be the only json file other than a potential postman collection
     repo_files = session.get('contents?ref=next')
@@ -201,6 +202,10 @@ def start_release(session):
         updates.append((release_notes_md, RELEASE_NOTES_MD.format(app_version_next)))
         updates.append((new_release_notes_html, RELEASE_NOTES_HTML))
         updates.append((unreleased_notes, UNRELEASED_MD))
+
+        # Generate documentation for the app
+        docs_updates = build_docs_from_html(app_dir, app_version_next)
+        updates.extend(docs_updates)
 
     # Build a commit from the head of next including the version and
     # release note updates

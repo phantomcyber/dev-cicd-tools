@@ -1,0 +1,636 @@
+<p>This App is an Ingestion source. In the Phantom documentation, in the <a href="../admin/">Administration<br>
+Manual</a> under the <a href="../admin/sources">Data Sources</a> section, you will find an explanation<br>
+of how Ingest Apps works and how information is extracted from the ingested data. There is a general<br>
+explanation in Overview, and some individuals Apps have their sections.</p>
+<p><strong>QRadar Instance Minimum Version Compatibility</strong></p>
+<ul>
+<li>With this version of the QRadar app on Phantom, we declare support for the QRadar instances<br>
+which are on and above the v7.3.1. This app has been tested and certified on the v7.3.1 version<br>
+of the QRadar.</li>
+<li>The expectations of the actions with this version of the app have not been changed majorly. It<br>
+is recommended to read the documentation for the app and each action first to understand the<br>
+functioning of the actions of all the asset configuration and the action parameters.</li>
+</ul>
+<p><strong>Playbook Backward Compatibility</strong></p>
+<ul>
+<li>
+<p>The existing action parameters have been modified in the actions given below. Hence, it is<br>
+requested to the end-user to please update their existing playbooks by re-inserting the<br>
+corresponding action blocks or by providing appropriate values to these action parameters to<br>
+ensure the correct functioning of the playbooks created on the earlier versions of the app.</p>
+<ul>
+<li>Alt Manage Ingestion - The new drop-down values in the [operation] parameter have been<br>
+added and the existing ones are modified.</li>
+<li>Get Flows - This action was not working correctly and we have updated the logic for this<br>
+action's functionality.</li>
+<li>Offense Details - The action parameter for [interval_days] has been removed as it was not<br>
+getting used in the action.</li>
+</ul>
+</li>
+</ul>
+<p><strong>Explanation of App Settings Parameter</strong></p>
+<ul>
+<li><strong>interval_days</strong>
+<ul>
+<li>For List Offenses and Get Events action if the [start_time] is specified, it will be given<br>
+priority, if not provided, this value is internally derived by subtracting the<br>
+[interval_days] from the [end_time]. For the Get Events action, this field is having a<br>
+higher preference over the [interval_days] action parameter if both are specified. If<br>
+[interval_days] is not specified in the app settings it will take the default value which<br>
+is 5.</li>
+<li>If [Alternative ariel query] configuration parameter is checked, for On Poll and Get<br>
+Events action to fetch the events, the time based filtering in this workflow is applied<br>
+based on the granularity of days instead of applying it based on the granularity of epoch<br>
+and Datetime formats.</li>
+<li>For On Poll, to fetch the offenses, if there is time stored in the state file it will be<br>
+given priority, if not provided, this value is internally derived by subtracting the<br>
+[interval_days] from the [end_time]. If [interval_days] is not specified in the app<br>
+settings it will take the default value which is 5.</li>
+<li>For On Poll, to fetch the events, if there is time stored in the state file it will be given<br>
+priority, if not provided, the [start_time] will be calculated by back-dating offense's<br>
+[start_time] by the value of [events_ingest_start_time] configuration parameter.</li>
+<li>[interval_days] parameter is not used in the alternative ingestion algorithm.</li>
+</ul>
+</li>
+</ul>
+<p><strong>Explanation of Asset Configuration Parameters</strong></p>
+<ul>
+<li>
+<p>All the asset configuration parameters which are affecting the functioning of the On Poll action<br>
+will also affect the functioning of the action [Offense Details] when the corresponding action<br>
+parameter [ingest_offense] is checked</p>
+</li>
+<li>
+<p><strong>Asset Configuration Parameters</strong></p>
+<ul>
+<li>
+<p><strong>artifact_max -</strong> Maximum number of event artifacts to ingest for the [On Poll] (both<br>
+manual and scheduled) action and [Offense Details] action with [ingest_offense] action<br>
+parameter set to TRUE. This count excludes the default generated offense artifact.</p>
+</li>
+<li>
+<p><strong>cef_event_map -</strong> JSON formatted string of key-value pairs for CEF mapping - use<br>
+double-quotes. CEF values are the keys, QRadar fields are the values. QRadar fields are the<br>
+internal names of the fields for the events data exported in the JSON format. These internal<br>
+names can be obtained from the JSON data obtained by running the [Get Events] action. If<br>
+the cef_event_map is provided by the user, the fields mentioned in this mapping and the<br>
+default CEF mapping fields along with the extra fields provided in the [Event fields to<br>
+include while querying] configuration parameter will be included in the CEF data of the<br>
+artifact created for ingestion. If the cef_event_map is not provided by the user, then, the<br>
+default event fields along with the extra fields provided in the [Event fields to include<br>
+while querying] configuration parameter will be included in the CEF data of the artifacts<br>
+created for ingestion. If the mapping provided in the [CEF event map] configuration field<br>
+consists of the fields which are already covered by the default CEF mapping, then, the<br>
+provided CEF mapping in the configuration parameter will also be created along with the<br>
+default CEF mapping.</p>
+<p><strong>Sample [CEF Event Map] value</strong><br>
+<code>        {"magnitudeValue":"magnitude","customAttributeValue1":"custom_attribute_1","customAttributeValue2":"Custom Attribute 2"}                         </code><br>
+<strong>Important Point</strong> - Internally the field UTF8(payload) is fetched by the name of Payload<br>
+(i.e. UTF8(payload) as Payload). Hence, to map the UTF8(payload) field in the CEF event map,<br>
+please provide the mapping as mentioned here {"[cef_name_for_payload_field]": "Payload"}.</p>
+<ul>
+<li>
+<p>The default CEF mapping is provided below (left-side is the display name of the event<br>
+fields in the ingested artifacts data and right-side is the original internal name of<br>
+the fields of an event)</p>
+<p><code>           {                        "signature_id": "qid",                        "name": "qidname_qid",                        "severity": "severity",                        "applicationProtocol": "Application",                        "destinationMacAddress": "destinationmac",                        "destinationNtDomain": "AccountDomain",                        "destinationPort": "destinationport",                        "destinationAddress": "destinationaddress",                        "endTime": "endtime",                        "fileHash": "File Hash",                        "fileId": "File ID",                        "filePath": "File Path",                        "fileName": "Filename",                        "bytesIn": "BytesReceived",                        "message": "Message",                        "bytesOut": "BytesSent",                        "transportProtocol": "protocolname_protocolid",                        "sourceMacAddress": "sourcemac",                        "sourcePort": "sourceport",                        "sourceAddress": "sourceaddress",                        "startTime": "starttime",                        "payload": "Payload"                        }          </code></p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>cef_value_map -</strong> JSON formatted string representation of a dictionary used to map CEF<br>
+field values to new values. Similar to cef_event_map, replace the value of any CEF field<br>
+with another value. For example, to replace the value of cef.requestURL of \"nourl\", with<br>
+null value, provide { \"nourl\": null }. If the user wants to replace a numeric<br>
+(integer|float) value with some other value, due to the SDK issue, the user has to provide<br>
+the key-value map in this format. e.g. if user wants to replace value 4 with 10 and 5.3 with<br>
+6.7, provide this CEF value mapping {"numeric(4)": 10, "numeric(5.3)": 6.7}<br>
+<strong>Sample [CEF Value Map] values</strong></p>
+<ul>
+<li>
+<p>To replace integer|float values; value 4 with 10 and 5.3 with 6.7, provide below CEF<br>
+value mapping</p>
+<p><code>           {"numeric(4)": 10, "numeric(5.3)": 6.7}          </code></p>
+</li>
+<li>
+<p>To replace string values; Alert with Alert_Info</p>
+<p><code>           {"Alert": "Alert_Info"}          </code></p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>delete_empty_cef_fields -</strong> Set true to delete CEF fields with empty values.</p>
+</li>
+<li>
+<p><strong>event_fields_for_query -</strong> Optionally define a new comma-separated list of fields (system<br>
+or custom or both) for querying. A comma-separated list of field internal names as obtained<br>
+in the JSON data while running the [Get Events] action. Use double-quotes if field names<br>
+contain spaces.</p>
+</li>
+<li>
+<p><strong>add_offense_id_to_name -</strong> Optionally add the offense ID to the container name. If the<br>
+user runs the On Poll action without this value being checked and then, stops the ingestion<br>
+and again starts the ingestion after checking this parameter (to TRUE), new containers will<br>
+not be created for the offenses which were already ingested and their names will also not be<br>
+changed to have the offense ID prefixed. All the new event artifacts will continue getting<br>
+created in the existing containers. Hence, it is recommended to delete the already ingested<br>
+containers and artifacts if the user is changing the value of this parameter to ensure that<br>
+all the containers and artifacts get created with the new expected names.</p>
+</li>
+<li>
+<p><strong>alternative_ariel_query -</strong> Alternative ariel query; considers Datetime specifications if<br>
+provided or else retrieve events from the last [interval_days] (default=5) days; affects<br>
+[On Poll], [Offense Details] and [Get Events] actions; [On Poll] will auto-extend<br>
+the number of days to start on/before the day of the offense being retrieved.</p>
+</li>
+<li>
+<p><strong>alt_initial_ingest_time -</strong> This parameter is applicable only if<br>
+[alternative_ingest_algorithm] parameter is checked. Set the [last_saved_ingest_time] to<br>
+this. This is the initial lower limit to ingest offenses. This field accepts the values<br>
+mentioned here; a string 'yesterday', a valid python parsable Datetime (dateutil module)<br>
+(for the given date-time string, while parsing the date portion, higher preference is given<br>
+to MM-DD-YYYY format and if the date-time string stands invalid in that date format, then,<br>
+than it is considered to have the DD-MM-YYYY date format) or an epoch time in milliseconds;<br>
+if no value is provided, then, the default value is 'yesterday'. Examples - yesterday,<br>
+2020-02-25 12:00:00, 2020-12-01T05:00:00, 2019-04-30, 01-20-2020, 20-01-2020, 06:30:00, etc.</p>
+</li>
+<li>
+<p><strong>alt_ingest_order -</strong> This parameter is applicable only if [alternative_ingest_algorithm]<br>
+parameter is checked. The parameter alt_ingest_order will decide the order in which the<br>
+offense will be fetched (oldest first or latest first).</p>
+</li>
+<li>
+<p><strong>alt_time_field -</strong> This parameter is applicable only if [alternative_ingest_algorithm]<br>
+parameter is checked. The parameter alt_time_field will decide the time on which the<br>
+alt_ingest_order will be applied (start_time or last_updated_time or either)</p>
+</li>
+<li>
+<p><strong>ingest_open -</strong> This parameter is optional and if not set to true, it will fetch all the<br>
+offenses (including the closed offenses). To fetch only open offenses ingest only open must<br>
+be set to TRUE. This configuration parameter is used in List Offenses, Offense Details as<br>
+well as in On Poll action.</p>
+</li>
+<li>
+<p><strong>alternative_ingest_algorithm -</strong> This parameter is optional and if not set to true then,<br>
+the app will ignore the values kept in the [alt_ingest_order] and [alt_time_field]. If<br>
+the parameter [alternative_ingest_algorithm] is set to true then, the offenses will be<br>
+fetched according to [alt_ingest_order] and [alt_time_field] parameters. This<br>
+configuration parameter is used in the List Offenses, Offense Details as well as in the On<br>
+Poll action.</p>
+</li>
+<li>
+<p><strong>events_ingest_start_time -</strong> This parameter is optional and the default value is 60. This<br>
+parameter defines the relative number of minutes (in milliseconds) to back-date the<br>
+offense's 'start_time' to start fetching the events for that particular offense. e.g. if<br>
+events_ingest_start_time = 25 and offense's start_time = 1582618635661, then, after<br>
+back-date, the final timestamp from which we will start fetching the events for that<br>
+particular offense is 1582618635661 - (25 * 60 * 1000) = 1582617135661. NOTE - This<br>
+parameter is applicable only for the manual POLL NOW, the first run of the SCHEDULED |<br>
+INTERVAL polling, and other actions like [Offense Details] which are involved in the<br>
+events ingestion.</p>
+</li>
+<li>
+<p><strong>containers_only -</strong> This parameter is optional and if not set to true then, the offenses<br>
+will be created as containers and the events of the offenses will be created as the<br>
+artifacts. If this parameter is set to true then, the offenses will be created as containers<br>
+and the details of the offenses will be created as the artifacts in those containers<br>
+respectively. This configuration parameter is used in the Offense Details and On Poll<br>
+actions.</p>
+</li>
+<li>
+<p><strong>has_offense -</strong> This parameter is optional and by default will be checked as true. This<br>
+parameter describes whether the events and flows should be associated with the offense or<br>
+not while fetching the events and flows. If this is set to true, then only the events and<br>
+flows associated with the offense will be considered. This configuration parameter is used<br>
+in the Get Events, Get Flows as well as in the On Poll action. For Get Events and Get Flows<br>
+Action, 'has_offense' will only be considered if the user has passed the 'offense_id' while<br>
+running these actions.</p>
+</li>
+<li>
+<p><strong>offense_ingest_start_time -</strong> This parameter is optional and the default will be 0. This<br>
+parameter defines the relative number of minutes (in milliseconds) to back-date the<br>
+offense's 'start_time' to start fetching the offenses. e.g. if offense_ingest_start_time =<br>
+25 and the time to start fetching offenses is 1582618635661, then after back-date, the final<br>
+timestamp from which we will start fetching the offenses would be 1582618635661 - (25 * 60<br>
+* 1000) = 1582617135661. This parameter is applicable for each type of polling.</p>
+</li>
+<li>
+<p><strong>event_ingest_end_time -</strong> This parameter is optional and the default will be 0. This<br>
+parameter defines the relative number of minutes (in milliseconds) to modify the event<br>
+ingestion 'end_time' by after-dating event ingestion 'start_time'. The 'start_time' will be<br>
+[offense's start_time - events_ingest_start_time] for manual polling and the first run of<br>
+scheduled | interval polling and for the next runs, it will take time stored in the state<br>
+file against last_ingested_events_data for a particular offense. e.g. if<br>
+event_ingest_end_time = 25 and the 'start_time' to fetch events is 1582618635661, then after<br>
+modification, the final 'end_time' to stop fetching events would be 1582618635661 + (25 *<br>
+60 * 1000) = 1582620135661. If the modified 'end_time' exceeds the current time then it<br>
+will consider the current time as 'end_time'. This parameter is applicable for each type of<br>
+polling.</p>
+</li>
+<li>
+<p><strong>max_events_per_offense -</strong> This parameter is optional and the default will be None. This<br>
+parameter defines the maximum accumulated artifacts to be ingested per offense, including<br>
+the default generated offense artifact. e.g. if max_events_per_offense = 100, then maximum<br>
+artifacts to be ingested in each container should not be greater than 100, considering all<br>
+polling cycles. 'artifact_max' parameter can affect the functionality of the<br>
+'max_events_per_offense' parameter based on its value as mentioned below.</p>
+<ul>
+<li>If artifact_max is less than max_events_per_offense, then it will ingest artifact_max<br>
+number of artifacts per cycle and once the total artifacts count in a container equals<br>
+or exceeds the max_events_per_offense count it will not collect artifacts. e.g. If<br>
+artifact_max = 20 and max_events_per_offense = 30, then in first polling cycle it will<br>
+ingest 21 artifacts (one default generated offense artifact). In the next polling cycle,<br>
+it will ingest 9 more artifacts. As the total artifacts in the container get equal to<br>
+the max_events_per_offense it will not collect artifacts from the next cycle.</li>
+<li>If max_events_per_offense is less than artifact_max, then it will ingest<br>
+max_events_per_offense number of artifacts. e.g. if max_events_per_offense = 10 and<br>
+artifact_max = 15, then it will ingest 10 artifacts.</li>
+<li>If max_events_per_offense = 1, then irrespective of any value provided in<br>
+'artifact_max', it will ingest only one artifact (default generated offense artifact).</li>
+<li>NOTE - If offense will get updated while Qradar event creation, accordingly offense<br>
+artifacts will also be ingested in phantom with updated parameters. This can affect the<br>
+functionality of max_events_per_offense. e.g. if artifact_max = 5 and<br>
+max_events_per_offense = 8, then in first cycle it will ingest 6 artifacts (one default<br>
+generated offense artifact). In the next polling cycle, it will ingest 2 more event<br>
+artifacts but if the offense is updated then it will also ingest one more offense<br>
+artifact and the total artifact count will be one more than max_events_per_offense.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p><strong>Explanation of QRadar Actions' Parameters</strong></p>
+<ul>
+<li>
+<p><strong>Test Connectivity (Authentication Details)</strong></p>
+<ul>
+<li>This action provides 2 modes of providing the authentication: Basic Auth and Auth Token.</li>
+<li>It expects the user to enter either a valid auth token or a valid pair of username and<br>
+password both.</li>
+<li>If none of the 3 configuration parameters for [Username], [Password], and [Auth Token<br>
+for QRadar REST API calls] is provided, the action fails with an appropriate error.</li>
+<li>If the user provides both the auth token and the pair of username and password, then, the<br>
+[Test Connectivity] action will validate both the modes of authentication and will throw<br>
+an appropriate error if any credentials are invalid.</li>
+<li>If the user provides the auth token and any one of the username and password, the<br>
+connectivity will fail and will throw an error to provide either both the username and<br>
+password or none of them as in this case the auth token already exists and has a higher<br>
+preference than the username and password. If the auth token is not provided, then, the user<br>
+must provide both the username and password.</li>
+<li>The connectivity gives a higher preference to the auth token than that using the pair of<br>
+username and password.</li>
+</ul>
+</li>
+<li>
+<p><strong>List Offenses</strong></p>
+<ul>
+<li>
+<p>Default Offenses Ingestion Workflow</p>
+<ul>
+<li>The offenses are fetched based on the logic that either their [start_time] or their<br>
+[last_updated_time] is between the time range defined by [start_time] and<br>
+[end_time].</li>
+<li><strong>Start Time -</strong> This field expects an epoch value in milliseconds. If not provided,<br>
+this value is internally derived by subtracting the [interval_days] from the<br>
+[end_time]. This field is having a higher preference over the [interval_days] action<br>
+parameter if both are specified.</li>
+<li><strong>End Time -</strong> This field expects an epoch value in milliseconds. If not provided, this<br>
+value is equal to the current epoch value in milliseconds.</li>
+<li><strong>Count -</strong> This field expects a valid non-zero integer value or empty value. If<br>
+provided, offenses equal to the provided value are fetched. If left empty, the default<br>
+100 offenses matching the filter criteria are fetched. If the user wants to fetch all<br>
+the offenses, provide a value greater than the total offenses that exist on the QRadar<br>
+server.</li>
+<li><strong>Offense ID -</strong> This field expects a comma-separated string containing valid offense<br>
+IDs. If this is provided, irrespective of the start_time or end_time, the offenses<br>
+corresponding to all the offense IDs provided here will be fetched based on the value<br>
+provided in the [count] parameter.</li>
+</ul>
+</li>
+<li>
+<p>Alternate Offenses Ingestion Workflow</p>
+<ul>
+<li>This workflow has the functionalities similar to the default ingestion workflow with the<br>
+below-mentioned points getting considered while ingestion.</li>
+<li>This workflow considers the value stored against the key [last_saved_ingest_time] in<br>
+the state file (only for On Poll and Ingest Offense action with ingest_offense set to<br>
+TRUE) as the start time to fetch the offenses. If the key is not found in the state<br>
+file, it considers the value mentioned in the [Alternative initial ingestion time]<br>
+asset configuration parameter as the start time to fetch the offenses. If none of the<br>
+above-mentioned values are found, it considers the default value as yesterday. It does<br>
+not consider the [interval_days] parameter mentioned in the [app_config] settings.</li>
+<li>This workflow is considered only if the [Alternative ingest algorithm for offenses]<br>
+configuration parameter is checked.</li>
+<li>The configuration parameters [Alternative ingestion time field] and [Alternative<br>
+ingestion order for offenses] are applicable for this workflow only if the<br>
+[Alternative ingest algorithm for offenses] config parameter is checked.</li>
+<li>This workflow provides a provision to fetch the offenses in the [latest first] and the<br>
+[oldest first] order.</li>
+<li>This workflow provides a provision to fetch the offenses in the sorted order based on<br>
+the QRadar offense time fields [starttime] and [last_updated_time]. Based on the<br>
+above-mentioned time field selected, the offenses whose time field fall in the time<br>
+range (inclusive of boundaries) defined by [start_time] and [end_time] action<br>
+parameters are fetched. If the time field selected is [either], then, the offenses<br>
+whose either [starttime] or [last_updated_time] falls in the time range (inclusive<br>
+of boundaries) defined by [start_time] and [end_time] action parameters are fetched.<br>
+For the time field [either], for the On Poll actions (scheduled | interval polling)<br>
+the maximum of the [starttime] or [last_updated_time] for the last fetched offense<br>
+is stored in the state file against the key [last_saved_ingest_time].</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Get Events</strong></p>
+<ul>
+<li>
+<p>Default Ariel Query Events Ingestion Workflow</p>
+<ul>
+<li>The events are fetched in the descending order of the values in the [starttime] field.</li>
+<li><strong>Start Time -</strong> This field expects an epoch value in milliseconds. If not provided,<br>
+this value is internally derived by subtracting the [interval_days] from the<br>
+[end_time]. This field is having a higher preference over the [interval_days] action<br>
+parameter if both are specified.</li>
+<li><strong>End Time -</strong> This field expects an epoch value in milliseconds. If not provided, this<br>
+value is equal to the current epoch value in milliseconds.</li>
+<li><strong>Count -</strong> This field expects a valid non-zero integer value or empty value. If<br>
+provided, events equal to the provided value are fetched. If left empty, default 100<br>
+events matching the filter criteria are fetched. If the user wants to fetch all the<br>
+events, provide a value greater than the total events that exist on the QRadar server.</li>
+<li><strong>Interval Days -</strong> This field expects a valid non-zero integer value or empty value. If<br>
+provided, events within the last n days (n is equal to the value provided in<br>
+[interval_days] parameter) are fetched. If left empty, the value provided in the [App<br>
+Config Settings] is considered in the [interval_days] parameter. If [App Config<br>
+Settings] is also left empty, the default value of 5 days is considered in the<br>
+[interval_days] parameter.</li>
+<li><strong>Fields Filter -</strong> This field expects a filter string in the valid AQL query syntax.</li>
+<li><strong>Offense ID -</strong> This field expects a unique offense ID to fetch the events for.</li>
+</ul>
+</li>
+<li>
+<p>Alternate Ariel Query Events Ingestion Workflow</p>
+<ul>
+<li>This workflow has the functionalities similar to the default ingestion workflow with the<br>
+below-mentioned points getting considered while ingestion.</li>
+<li>This workflow is considered only if the [Alternative ariel query] configuration<br>
+parameter is checked.</li>
+<li>The configuration parameter [Alternative initial ingestion time] is applicable for<br>
+this workflow only if the [Alternative ariel query] config parameter is checked.</li>
+<li>This workflow performs the same functionality as the default ingestion workflow, but<br>
+with a different form of the Ariel query. The time based filtering in this workflow is<br>
+applied based on the granularity of days instead of applying it based on the granularity<br>
+of epoch and Datetime formats.</li>
+<li>As the time based filtering in this workflow is applied based on the granularity of<br>
+days, back-dating event fetching 'start_time' and after-dating event fetching 'end_time'<br>
+does not work with this workflow.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Offense Details</strong></p>
+<ul>
+<li>
+<p>Default Offenses Ingestion Workflow</p>
+<ul>
+<li>
+<p>This action will behave similarly to a manual On Poll action run if the<br>
+[ingest_offense] flag is checked and it will ingest all the events as artifacts for<br>
+the provided offense ID.</p>
+</li>
+<li>
+<p><strong>Tenant ID -</strong> This field expects a valid tenant ID of the Phantom server for saving<br>
+the container. If multi-tenancy is not enabled, then the events will be ingested with<br>
+the default tenant. But if multi-tenancy is enabled and this field is left blank and no<br>
+tenant is mapped with the asset then containers will not be created.</p>
+<ul>
+<li>
+<p><strong>To enable Multi-Tenancy</strong></p>
+<ul>
+<li>Go to the Administration section and under Product settings, select<br>
+Multi-tenancy and enable it.</li>
+</ul>
+</li>
+<li>
+<p><strong>To map a tenant with asset</strong></p>
+<ul>
+<li>After enabling Multi-tenancy, go to asset configurations, and select the Tenants<br>
+tab. From the available list of tenants, select the tenant to map with the<br>
+asset.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Offense ID -</strong> This field expects a unique offense ID whose details are to be fetched.<br>
+If the value is provided, it will fetch the data for that offense ID irrespective of<br>
+whether it falls in the range of days specified in the [interval_days] parameter of<br>
+the app settings.</p>
+</li>
+<li>
+<p><strong>Ingest Offense -</strong> This flag if checked, the action ingests all the offense and events<br>
+details. The parameters [interval_days] and [tenant_id] will be accounted for if the<br>
+[ingest_offense] parameter is checked.</p>
+</li>
+</ul>
+</li>
+<li>
+<p>Alternate Offenses Ingestion Workflow</p>
+<ul>
+<li>This workflow is considered only if the [Alternative ingest algorithm for offenses]<br>
+configuration parameter is checked.</li>
+<li>The behavior of this alternate workflow is the same as described in the alternate<br>
+workflow section of the [List Offenses] action.</li>
+</ul>
+</li>
+<li>
+<p>Alternate Ariel Query Events Ingestion Workflow</p>
+<ul>
+<li>This workflow is considered only if the [Alternative ariel query] configuration<br>
+parameter is checked.</li>
+<li>The behavior of this alternate workflow is the same as described in the alternate<br>
+workflow section of the [Get Events] action.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Get Flows</strong></p>
+<ul>
+<li><strong>Start Time -</strong> This field expects an epoch value in milliseconds. If not provided, this<br>
+value is internally derived by subtracting the [interval_days] from the [end_time].</li>
+<li><strong>End Time -</strong> This field expects an epoch value in milliseconds. If not provided, this<br>
+value is equal to the current epoch value in milliseconds.</li>
+<li><strong>Count -</strong> This field expects a valid non-zero integer value or empty value. If provided,<br>
+flows equal to the provided value are fetched. If left empty, default 100 flows matching the<br>
+filter criteria are fetched. If the user wants to fetch all the flows, provide a value<br>
+greater than the total flows that exist on the QRadar server.</li>
+<li><strong>IP -</strong> IP to match against [Source Destination IP] and [Target Destination IP] for<br>
+fetching all the flows.</li>
+<li><strong>Fields Filter -</strong> This field expects a filter string in the valid AQL query syntax.</li>
+<li><strong>Offense ID -</strong> This field expects a unique offense ID to fetch the flows for.</li>
+</ul>
+</li>
+<li>
+<p><strong>Alt Manage Ingestion</strong></p>
+<ul>
+<li>This action provides a provision to alter the state file associated with the corresponding<br>
+asset. For more details, please refer to the specific documentation for this action.</li>
+<li>This action does not make any REST call to the QRadar instance. It simply fetches or<br>
+manipulates the state file of the Phantom server for the corresponding asset.</li>
+<li>Please change the state file with great care because if the standard format of the state<br>
+file goes wrong, then, all the actions which are dependent on the state file e.g. On Poll,<br>
+Offense Details with [ingest_offense] value True will start working incorrectly</li>
+</ul>
+</li>
+<li>
+<p><strong>On Poll</strong></p>
+<ul>
+<li>
+<p>The On Poll action works in 2 steps. In the first step, all the offenses in a defined time<br>
+duration will be fetched. In the second step, all the events of the offenses (retrieved in<br>
+the first step) will be fetched. A container will be created for each offense and for each<br>
+offense all the events will be fetched as the respective artifacts.</p>
+</li>
+<li>
+<p>The list of offenses will be fetched based on the asset configuration and the app<br>
+configuration parameters configured with the asset. The first step simply calls [List<br>
+Offenses] action. Based on the value of the flag [Alternative ingest algorithm for<br>
+offenses], the offenses will be fetched either by the default ingestion workflow or by the<br>
+alternative ingestion workflow.</p>
+</li>
+<li>
+<p>The list of events will be fetched for each offense fetched in the earlier step based on the<br>
+asset configuration and the app configuration parameters configured with the asset. This<br>
+step simply calls [Get Events] action. Based on the value of the flag [Alternative ariel<br>
+query], the offenses will be fetched either by the default ingestion workflow or by the<br>
+alternative ingestion workflow. For manual polling and the first run of the scheduled |<br>
+interval polling, the list of events for every offense will be fetched starting from the<br>
+default time of 3600000 epoch milliseconds (1 hour past the 0 epoch) because if we start<br>
+fetching it from 0 epoch, then, the QRadar API throws an error mentioning "Response Code:<br>
+422 and Response Message: The request was well-formed but was unable to be followed due to<br>
+semantic errors. Invalid query parameters: Start time(70-01-01,06:29:59) should be greater<br>
+than one hour since the epoch.". NOTE - If the user's QRadar instance is in America/Los<br>
+Angeles (-08:00 hrs) timezone and for the [QRadar timezone] asset configuration parameter,<br>
+the user selects a timezone which is having an offset of [-08:00 hrs (QRadar instance's<br>
+timezone) + 1 = -07:00 hrs] or greater, then, the date-time string that gets generated in<br>
+the ariel query will represent a time which is earlier than the allowed time by the QRadar<br>
+ariel query APIs (allowed time is 1 hour past the 0 epoch) for the configured timezone on<br>
+the QRadar instance and it will throw the above-mentioned error. Hence, it is recommended<br>
+that the end-user selects the same timezone in the asset as that configured in the QRadar<br>
+instance to avoid any timezone related issues.</p>
+</li>
+<li>
+<p>The general structure of the state file : {"app_version":"app_version",<br>
+"last_saved_ingest_time":"epoch_time_last_fetched_offense",<br>
+"last_ingested_events_data":{"offense_id":"epoch_time_last_fetched_event_for_offense_id"}}</p>
+</li>
+<li>
+<p><strong>Two approaches for On Poll</strong></p>
+<ul>
+<li>
+<p>Manual polling</p>
+<ul>
+<li>
+<p>Manual polling fetches all the data every time based on the asset and app<br>
+configurations. It is recommended to keep a very high value in [container_count]<br>
+and [artifact_max] parameters to ensure all the required data gets ingested to<br>
+avoid any data loss.</p>
+</li>
+<li>
+<p>Fetch the offenses</p>
+<ul>
+<li>The application will fetch the number of offenses controlled by the<br>
+[container_count] parameter in [On Poll] action.</li>
+<li>The application will fetch all the offenses governed by the behavior of the<br>
+[List Offenses] action.</li>
+<li>The state file is neither considered nor modified by the manual polling.</li>
+</ul>
+</li>
+<li>
+<p>Fetch the events</p>
+<ul>
+<li>This step will be executed only if the [containers_only] configuration<br>
+parameter is not checked.</li>
+<li>The application will fetch all events for each offense (retrieved in the<br>
+previous step) controlled by the [artifact_max] configuration parameter and<br>
+governed by the behavior of the [Get Events] action.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>Scheduled polling</p>
+<ul>
+<li>
+<p>Scheduled polling fetches all the data every time (for the first run only) based on<br>
+the asset and app configurations. It is recommended to keep a very high value in<br>
+[container_count] and [artifact_max] parameters to ensure all the required data<br>
+gets ingested (in the first run itself and gets in sync with the QRadar current<br>
+state) and avoids any data loss.</p>
+</li>
+<li>
+<p>It is recommended to keep scheduled polling interval of more than 30 minutes or an<br>
+hour (for the first time so that all the initial offenses and events data get<br>
+ingested quickly and correctly) if the number of events to be ingested is large in<br>
+number (e.g. &gt; 50,000 events collectively to be ingested for all offenses). The<br>
+reason for doing this is due to the Phantom core's inherent behavior of killing the<br>
+previous scheduled poll or interval poll run if it does not get completed within a<br>
+definite time which is x times (x is internally defined specific to the Phantom<br>
+server) multiple of the current polling interval. e.g. If there are 10 offenses with<br>
+each offense having 5000 events (total 50,000 events), configure the scheduled<br>
+polling for 30 minutes or an hour or more and wait until all the initial data gets<br>
+ingested. Once it is completed, change the polling interval to the required time and<br>
+then, the scheduled polling will work correctly, keeping the Phantom ingested data<br>
+in sync with the QRadar data.</p>
+</li>
+<li>
+<p>For the consecutive runs, the offenses are fetched starting from the epoch value in<br>
+milliseconds stored in the [last_saved_ingest_time] key of the state file.</p>
+</li>
+<li>
+<p>Fetch the offenses</p>
+<ul>
+<li>The application will fetch all the offenses governed by the behavior of the<br>
+[List Offenses] action.</li>
+<li>The [starttime] or the [last_updated_time] of the last offense fetched is<br>
+stored in the state file against the key [last_saved_ingest_time] based on the<br>
+default or alternate ingestion workflow and the value selected in the<br>
+[Alternative ingestion time field] configuration parameter. If the value<br>
+selected in the [Alternative ingestion time field] configuration parameter is<br>
+[either], then, the maximum of the [starttime] or the [last_updated_time]<br>
+for the last fetched offense is stored in the state file.</li>
+</ul>
+</li>
+<li>
+<p>Fetch the events</p>
+<ul>
+<li>This step will be executed only if the [containers_only] configuration<br>
+parameter is not checked.</li>
+<li>The application will fetch all events for each offense (retrieved in the<br>
+previous step) controlled by the [artifact_max] configuration parameter and<br>
+governed by the behavior of the [Get Events] action.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p><strong>General Notes</strong></p>
+<ul>
+<li>
+<p>Case-sensitive</p>
+<ul>
+<li>
+<p>For Assign User, Add Listitem</p>
+<ul>
+<li>Parameters [reference_set_name] for 'add listitem' and [assignee] for 'assign user'<br>
+are case sensitive.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
