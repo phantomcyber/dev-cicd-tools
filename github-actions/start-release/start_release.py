@@ -136,6 +136,11 @@ def load_main_pr_body():
         return f.read()
 
 
+def _handle_http_not_found(ex):
+    if not isinstance(ex, HTTPError) or ex.response.status_code != HTTPStatus.NOT_FOUND:
+        raise ex
+
+
 def start_release(session, app_dir=os.getenv('GITHUB_WORKSPACE')):
     # Fetch repo contents and find the app json file - which we
     # expect to be the only json file other than a potential postman collection
@@ -158,8 +163,7 @@ def start_release(session, app_dir=os.getenv('GITHUB_WORKSPACE')):
         app_json_main, _ = deserialize_app_json(session.get('contents/{}?ref=main'.format(app_json_file)))
         app_version_main = app_json_main['app_version']
     except HTTPError as ex:
-        if ex.response.status != 404:
-            raise ex
+        _handle_http_not_found(ex)
         app_version_main = FIRST_VERSION
 
     updates = []
@@ -184,8 +188,7 @@ def start_release(session, app_dir=os.getenv('GITHUB_WORKSPACE')):
         old_release_notes_html = deserialize_text_file(
             session.get('contents/{}?ref=next'.format(RELEASE_NOTES_HTML)))
     except HTTPError as ex:
-        if ex.response.status != HTTPStatus.NOT_FOUND:
-            raise ex
+        _handle_http_not_found(ex)
         old_release_notes_html = None
 
     new_release_notes_html = update_release_notes_html(old_release_notes_html,
