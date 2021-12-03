@@ -93,8 +93,8 @@ def test_start_release_happy_path(session, next_version, main_version, release_n
     session.get = MagicMock()
 
     app_json_next = mock_app_json(next_version)
-    app_json_main = mock_app_json(main_version) if main_version else HTTPError(response=Mock(status=404))
-    release_notes_result = release_notes if release_notes else HTTPError(response=Mock(status=404))
+    app_json_main = mock_app_json(main_version) if main_version else HTTPError(response=Mock(status_code=404))
+    release_notes_result = release_notes if release_notes else HTTPError(response=Mock(status_code=404))
     session.get.side_effect = [[{'name': '{}.json'.format(APP_NAME)}, {'name': '{}.postman_collection.json'.format(APP_NAME)}],
                                app_json_next, app_json_main,
                                mock_unreleased_md(), release_notes_result, {'object': {'sha': base_sha}}]
