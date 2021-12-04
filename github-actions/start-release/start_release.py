@@ -7,6 +7,7 @@ import re
 from http import HTTPStatus
 
 from distutils.version import LooseVersion
+
 from requests import HTTPError
 
 from api.github import GitHubApiSession
@@ -20,7 +21,15 @@ RELEASE_NOTES_MD = RELEASE_NOTES_DIR + '/{}.md'
 RELEASE_NOTES_TOP_HEADER = '**{} Release Notes - Published by {} {}**\n\n'
 RELEASE_NOTES_VERSION_HEADER = '**Version {} - Released {}**\n'
 RELEASE_NOTES_DATE_FORMAT = '%B %d, %Y'
-RELEASE_NOTE_PATTERN = re.compile(r'^\* (?P<note>.+)$')
+RELEASE_NOTE_PATTERN = re.compile(r'^\s*\* (?P<note>.+)$')
+
+# The minimum number of white spaces a nested list entry needs to be
+# indented from its parent for it be rendered correctly on GitHub
+MD_NESTED_LIST_MIN_INDENT = 2
+
+# The maximum number of white spaces a nested list entry can be
+# indented from its parent for it to be rendered correctly on GitHub
+MD_NESTED_LIST_MAX_INDENT = 5
 
 DEFAULT_ENCODING = 'utf-8'
 
@@ -56,11 +65,12 @@ def build_release_notes_md(release_version, unreleased_notes, app_json):
                          .format(UNRELEASED_MD, UNRELEASED_MD_HEADER))
 
     publish_date = datetime.date.today().strftime(RELEASE_NOTES_DATE_FORMAT)
-    release_notes = [
+    release_notes_headers = [
         RELEASE_NOTES_TOP_HEADER.format(app_json['name'], app_json['publisher'], publish_date),
         RELEASE_NOTES_VERSION_HEADER.format(release_version, publish_date)
     ]
-    new_notes_added = False
+    release_notes_body = []
+    parent_depths = []
     for note in unreleased_notes[1:]:
         if not note or not note.strip():
             continue
@@ -68,13 +78,34 @@ def build_release_notes_md(release_version, unreleased_notes, app_json):
         if not match:
             raise ValueError('Detected incorrectly formatted release note: \'{}\''
                              .format(note))
-        release_notes.append(match.group())
-        new_notes_added = True
+        note = match.group()
 
-    if not new_notes_added:
+        cur_depth, parent_depth = note.index('*'), parent_depths[-1] if parent_depths else 0
+        depth_diff = cur_depth - parent_depth
+
+        # Previous nested list ended and we're moving back up one or more levels
+        if depth_diff < 0:
+            while True:
+                parent_depths.pop()
+                depth_diff = cur_depth - parent_depths[-1] if parent_depths else 0
+                if depth_diff >= 0:
+                    break
+        # Current note is too far indented from its parent
+        elif depth_diff > MD_NESTED_LIST_MAX_INDENT:
+            raise ValueError(f'Nested list entry {note} is too far indented from its parent')
+        # Current note starts a new nested list - record the depth of the new list
+        elif MD_NESTED_LIST_MIN_INDENT <= depth_diff:
+            parent_depths.append(cur_depth)
+        # Current note is on the same level as the previous
+        else:
+            pass
+
+        release_notes_body.append(note)
+
+    if not release_notes_body:
         return None
 
-    return '\n'.join(release_notes)
+    return '\n'.join(release_notes_headers + release_notes_body)
 
 
 def update_release_notes_html(old_release_notes_html, release_version, unreleased_notes, app_json):
@@ -103,15 +134,34 @@ def update_release_notes_html(old_release_notes_html, release_version, unrelease
         raise ValueError('Expected the first line of {} to be the header {}'
                          .format(UNRELEASED_MD, UNRELEASED_MD_HEADER))
 
+    parent_depths = []
     new_notes_html.append('<ul>')
     for note_md in unreleased_notes[1:]:
         if not note_md.strip():
             continue
-        note = RELEASE_NOTE_PATTERN.match(note_md)
-        if not note:
-            raise ValueError('Detected incorrectly formatted release note: \'{}\''.format(note_md))
 
-        new_notes_html.append('<li>{}</li>'.format(note.group('note')))
+        note = RELEASE_NOTE_PATTERN.match(note_md).group('note')
+
+        cur_note_depth = note_md.index('*')
+        parent_depth = parent_depths[-1] if parent_depths else 0
+        depth_diff = cur_note_depth - parent_depth
+
+        # Check if we're starting a nested list, no need to check for over-indentation
+        # since the markdown was already validated
+        if depth_diff >= MD_NESTED_LIST_MIN_INDENT:
+            parent_depths.append(cur_note_depth)
+            new_notes_html.append('<ul>')
+        # Check if we're ending a nested list
+        elif depth_diff < 0:
+            while True:
+                parent_depths.pop()
+                new_notes_html.append('</ul>')
+                depth_diff = cur_note_depth - parent_depths[-1] if parent_depths else 0
+                if depth_diff >= 0:
+                    break
+
+        new_notes_html.append('<li>{}</li>'.format(note))
+
     new_notes_html.append('</ul>')
 
     if old_release_notes_html:
