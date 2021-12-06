@@ -155,39 +155,11 @@ def has_markdown_comment(md_content):
     return "[comment]: #" in md_content
 
 
-def manage_existing_markdown(connector_path):
-    md_path = Path(connector_path, README_INPUT_NAME)
-    author_notes_path = Path(connector_path, README_MD_ORIGINAL_NAME)
-
-    if not md_path.is_file():
-        return None, None
-
-    with open(md_path) as md_file:
-        md_content = md_file.read()
-
-    if (author_notes_path.is_file()
-        or check_markdown_for_template_text(md_content)
-        or has_markdown_comment(md_content)
-        or first_n_rendered_words_match_readme_html(50, connector_path, md_content)):
-
-        logging.info("Removing existing auto-gen readme: %s", md_path)
-        md_path.unlink(missing_ok=True)
-        return None, None
-
-    logging.info("Backing-up existing readme from %s to %s",
-                 md_path, author_notes_path)
-    return md_content, md_path.rename(author_notes_path)
-
-
 def build_docs_from_html(connector_path, app_version=None):
-    backup_content, backup_path = manage_existing_markdown(connector_path)
     readme_html_to_markdown(connector_path)
     output_content, output_path = build_docs(connector_path, app_version)
 
     updates = [(output_content, str(output_path.relative_to(connector_path)))]
-    if backup_content:
-        updates.append((backup_content, str(backup_path.relative_to(connector_path))))
-
     return updates
 
 

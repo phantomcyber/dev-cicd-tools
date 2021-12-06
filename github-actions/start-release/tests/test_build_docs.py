@@ -20,8 +20,7 @@ FROM_MD_TEST_DATA = [
 ]
 
 FROM_HTML_TEST_DATA = [
-    ("tests/data/build_docs/has_existing_readme_html_and_md", True, [README_MD_ORIGINAL_NAME], [], None),
-    ("tests/data/build_docs/has_existing_readme_html_and_autogen_md", True, [], [README_MD_ORIGINAL_NAME], None),
+    ("tests/data/build_docs/has_existing_readme_html_and_md", True, [], [README_MD_ORIGINAL_NAME], None),
     ("tests/data/build_docs/has_no_readme", True, [README_OUTPUT_NAME], [], None),
     ("tests/data/build_docs/has_no_readme_set_app_version", True, [README_OUTPUT_NAME], [], "3.0.0")
 ]

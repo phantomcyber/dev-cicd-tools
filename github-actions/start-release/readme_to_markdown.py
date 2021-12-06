@@ -378,7 +378,7 @@ def fix_relative_links(parsed_html_content, app_json_dir_path,
 
 
 def readme_html_to_markdown(connector_path, connector_name=None,
-                            output_folder=None, overwrite=False,
+                            output_folder=None, overwrite=True,
                             debug_mode=False):
 
     readme_html = Path(connector_path, README_HTML_NAME)
