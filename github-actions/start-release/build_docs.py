@@ -130,31 +130,6 @@ def build_docs(connector_path, app_version=None):
     return render_template_to_file(connector_path, json_content)
 
 
-def first_n_rendered_words_match_readme_html(n, connector_path, md_content):
-    html_path = Path(connector_path, README_HTML_NAME)
-    if html_path.is_file():
-        with open(html_path) as html_file:
-            html_content = html_file.read()
-        parsed_html_content = parse_html(html_content)
-
-        txt_from_htm = get_visible_text_from_html(parsed_html_content).split()
-        html_from_md = md_to_html(md_content)
-        parsed_html_from_md = parse_html(html_from_md)
-        txt_from_md = get_visible_text_from_html(parsed_html_from_md).split()
-
-        if txt_from_htm[:n] == txt_from_md[:n]:
-            return True
-        else:
-            logging.info("** %s", txt_from_htm[:n])
-            logging.info("@@ %s", txt_from_md[:n])
-
-    return False
-
-
-def has_markdown_comment(md_content):
-    return "[comment]: #" in md_content
-
-
 def build_docs_from_html(connector_path, app_version=None):
     readme_html_to_markdown(connector_path)
     output_content, output_path = build_docs(connector_path, app_version)
