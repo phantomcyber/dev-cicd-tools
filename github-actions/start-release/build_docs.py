@@ -144,9 +144,6 @@ def first_n_rendered_words_match_readme_html(n, connector_path, md_content):
 
         if txt_from_htm[:n] == txt_from_md[:n]:
             return True
-        else:
-            logging.info("** %s", txt_from_htm[:n])
-            logging.info("@@ %s", txt_from_md[:n])
 
     return False
 
