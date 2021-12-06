@@ -3,6 +3,7 @@ import json
 import logging
 import datetime
 import shutil
+from collections import namedtuple
 from distutils.version import LooseVersion
 from unittest.mock import MagicMock, call, Mock
 
@@ -48,24 +49,39 @@ def mock_app_json(version):
     }
 
 
-def mock_unreleased_md():
-    return encode_text_file('tests/data/unreleased.md')
+TestData = namedtuple('TestData', ['unreleased_md',
+                                   'release_notes_html',
+                                   'expected_release_notes_md',
+                                   'expected_release_notes_html'])
 
 
-def mock_release_notes_html():
-    return encode_text_file('tests/data/old_release_notes.html')
+@pytest.fixture(scope='function',
+                params=[
+                    TestData('tests/data/unreleased.md',
+                             'tests/data/old_release_notes.html',
+                             'tests/data/expected_release_notes.md',
+                             'tests/data/expected_new_release_notes.html'),
+                    TestData('tests/data/unreleased.md',
+                             None,
+                             'tests/data/expected_release_notes.md',
+                             'tests/data/expected_new_release_notes_no_history.html'),
+                    TestData('tests/data/unreleased_nested.md',
+                             'tests/data/old_release_notes.html',
+                             'tests/data/expected_release_notes_nested.md',
+                             'tests/data/expected_new_release_notes_nested.html'),
+                ])
+def test_data(request):
+    return request.param
 
 
 def encode_text_file(file_path):
+    if not file_path:
+        return None
+
     with open(file_path) as f:
         return {
             'content': base64.b64encode(f.read().encode(DEFAULT_ENCODING))
         }
-
-
-@pytest.fixture(scope='function', params=[mock_release_notes_html(), None])
-def release_notes(request):
-    return request.param
 
 
 @pytest.fixture(scope='function', params=[
@@ -87,17 +103,20 @@ def app_dir(request):
     return app_dir_copy
 
 
-def test_start_release_happy_path(session, next_version, main_version, release_notes, app_dir):
+def test_start_release_happy_path(session, next_version, main_version, test_data, app_dir):
     base_sha, json_sha, release_note_md_sha, \
         release_note_html_sha, unreleased_sha, readme_sha, tree_sha, commit_sha = (i for i in range(8))
     session.get = MagicMock()
 
     app_json_next = mock_app_json(next_version)
     app_json_main = mock_app_json(main_version) if main_version else HTTPError(response=Mock(status_code=404))
-    release_notes_result = release_notes if release_notes else HTTPError(response=Mock(status_code=404))
+    unreleased_md_resp = encode_text_file(test_data.unreleased_md)
+    release_notes_html_resp = encode_text_file(test_data.release_notes_html) if test_data.release_notes_html \
+        else HTTPError(response=Mock(status_code=404))
+
     session.get.side_effect = [[{'name': '{}.json'.format(APP_NAME)}, {'name': '{}.postman_collection.json'.format(APP_NAME)}],
                                app_json_next, app_json_main,
-                               mock_unreleased_md(), release_notes_result, {'object': {'sha': base_sha}}]
+                               unreleased_md_resp, release_notes_html_resp, {'object': {'sha': base_sha}}]
 
     main_version = main_version or FIRST_VERSION
     if LooseVersion(next_version) <= LooseVersion(main_version):
@@ -132,27 +151,19 @@ def test_start_release_happy_path(session, next_version, main_version, release_n
     assert session.get.call_args_list[5] == call('git/ref/heads/next')
 
     assert session.post.call_count == len(post_l)
-    with open('tests/data/expected_release_notes.md') as f:
+    with open(test_data.expected_release_notes_md) as f:
         expected_blobs.append(f.read() \
                               .replace('<APP_NAME>', 'App') \
                               .replace('<PUBLISHER>', 'Splunk') \
                               .replace('<PUBLISH_DATE>', DATE) \
                               .replace('<VERSION>', expected_next_version))
 
-    if release_notes:
-        with open('tests/data/expected_new_release_notes.html') as f:
-            expected_blobs.append(f.read() \
-                                  .replace('APP_NAME', 'App') \
-                                  .replace('PUBLISHER', 'Splunk') \
-                                  .replace('PUBLISH_DATE', DATE) \
-                                  .replace('VERSION', expected_next_version))
-    else:
-        with open('tests/data/expected_new_release_notes_no_history.html') as f:
-            expected_blobs.append(f.read() \
-                                  .replace('APP_NAME', 'App') \
-                                  .replace('PUBLISHER', 'Splunk') \
-                                  .replace('PUBLISH_DATE', DATE) \
-                                  .replace('VERSION', expected_next_version))
+    with open(test_data.expected_release_notes_html) as f:
+        expected_blobs.append(f.read() \
+                              .replace('APP_NAME', 'App') \
+                              .replace('PUBLISHER', 'Splunk') \
+                              .replace('PUBLISH_DATE', DATE) \
+                              .replace('VERSION', expected_next_version))
 
     expected_blobs.append('{}\n'.format(UNRELEASED_MD_HEADER))
 
@@ -185,17 +196,19 @@ zero_json_files = []
 multiple_json_files = [{'name': f} for f in ('x.json', 'y.json')]
 
 
-def invalid_unreleased_md():
-    with open('tests/data/unreleased.md') as f:
-        unreleased_md = f.read().split('\n')
-        unreleased_md = '\n'.join(unreleased_md[1:]).encode(DEFAULT_ENCODING)
+def invalid_unreleased_md(file_path):
+    with open(file_path) as f:
+        unreleased_md = f.read().encode(DEFAULT_ENCODING)
 
     return [[{'name': '{}.json'.format(APP_NAME)}], mock_app_json('1.1'), mock_app_json('1.0'),
             {'content': base64.b64encode(unreleased_md)}]
 
 
 @pytest.fixture(scope='function', name='session_invalid_data',
-                params=[[zero_json_files], [multiple_json_files], invalid_unreleased_md()])
+                params=[[zero_json_files],
+                        [multiple_json_files],
+                        invalid_unreleased_md('tests/data/invalid_unreleased.md'),
+                        invalid_unreleased_md('tests/data/invalid_unreleased_nested.md')])
 def _session_invalid_data(session, request):
     session.get = MagicMock()
     session.get.side_effect = request.param
@@ -214,7 +227,7 @@ def test_start_release_nothing_to_release(session, app_dir):
     session.get = MagicMock()
     empty_unreleased_md = base64.b64encode(UNRELEASED_MD_HEADER.encode(DEFAULT_ENCODING))
     session.get.side_effect = [[{'name': '{}.json'.format(APP_NAME)}], mock_app_json('1.1'), mock_app_json('1.0'),
-                               {'content': empty_unreleased_md}, mock_release_notes_html()]
+                               {'content': empty_unreleased_md}, encode_text_file('tests/data/old_release_notes.html')]
 
     start_release(session, app_dir)
     assert session.patch.call_count == 0
