@@ -105,6 +105,15 @@ def render_template_to_file(connector_path, json_content):
     return rendered_content, output_readme_path
 
 
+def check_markdown_for_template_text(md_content):
+    if md_content:
+        template_path = Path(TEMPLATE_DIR, TEMPLATE_NAME)
+        with open(template_path) as template_file:
+            first_line_in_template = template_file.readline()
+
+        return first_line_in_template in md_content
+
+
 def build_docs(connector_path, app_version=None):
     input_readme_path = Path(connector_path, README_INPUT_NAME)
 
@@ -112,38 +121,16 @@ def build_docs(connector_path, app_version=None):
     if app_version:
         json_content["app_version"] = app_version
 
-    if md_content := load_file(input_readme_path):
-        template_path = Path(TEMPLATE_DIR, TEMPLATE_NAME)
-        with open(template_path) as template_file:
-            first_line_in_template = template_file.readline()
-
-        if first_line_in_template in md_content:
-            raise ValueError("Input readme contains auto-generated content!")
+    md_content = load_file(input_readme_path)
+    if check_markdown_for_template_text(md_content):
+        raise ValueError("Input readme contains auto-generated content!")
 
     json_content["md_content"] = md_content
 
     return render_template_to_file(connector_path, json_content)
 
 
-def manage_existing_markdown(connector_path):
-    md_path = Path(connector_path, README_INPUT_NAME)
-    author_notes_path = Path(connector_path, README_MD_ORIGINAL_NAME)
-
-    # Does the readme exist?
-    if not md_path.is_file():
-        return None, None
-
-    # Does notes.md already exist?
-    if author_notes_path.is_file():
-        logging.info("Removing existing auto-gen readme: %s", md_path)
-        md_path.unlink(missing_ok=True)
-        return None, None
-
-    # Are the first N words of readme.md the same as the first N words
-    # of readme.html (is md auto-generated)?
-    with open(md_path) as md_file:
-        md_content = md_file.read()
-
+def first_n_rendered_words_match_readme_html(n, connector_path, md_content):
     html_path = Path(connector_path, README_HTML_NAME)
     if html_path.is_file():
         with open(html_path) as html_file:
@@ -155,10 +142,34 @@ def manage_existing_markdown(connector_path):
         parsed_html_from_md = parse_html(html_from_md)
         txt_from_md = get_visible_text_from_html(parsed_html_from_md).split()
 
-        if txt_from_htm[:50] == txt_from_md[:50]:
-            logging.info("Removing existing auto-gen readme: %s", md_path)
-            md_path.unlink()
-            return None, None
+        if txt_from_htm[:n] == txt_from_md[:n]:
+            return True
+
+    return False
+
+
+def has_markdown_comment(md_content):
+    return "[comment]: #" in md_content
+
+
+def manage_existing_markdown(connector_path):
+    md_path = Path(connector_path, README_INPUT_NAME)
+    author_notes_path = Path(connector_path, README_MD_ORIGINAL_NAME)
+
+    if not md_path.is_file():
+        return None, None
+
+    with open(md_path) as md_file:
+        md_content = md_file.read()
+
+    if (author_notes_path.is_file()
+        or check_markdown_for_template_text(md_content)
+        or has_markdown_comment(md_content)
+        or first_n_rendered_words_match_readme_html(50, connector_path, md_content)):
+
+        logging.info("Removing existing auto-gen readme: %s", md_path)
+        md_path.unlink(missing_ok=True)
+        return None, None
 
     logging.info("Backing-up existing readme from %s to %s",
                  md_path, author_notes_path)
