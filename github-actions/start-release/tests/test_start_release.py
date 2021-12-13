@@ -170,7 +170,7 @@ def test_start_release_happy_path(session, next_version, main_version, test_data
     expected_tree.append(('release_notes/{}.md'.format(expected_next_version), release_note_md_sha))
     expected_tree.append(('release_notes/release_notes.html', release_note_html_sha))
     expected_tree.append(('release_notes/unreleased.md', unreleased_sha))
-    expected_tree.append(('readme.md', readme_sha))
+    expected_tree.append(('README.md', readme_sha))
 
     for i, blob in enumerate(expected_blobs):
         assert session.post.call_args_list[i] == call('git/blobs', content=blob, encoding=DEFAULT_ENCODING)

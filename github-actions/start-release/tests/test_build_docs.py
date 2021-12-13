@@ -48,7 +48,7 @@ def app_dir(request):
                           indirect=["app_dir"])
 def test_build_docs(app_dir, expected_exit_code,
                     check_output, expected_new_files):
-    output_readme = os.path.join(app_dir, 'readme.md')
+    output_readme = os.path.join(app_dir, 'README.md')
     expected_readme = os.path.join(app_dir, 'expected_readme.md')
 
     result = subprocess.run([os.path.join(START_RELEASE_DIR, 'build_docs')],
@@ -72,7 +72,7 @@ def test_build_docs(app_dir, expected_exit_code,
                           indirect=["app_dir"])
 def test_build_docs_from_html(app_dir, check_output, expected_new_files,
                               unexpected_new_files, app_version):
-    output_readme = os.path.join(app_dir, 'readme.md')
+    output_readme = os.path.join(app_dir, 'README.md')
     expected_readme = os.path.join(app_dir, 'expected_readme.md')
 
     build_docs_from_html(Path(app_dir), app_version)

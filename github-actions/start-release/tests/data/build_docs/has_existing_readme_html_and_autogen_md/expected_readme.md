@@ -10,7 +10,7 @@ Minimum Product Version: 4\.9\.39220
 
 This app supports generic, investigative, and ingestion actions on an IBM QRadar device
 
-[comment]: # " File: readme.md"
+[comment]: # " File: README.md"
 [comment]: # " Copyright (c) 2016-2021 Splunk Inc."
 [comment]: # ""
 [comment]: # " SPLUNK CONFIDENTIAL - Use or disclosure of this material in whole or in part"
