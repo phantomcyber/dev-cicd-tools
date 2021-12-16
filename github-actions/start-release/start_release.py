@@ -37,8 +37,8 @@ RELEASE_NOTE_COMMIT_MSG = 'Release notes for version {}'
 MAIN_PR_TITLE = 'Merging next to main for release {}'
 MAIN_PR_BODY_FILE = 'templates/main_pr_body.md'
 COMMIT_AUTHOR = {
-    'name': 'root',
-    'email': 'root@splunksoar'
+    'name': 'splunk-soar-connectors-admin',
+    'email': 'admin@splunksoar'
 }
 
 FIRST_VERSION = '1.0.0'
