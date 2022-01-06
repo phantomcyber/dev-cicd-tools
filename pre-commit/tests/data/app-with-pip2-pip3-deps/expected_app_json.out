@@ -36,7 +36,7 @@
             },
             {
                 "module": "charset_normalizer",
-                "input_file": "wheels/py3/charset_normalizer-2.0.9-py3-none-any.whl"
+                "input_file": "wheels/py3/charset_normalizer-2.0.10-py3-none-any.whl"
             },
             {
                 "module": "idna",
