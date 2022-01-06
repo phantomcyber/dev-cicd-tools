@@ -115,7 +115,6 @@ def check_markdown_for_template_text(md_content):
 
 
 def build_docs(connector_path, app_version=None):
-    connector_path = Path(connector_path)
     input_readme_path = Path(connector_path, README_INPUT_NAME)
 
     json_content = get_app_json(connector_path)
@@ -178,7 +177,6 @@ def manage_existing_markdown(connector_path):
 
 
 def build_docs_from_html(connector_path, app_version=None):
-    connector_path = Path(connector_path)
     backup_content, backup_path = manage_existing_markdown(connector_path)
     readme_html_to_markdown(connector_path)
     output_content, output_path = build_docs(connector_path, app_version)
