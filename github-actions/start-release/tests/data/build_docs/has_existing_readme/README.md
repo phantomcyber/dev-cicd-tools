@@ -1,4 +1,4 @@
-[comment]: # " File: readme.md"
+[comment]: # " File: README.md"
 [comment]: # " Copyright (c) 2016-2021 Splunk Inc."
 [comment]: # ""
 [comment]: # " SPLUNK CONFIDENTIAL - Use or disclosure of this material in whole or in part"

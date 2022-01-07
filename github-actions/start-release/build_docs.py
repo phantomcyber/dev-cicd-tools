@@ -2,7 +2,7 @@
 Builds connector detail documentation similar to
 https://my.phantom.us/<soar_version>/docs/app_reference/<connector>,
 in github-flavored markdown format, and combines it with human-written
-author notes (legacy readme.md).
+author notes (legacy README.md).
 """
 import argparse
 import json
@@ -23,7 +23,7 @@ from readme_to_markdown import (README_HTML_NAME, README_MD_ORIGINAL_NAME,
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 TEMPLATE_DIR = Path(SCRIPT_DIR, "templates")
 TEMPLATE_NAME = "connector_detail.md"
-README_OUTPUT_NAME = "readme.md"
+README_OUTPUT_NAME = "README.md"
 README_INPUT_NAME = README_OUTPUT_NAME
 
 # From https://enterprise.github.com/downloads/en/markdown-cheatsheet.pdf

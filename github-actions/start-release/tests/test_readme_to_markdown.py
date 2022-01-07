@@ -41,7 +41,7 @@ def app_dir(request):
                          TEST_DATA, indirect=["app_dir"])
 def test_readme_to_markdown(app_dir, check_output, expected_result,
                             expected_new_files, unexpected_new_files):
-    output_readme = os.path.join(app_dir, 'readme.md')
+    output_readme = os.path.join(app_dir, 'README.md')
     expected_readme = os.path.join(app_dir, 'expected_readme.md')
 
     result, backup = readme_html_to_markdown(app_dir, None, None, False, False)

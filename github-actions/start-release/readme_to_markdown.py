@@ -1,5 +1,5 @@
 """
-Converts readme.html documents to readme.md
+Converts readme.html documents to README.md
 
 This script has dependencies on some binary libraries.
 
@@ -34,7 +34,7 @@ from gh_md_to_html import core_converter
 from tidylib import tidy_document
 
 README_HTML_NAME = "readme.html"
-README_MD_NAME = "readme.md"
+README_MD_NAME = "README.md"
 README_MD_ORIGINAL_NAME = "notes.md"
 ORIGINAL_ATTRIBUTE_NAME = "data-original-6a350139-f584-4810-a736-19b01021e0c9"
 ORIGINAL_ATTRIBUTE_VALUE = "1"
@@ -466,7 +466,7 @@ def readme_html_to_markdown(connector_path, connector_name=None,
 
 
 def main():
-    parser = argparse.ArgumentParser(description=("Generate readme.md files "
+    parser = argparse.ArgumentParser(description=("Generate README.md files "
                                                   "from readme.html files in "
                                                   "SOAR apps"))
     parser.add_argument("--folder", dest="folder", required=True,
