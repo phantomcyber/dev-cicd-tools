@@ -20,7 +20,7 @@ def generate_apache_license_content(copyright_str):
 SUPPORTED_SOURCE_FILE_EXTENSIONS = ('.py', '.html')
 
 COPYRIGHT_REGEX = re.compile(
-    r'^#*\s*(?P<copyright>Copyright\s*(\(c\))?\s*(([0-9]{4},?)+(-[0-9]{4})?)?,?\s*[a-z.\s]+'
+    r'^#*\s*(?P<copyright>Copyright\s*(\(c\))?\s*(([0-9]{4},?)+(-[0-9]{4})?)?,?\s*[a-z0-9.,\s]+'
     r',?\s*(([0-9]{4},?)+(-[0-9]{4})?)?)$', re.IGNORECASE)
 
 

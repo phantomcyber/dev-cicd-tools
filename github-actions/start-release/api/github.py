@@ -1,7 +1,5 @@
-import base64
 from http import HTTPStatus
 
-from requests import HTTPError
 from requests.adapters import Retry, HTTPAdapter
 from requests_toolbelt import sessions
 
@@ -12,18 +10,6 @@ COMMIT_AUTHOR = {
     'name': 'root',
     'email': 'root@splunkphantom'
 }
-
-DEFAULT_ENCODING = 'utf-8'
-
-
-def deserialize_text_file(unreleased_md):
-    return base64.b64decode(unreleased_md['content']) \
-        .decode(DEFAULT_ENCODING).split('\n')
-
-
-def handle_http_not_found(ex):
-    if not isinstance(ex, HTTPError) or ex.response.status_code != HTTPStatus.NOT_FOUND:
-        raise ex
 
 
 class GitHubApiSession:
