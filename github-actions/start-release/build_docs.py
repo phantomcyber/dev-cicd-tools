@@ -183,9 +183,11 @@ def build_docs_from_html(connector_path, app_version=None):
     readme_html_to_markdown(connector_path)
     output_content, output_path = build_docs(connector_path, app_version)
 
-    updates = [(output_content, str(output_path.relative_to(connector_path)))]
+    updates = {
+        str(output_path.relative_to(connector_path)): output_content
+    }
     if backup_content:
-        updates.append((backup_content, str(backup_path.relative_to(connector_path))))
+        updates[str(backup_path.relative_to(connector_path))] = backup_content
 
     return updates
 
