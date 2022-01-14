@@ -6,8 +6,9 @@ repos:
     hooks:
     -   id: check-merge-conflict
     -   id: end-of-file-fixer
+        exclude_types: [markdown]
     -   id: trailing-whitespace
-        exclude_types: [markdown] 
+        exclude_types: [markdown]
     -   id: requirements-txt-fixer
     -   id: check-json
     -   id: check-yaml
