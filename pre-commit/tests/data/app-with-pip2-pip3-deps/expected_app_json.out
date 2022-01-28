@@ -1,59 +1,87 @@
 {
-    "python_version": "3",
-    "pip_dependencies": {
-        "wheel": [
-            {
-                "module": "certifi",
-                "input_file": "wheels/shared/certifi-2021.10.8-py2.py3-none-any.whl"
-            },
-            {
-                "module": "chardet",
-                "input_file": "wheels/shared/chardet-4.0.0-py2.py3-none-any.whl"
-            },
-            {
-                "module": "idna",
-                "input_file": "wheels/shared/idna-2.10-py2.py3-none-any.whl"
-            },
-            {
-                "module": "requests",
-                "input_file": "wheels/shared/requests-2.26.0-py2.py3-none-any.whl"
-            },
-            {
-                "module": "simplejson",
-                "input_file": "wheels/py2/existing-platform-wheel.whl"
-            },
-            {
-                "module": "urllib3",
-                "input_file": "wheels/shared/urllib3-1.26.8-py2.py3-none-any.whl"
-            }
-        ]
-    },
-    "pip3_dependencies": {
-        "wheel": [
-            {
-                "module": "certifi",
-                "input_file": "wheels/shared/certifi-2021.10.8-py2.py3-none-any.whl"
-            },
-            {
-                "module": "charset_normalizer",
-                "input_file": "wheels/py3/charset_normalizer-2.0.10-py3-none-any.whl"
-            },
-            {
-                "module": "idna",
-                "input_file": "wheels/py3/idna-3.3-py3-none-any.whl"
-            },
-            {
-                "module": "requests",
-                "input_file": "wheels/shared/requests-2.26.0-py2.py3-none-any.whl"
-            },
-            {
-                "module": "simplejson",
-                "input_file": "wheels/py3/simplejson-3.17.5-cp36-cp36m-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_12_x86_64.manylinux2010_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
-            },
-            {
-                "module": "urllib3",
-                "input_file": "wheels/shared/urllib3-1.26.8-py2.py3-none-any.whl"
-            }
-        ]
-    }
+  "python_version": "3",
+  "pip_dependencies": {
+    "wheel": [
+      {
+        "module": "certifi",
+        "input_file": "wheels/shared/certifi-2021.10.8-py2.py3-none-any.whl"
+      },
+      {
+        "module": "chardet",
+        "input_file": "wheels/shared/chardet-4.0.0-py2.py3-none-any.whl"
+      },
+      {
+        "module": "idna",
+        "input_file": "wheels/shared/idna-2.10-py2.py3-none-any.whl"
+      },
+      {
+        "module": "requests",
+        "input_file": "wheels/shared/requests-2.26.0-py2.py3-none-any.whl"
+      },
+      {
+        "module": "simplejson",
+        "input_file": "wheels/py2/existing-platform-wheel.whl"
+      },
+      {
+        "module": "urllib3",
+        "input_file": "wheels/shared/urllib3-1.26.8-py2.py3-none-any.whl"
+      }
+    ]
+  },
+  "pip3_dependencies": {
+    "wheel": [
+      {
+        "module": "certifi",
+        "input_file": "wheels/shared/certifi-2021.10.8-py2.py3-none-any.whl"
+      },
+      {
+        "module": "charset_normalizer",
+        "input_file": "wheels/py3/charset_normalizer-2.0.11-py3-none-any.whl"
+      },
+      {
+        "module": "idna",
+        "input_file": "wheels/py3/idna-3.3-py3-none-any.whl"
+      },
+      {
+        "module": "requests",
+        "input_file": "wheels/shared/requests-2.26.0-py2.py3-none-any.whl"
+      },
+      {
+        "module": "simplejson",
+        "input_file": "wheels/py36/simplejson-3.17.5-cp36-cp36m-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_12_x86_64.manylinux2010_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+      },
+      {
+        "module": "urllib3",
+        "input_file": "wheels/shared/urllib3-1.26.8-py2.py3-none-any.whl"
+      }
+    ]
+  },
+  "pip39_dependencies": {
+    "wheel": [
+      {
+        "module": "certifi",
+        "input_file": "wheels/shared/certifi-2021.10.8-py2.py3-none-any.whl"
+      },
+      {
+        "module": "charset_normalizer",
+        "input_file": "wheels/py3/charset_normalizer-2.0.11-py3-none-any.whl"
+      },
+      {
+        "module": "idna",
+        "input_file": "wheels/py3/idna-3.3-py3-none-any.whl"
+      },
+      {
+        "module": "requests",
+        "input_file": "wheels/shared/requests-2.26.0-py2.py3-none-any.whl"
+      },
+      {
+        "module": "simplejson",
+        "input_file": "wheels/py39/simplejson-3.17.5-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_12_x86_64.manylinux2010_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+      },
+      {
+        "module": "urllib3",
+        "input_file": "wheels/shared/urllib3-1.26.8-py2.py3-none-any.whl"
+      }
+    ]
+  }
 }

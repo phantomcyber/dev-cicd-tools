@@ -11,6 +11,7 @@ PRE_COMMIT_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 @pytest.fixture(scope='function', params=[
     'tests/data/py2-app',
     'tests/data/py3-app',
+    'tests/data/pure-python-py3-app',
     'tests/data/app-with-pip2-pip3-deps'
 ])
 def app_dir(request):

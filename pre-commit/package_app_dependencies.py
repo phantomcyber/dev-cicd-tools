@@ -7,6 +7,7 @@ NOTE: If running this script with the --repair_wheels flag, make sure the script
 a manylinux2014_x86_64 container https://github.com/pypa/manylinux
 """
 import argparse
+import itertools
 import json
 import logging
 import os
@@ -18,6 +19,7 @@ import string
 import subprocess
 import sys
 from collections import namedtuple
+from enum import Enum, unique
 
 PLATFORM = 'manylinux2014_x86_64'
 REPAIRED_WHEELS_REL_PATH = 'repaired-wheels'
@@ -31,14 +33,47 @@ WHEEL_PATTERN = re.compile(
 Wheel = namedtuple('Wheel', ['file_name', 'distribution', 'python_version', 'platform'])
 AppJsonWheelEntry = namedtuple('AppJsonWheel', ['module', 'input_file'])
 
-PIP_DEPENDENCIES = 'pip_dependencies'
-PIP3_DEPENDENCIES = 'pip3_dependencies'
-PY2_WHEELS_DIR = PY2_TAG = 'py2'
-PY3_WHEELS_DIR = PY3_TAG = 'py3'
-SHARED_WHEELS_DIR = 'shared'
-PY2_PY3_TAG = '{}.{}'.format(PY2_TAG, PY3_TAG)
-CP2_TAG_PATTEN = re.compile(r'cp2\d?')
-CP3_TAG_PATTERN = re.compile(r'cp3\d{0,2}')
+
+@unique
+class PipDependency(Enum):
+    """
+    Pip dependency keys in app JSON.
+    """
+    ANY = 'pip_dependencies'
+    PYTHON3 = 'pip3_dependencies'
+    PYTHON3_9 = 'pip39_dependencies'
+
+
+@unique
+class CPythonTag(Enum):
+    """
+    Cpython wheel tags and associated properties.
+
+    NOTE: Definition order matters!
+    """
+    PY2_PY3 = ('py2.py3', r'py2\.py3', 'shared')
+    PY2 = ('py2', r'cp2\d?')
+    PY39 = ('py39', r'cp39')
+    PY36 = ('py36', r'cp36')
+    PY3 = ('py3', r'cp3\d{0,2}')
+
+    def __init__(self, tag, pattern, wheels_dir=None):
+        self._tag = tag
+        self._pattern = re.compile(pattern)
+        self._wheels_dir = wheels_dir if wheels_dir is not None else tag
+
+    @property
+    def tag(self):
+        return self._tag
+
+    @property
+    def pattern(self):
+        return self._pattern
+
+    @property
+    def wheels_dir(self):
+        return self._wheels_dir
+
 
 AppJson = namedtuple('AppJson', ['file_name', 'content'])
 APP_JSON_INDENT = 4
@@ -163,37 +198,30 @@ def _copy_new_wheels(new_wheels, new_wheels_dir, app_dir, app_json, pip_dependen
         logging.info('Writing %s --> %s', wheel_name, new_wheel_paths[-1])
         shutil.copyfile(src_fp, os.path.join(app_dir, new_wheel_paths[-1]))
 
-    # Make sure to write the new wheels under appropriate wheels/(py2|py3|shared) sub paths
-    # when the app supports both pip_dependencies/pip3_dependencies
-    other_key = PIP_DEPENDENCIES if pip_dependencies_key == PIP3_DEPENDENCIES else PIP3_DEPENDENCIES
-    if other_key in app_json.content:
-        for path in (PY2_WHEELS_DIR, PY3_WHEELS_DIR, SHARED_WHEELS_DIR):
-            pathlib.Path(os.path.join(app_dir, 'wheels', path)).mkdir(parents=True, exist_ok=True)
+    # Make sure to write the new wheels under appropriate wheels/(py2|py3|py36|py39|shared) sub paths
+    for path in iter(cp_tag.wheels_dir for cp_tag in CPythonTag):
+        pathlib.Path(os.path.join(app_dir, 'wheels', path)).mkdir(parents=True, exist_ok=True)
 
-        for whl in new_wheels:
-            if whl.python_version == PY2_PY3_TAG:
-                sub_path = os.path.join(SHARED_WHEELS_DIR, whl.file_name)
-            elif whl.python_version == PY2_TAG or CP2_TAG_PATTEN.match(whl.python_version):
-                sub_path = os.path.join(PY2_WHEELS_DIR, whl.file_name)
-            elif whl.python_version == PY3_TAG or CP3_TAG_PATTERN.match(whl.python_version):
-                sub_path = os.path.join(PY3_WHEELS_DIR, whl.file_name)
-            else:
-                raise ValueError('{} has an unexpected python version tag: {}'.format(
-                    whl.file_name, whl.python_version))
+    for whl in new_wheels:
+        for cp_tag in CPythonTag:
+            if whl.python_version == cp_tag.tag or cp_tag.pattern.match(whl.python_version):
+                sub_path = os.path.join(cp_tag.wheels_dir, whl.file_name)
+                break
+        else:
+            raise ValueError('{} has an unexpected python version tag: {}'.format(
+                whl.file_name, whl.python_version))
 
-            copy_wheel(whl.file_name, sub_path)
-    else:
-        for whl in new_wheels:
-            copy_wheel(whl.file_name, whl.file_name)
+        copy_wheel(whl.file_name, sub_path)
 
     return new_wheel_paths
 
 
-def _remove_unreferenced_wheel_paths(app_dir, existing_wheel_paths, new_wheel_paths, wheel_entries_for_other_py_version):
+def _remove_unreferenced_wheel_paths(app_dir, existing_wheel_paths, new_wheel_paths, wheel_entries_for_other_py_versions):
     """
     Removes wheels from the app directory that will no longer be referenced by in app JSON.
     """
-    all_referenced_wheel_paths = set(new_wheel_paths + [w.input_file for w in wheel_entries_for_other_py_version])
+    all_referenced_wheel_paths = set(itertools.chain(
+        new_wheel_paths, iter(w.input_file for w in wheel_entries_for_other_py_versions)))
     for path in existing_wheel_paths:
         if path not in all_referenced_wheel_paths:
             logging.info('Removing unreferenced wheel under path %s', path)
@@ -242,11 +270,8 @@ def main(args):
         # Some apps may have different dependencies for Python2 and Python3, and
         # we don't want to override the wheels for the Python version we aren't building for
         app_json = _load_app_json(app_dir)
-        if pip_dependencies_key == PIP3_DEPENDENCIES:
-            existing_app_json_wheel_entries = _parse_pip_dependency_wheels(app_json, PIP3_DEPENDENCIES)
-        else:  # pip_dependencies_key == 'pip_dependencies
-            existing_app_json_wheel_entries = _parse_pip_dependency_wheels(app_json, PIP_DEPENDENCIES)
 
+        existing_app_json_wheel_entries = _parse_pip_dependency_wheels(app_json, pip_dependencies_key)
         existing_wheel_paths = set(w.input_file for w in existing_app_json_wheel_entries)
 
         wheel_file_names = set(os.listdir(temp_dir))
@@ -276,20 +301,24 @@ def main(args):
         # Add the newly built wheels and remove the wheels no longer needed from the wheels folder
         new_wheel_paths = _copy_new_wheels(all_built_wheels, temp_dir, app_dir, app_json, pip_dependencies_key)
 
-        wheels_for_other_py_version = _parse_pip_dependency_wheels(app_json, PIP_DEPENDENCIES) \
-            if pip_dependencies_key == PIP3_DEPENDENCIES else _parse_pip_dependency_wheels(app_json, PIP3_DEPENDENCIES)
+        wheels_for_other_py_versions = list(itertools.chain.from_iterable(
+            _parse_pip_dependency_wheels(app_json, pip_dep.value)
+            for pip_dep in PipDependency if pip_dep.value != pip_dependencies_key))
 
         _remove_unreferenced_wheel_paths(app_dir=app_dir,
                                          new_wheel_paths=new_wheel_paths,
                                          existing_wheel_paths=existing_wheel_paths,
-                                         wheel_entries_for_other_py_version=wheels_for_other_py_version)
+                                         wheel_entries_for_other_py_versions=wheels_for_other_py_versions)
 
         logging.info('Updating app json with latest dependencies...')
         for pair in zip(all_built_wheels, new_wheel_paths):
             updated_app_json_wheel_entries.append(
                 AppJsonWheelEntry(pair[0].distribution, pair[1]))
-        _update_app_json(app_json, pip_dependencies_key, updated_app_json_wheel_entries, app_dir)
-    except:
+        if sorted(updated_app_json_wheel_entries) == sorted(wheels_for_other_py_versions):
+            logging.info('Same wheels found for other python versions. Not introducing a new key.')
+        else:
+            _update_app_json(app_json, pip_dependencies_key, updated_app_json_wheel_entries, app_dir)
+    except Exception:
         logging.exception('Unexpected error')
     finally:
         shutil.rmtree(temp_dir)
@@ -300,7 +329,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description=help_str)
     parser.add_argument('app_dir', help='Path to the target app directory'),
     parser.add_argument('pip_path', help='Path to the pip installation to use')
-    parser.add_argument('pip_dependencies_key', choices=[PIP_DEPENDENCIES, PIP3_DEPENDENCIES],
+    parser.add_argument('pip_dependencies_key', choices=[pip_dep.value for pip_dep in PipDependency],
                         help='Key in the app JSON specifying pip dependencies')
     parser.add_argument('--repair_wheels', action='store_true',
                         help='Whether to repair platform wheels with auditwheel'),
