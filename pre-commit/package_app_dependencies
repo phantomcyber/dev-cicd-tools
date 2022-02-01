@@ -12,6 +12,14 @@ function package_py2_app_dependencies() {
   python "$SCRIPT_DIR/package_app_dependencies.py" "$APP_DIR" pip2 pip_dependencies
 }
 
+function package_py3_app_dependencies() {
+  PYTHON_VERSION_STRING=$1
+  PIP_DEPENDENCIES_KEY=$2
+  docker run --rm -v "$APP_DIR":/src -v "$SCRIPT_DIR":/pre-commit/ -w "$SCRIPT_DIR" \
+    quay.io/pypa/manylinux2014_x86_64 /bin/bash -c \
+     "/opt/python/cp39-cp39/bin/python /pre-commit/package_app_dependencies.py \
+     /src /opt/python/$PYTHON_VERSION_STRING/bin/pip $PIP_DEPENDENCIES_KEY --repair_wheels"
+}
 
 if ! jq --help &> /dev/null; then
   echo 'Please ensure jq is installed (eg, brew install jq)'
@@ -44,7 +52,7 @@ else
   fi
 fi
 
-docker run --rm -v "$APP_DIR":/src -v "$SCRIPT_DIR":/pre-commit/ -w "$SCRIPT_DIR" \
-  quay.io/pypa/manylinux2014_x86_64 /bin/bash -c \
-   "/opt/python/cp39-cp39/bin/python /pre-commit/package_app_dependencies.py \
-   /src /opt/python/cp36-cp36m/bin/pip $pip3_dependencies_key --repair_wheels"
+pip39_dependencies_key='pip39_dependencies'
+
+package_py3_app_dependencies 'cp36-cp36m' $pip3_dependencies_key
+package_py3_app_dependencies 'cp39-cp39' $pip39_dependencies_key
