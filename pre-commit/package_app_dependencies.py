@@ -115,7 +115,7 @@ def _repair_wheels(wheels_to_check, all_wheels, wheels_dir):
             logging.info('Skipping non-platform wheel %s', whl)
         else:
             repair_result = subprocess.run(['auditwheel', 'repair', whl_path,
-                                            '--plat', PLATFORM, '-w', repaired_wheels_dir], capture_output=True)
+                                            '--plat', PLATFORM, '-w', repaired_wheels_dir])
             if repair_result.returncode != 0:
                 logging.warning('Failed to repair platform wheel %s', whl)
                 continue
@@ -186,7 +186,7 @@ def _parse_pip_dependency_wheels(app_json, pip_dependency_key):
             for w in pip_dependencies.get('wheel', [])]
 
 
-def _copy_new_wheels(new_wheels, new_wheels_dir, app_dir, app_json, pip_dependencies_key):
+def _copy_new_wheels(new_wheels, new_wheels_dir, app_dir):
     """
     Copies new wheels to the wheels/ directory of the app dir.
     """
@@ -248,14 +248,13 @@ def main(args):
     os.mkdir(temp_dir)
 
     try:
+        local_wheel_dirs = []
+        for sub_dir in os.listdir(wheels_dir):
+            local_wheel_dirs.extend(['-f', os.path.join(wheels_dir, sub_dir)])
+
         build_result = subprocess.run([pip_path, 'wheel',
-                                       '-f', wheels_dir,
                                        '-w', temp_dir,
-                                       '-r', requirements_file], capture_output=True)
-        if build_result.stdout:
-            logging.info(build_result.stdout.decode())
-        if build_result.stderr:
-            logging.warning(build_result.stderr.decode())
+                                       '-r', requirements_file] + local_wheel_dirs)
 
         if build_result.returncode != 0:
             logging.error('Failed to build wheels from requirements.txt. '
@@ -299,7 +298,7 @@ def main(args):
             existing_wheel_paths -= set(w.input_file for w in existing_platform_wheel_entries)
 
         # Add the newly built wheels and remove the wheels no longer needed from the wheels folder
-        new_wheel_paths = _copy_new_wheels(all_built_wheels, temp_dir, app_dir, app_json, pip_dependencies_key)
+        new_wheel_paths = _copy_new_wheels(all_built_wheels, temp_dir, app_dir)
 
         wheels_for_other_py_versions = list(itertools.chain.from_iterable(
             _parse_pip_dependency_wheels(app_json, pip_dep.value)
