@@ -107,23 +107,41 @@ def app_dir(request):
     return copy_app_dir(request)
 
 
+@pytest.fixture(scope='function', params=[True, False])
+def existing_pr(request):
+    return request.param
+
+
 def test_start_release_happy_path(session,
                                   next_version,
                                   main_version,
                                   generate_release_notes,
                                   update_copyrights,
-                                  build_docs):
+                                  build_docs,
+                                  existing_pr):
     base_sha, json_sha, tree_sha, commit_sha = (i for i in range(4))
     session.get = MagicMock()
 
     app_json_next = mock_app_json(next_version)
     app_json_main = mock_app_json(main_version) if main_version else HTTPError(response=Mock(status_code=404))
 
+    open_prs = [{
+        'head': {'ref': 'a'},
+        'base': {'ref': 'b'},
+        'html_url': 'url'
+    }]
+    if existing_pr:
+        open_prs.append({
+            'head': {'ref': 'next'},
+            'base': {'ref': 'main'},
+            'html_url': 'url'
+        })
     session.get.side_effect = [
         [{'name': '{}.json'.format(APP_NAME)}, {'name': '{}.postman_collection.json'.format(APP_NAME)}],
         app_json_next,
         app_json_main,
-        {'object': {'sha': base_sha}}
+        {'object': {'sha': base_sha}},
+        open_prs
     ]
 
     main_version = main_version or FIRST_VERSION
@@ -161,12 +179,14 @@ def test_start_release_happy_path(session,
     post_blob_sha_l.extend([tree_sha, commit_sha])
 
     session.post = MagicMock()
-    post_l = [{'sha': s} for s in post_blob_sha_l] + [{'html_url': 'url'}]
+    post_l = [{'sha': s} for s in post_blob_sha_l]
+    if not existing_pr:
+        post_l.append({'html_url': 'pr_url'})
     session.post.side_effect = post_l
 
     start_release(session)
 
-    assert session.get.call_count == 4
+    assert session.get.call_count == 5
     assert session.get.call_args_list[0] == call('contents?ref=next')
     assert session.get.call_args_list[1] == call('contents/{}.json?ref=next'.format(APP_NAME))
     assert session.get.call_args_list[2] == call('contents/{}.json?ref=main'.format(APP_NAME))
@@ -177,21 +197,24 @@ def test_start_release_happy_path(session,
     for i, blob in enumerate(expected_blobs):
         assert session.post.call_args_list[i] == call('git/blobs', content=blob, encoding=DEFAULT_ENCODING)
 
+    post_idx = len(expected_blobs)
     expected_tree = [{'mode': '100644', 'type': 'blob', 'path': path, 'sha': sha}
                      for path, sha in expected_tree]
+    assert session.post.call_args_list[post_idx] == call('git/trees', tree=expected_tree, base_tree=base_sha)
+    post_idx += 1
 
-    assert session.post.call_args_list[-3] == call('git/trees', tree=expected_tree, base_tree=base_sha)
-    assert session.post.call_args_list[-2] == call('git/commits',
-                                                   tree=tree_sha, parents=[base_sha],
-                                                   message=RELEASE_NOTE_COMMIT_MSG.format(expected_next_version),
-                                                   author=COMMIT_AUTHOR)
+    assert session.post.call_args_list[post_idx] == call('git/commits',
+                                                         tree=tree_sha, parents=[base_sha],
+                                                         message=RELEASE_NOTE_COMMIT_MSG.format(expected_next_version),
+                                                         author=COMMIT_AUTHOR)
+    post_idx += 1
+    if not existing_pr:
+        assert session.post.call_args_list[-1] == call('pulls', head='next', base='main',
+                                                       body=load_main_pr_body(),
+                                                       title=MAIN_PR_TITLE.format(expected_next_version),
+                                                       maintainers_can_modify=True)
     assert session.patch.call_count == 1
     assert session.patch.call_args_list[0] == call('git/refs/heads/next', sha=commit_sha)
-
-    assert session.post.call_args_list[-1] == call('pulls', head='next', base='main',
-                                                   body=load_main_pr_body(),
-                                                   title=MAIN_PR_TITLE.format(expected_next_version),
-                                                   maintainers_can_modify=True)
 
 
 zero_json_files = []

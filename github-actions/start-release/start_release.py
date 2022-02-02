@@ -1,5 +1,4 @@
 import base64
-import datetime
 import json
 import logging
 import os
@@ -59,128 +58,6 @@ def deserialize_app_json(app_json):
 def deserialize_text_file(unreleased_md):
     return base64.b64decode(unreleased_md['content'])\
         .decode(DEFAULT_ENCODING).split('\n')
-
-
-def build_release_notes_md(release_version, unreleased_notes, app_json):
-    if unreleased_notes[0] != UNRELEASED_MD_HEADER:
-        raise ValueError('Expected the first line of {} to be the header {}'
-                         .format(UNRELEASED_MD, UNRELEASED_MD_HEADER))
-
-    publish_date = datetime.date.today().strftime(RELEASE_NOTES_DATE_FORMAT)
-    release_notes_headers = [
-        RELEASE_NOTES_TOP_HEADER.format(app_json['name'], app_json['publisher'], publish_date),
-        RELEASE_NOTES_VERSION_HEADER.format(release_version, publish_date)
-    ]
-    release_notes_body = []
-    parent_depths = []
-    for note in unreleased_notes[1:]:
-        if not note or not note.strip():
-            continue
-        match = RELEASE_NOTE_PATTERN.match(note)
-        if not match:
-            raise ValueError('Detected incorrectly formatted release note: \'{}\''
-                             .format(note))
-        note = match.group()
-
-        cur_depth, parent_depth = note.index('*'), parent_depths[-1] if parent_depths else 0
-        depth_diff = cur_depth - parent_depth
-
-        # Previous nested list ended and we're moving back up one or more levels
-        if depth_diff < 0:
-            while True:
-                parent_depths.pop()
-                depth_diff = cur_depth - parent_depths[-1] if parent_depths else 0
-                if depth_diff >= 0:
-                    break
-        # Current note is too far indented from its parent
-        elif depth_diff > MD_NESTED_LIST_MAX_INDENT:
-            raise ValueError(f'Nested list entry {note} is too far indented from its parent')
-        # Current note starts a new nested list - record the depth of the new list
-        elif MD_NESTED_LIST_MIN_INDENT <= depth_diff:
-            parent_depths.append(cur_depth)
-        # Current note is on the same level as the previous
-        else:
-            pass
-
-        release_notes_body.append(note)
-
-    if not release_notes_body:
-        return None
-
-    return '\n'.join(release_notes_headers + release_notes_body)
-
-
-def update_release_notes_html(old_release_notes_html, release_version, unreleased_notes, app_json):
-    """
-    Updates the app's HTML release notes with the latest notes from unreleased.md
-    first converting from Markdown to HTML.
-
-    HTML release notes are cumulative and sorted by revision in descending order, the new
-    release notes are added at the top of the file after the first header.
-
-    TODO: This code can be removed once Phantom Portal is retired
-          https://jira.splunk.com/browse/PAPP-21215
-    """
-    # Prepend a top level header with updated publish date, and a version header
-    # for the new release notes
-    publish_date = datetime.date.today().strftime(RELEASE_NOTES_DATE_FORMAT)
-    new_notes_html = [
-        '<b>{} Release Notes - Published by {} {}</b>'.format(
-            app_json['name'], app_json['publisher'], publish_date),
-        '<br><br>',
-        '<b>Version {} - Released {}</b>'.format(release_version, publish_date)
-    ]
-
-    # Write the new release notes, converting bulleted lists in Markdown to HTML
-    if unreleased_notes[0] != UNRELEASED_MD_HEADER:
-        raise ValueError('Expected the first line of {} to be the header {}'
-                         .format(UNRELEASED_MD, UNRELEASED_MD_HEADER))
-
-    parent_depths = []
-    new_notes_html.append('<ul>')
-    for note_md in unreleased_notes[1:]:
-        if not note_md.strip():
-            continue
-
-        note = RELEASE_NOTE_PATTERN.match(note_md).group('note')
-
-        cur_note_depth = note_md.index('*')
-        parent_depth = parent_depths[-1] if parent_depths else 0
-        depth_diff = cur_note_depth - parent_depth
-
-        # Check if we're starting a nested list, no need to check for over-indentation
-        # since the markdown was already validated
-        if depth_diff >= MD_NESTED_LIST_MIN_INDENT:
-            parent_depths.append(cur_note_depth)
-            new_notes_html.append('<ul>')
-        # Check if we're ending a nested list
-        elif depth_diff < 0:
-            while True:
-                parent_depths.pop()
-                new_notes_html.append('</ul>')
-                depth_diff = cur_note_depth - parent_depths[-1] if parent_depths else 0
-                if depth_diff >= 0:
-                    break
-
-        new_notes_html.append('<li>{}</li>'.format(note))
-
-    new_notes_html.append('</ul>')
-
-    if old_release_notes_html:
-        # Read the previous release notes to find the linebreak separating the
-        # top header from the release notes, then copy the previous release notes
-        # into the new release notes
-        line_break_idx = -1
-        while True:
-            line_break_idx += 1
-            if line_break_idx >= len(old_release_notes_html):
-                raise ValueError('Could not find expected linebreak in HTML release notes')
-            elif old_release_notes_html[line_break_idx] == '<br><br>':
-                break
-
-        new_notes_html.extend(old_release_notes_html[line_break_idx + 1:])
-
-    return '\n'.join(new_notes_html)
 
 
 def load_main_pr_body():
@@ -272,14 +149,23 @@ def start_release(session, app_dir=os.getenv('GITHUB_WORKSPACE')):
         session.patch('git/refs/heads/next', sha=commit['sha'])
         logging.info('Committed changes to next')
 
-    # Submit a PR to merge next to main
-    pr = session.post('pulls',
-                      head='next',
-                      base='main',
-                      body=load_main_pr_body(),
-                      title=MAIN_PR_TITLE.format(app_version_next),
-                      maintainers_can_modify=True)
-    logging.info('PR merging next --> main created at: %s', pr['html_url'])
+    # Submit a PR to merge next to main if one doesn't exist
+    open_prs, next_to_main_pr = session.get('pulls'), None
+    for pr in open_prs:
+        if pr['head']['ref'] == 'next' and pr['base']['ref'] == 'main':
+            next_to_main_pr = pr
+            break
+
+    if next_to_main_pr:
+        logging.info('PR merging next --> main already exists at: %s', next_to_main_pr['html_url'])
+    else:
+        pr = session.post('pulls',
+                          head='next',
+                          base='main',
+                          body=load_main_pr_body(),
+                          title=MAIN_PR_TITLE.format(app_version_next),
+                          maintainers_can_modify=True)
+        logging.info('PR merging next --> main created at: %s', pr['html_url'])
 
 
 def main():
