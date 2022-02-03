@@ -195,8 +195,12 @@ def _copy_new_wheels(new_wheels, new_wheels_dir, app_dir):
     def copy_wheel(wheel_name, dst_path):
         src_fp = os.path.join(new_wheels_dir, wheel_name)
         new_wheel_paths.append(os.path.join('wheels', dst_path))
-        logging.info('Writing %s --> %s', wheel_name, new_wheel_paths[-1])
-        shutil.copyfile(src_fp, os.path.join(app_dir, new_wheel_paths[-1]))
+        full_dst_path = os.path.join(app_dir, new_wheel_paths[-1])
+        if not os.path.exists(full_dst_path):
+            logging.info('Writing new wheel %s --> %s', wheel_name, new_wheel_paths[-1])
+            shutil.copyfile(src_fp, full_dst_path)
+        else:
+            logging.info('Found wheel %s to already exist in %s', wheel_name, os.path.dirname(new_wheel_paths[-1]))
 
     # Make sure to write the new wheels under appropriate wheels/(py2|py3|py36|py39|shared) sub paths
     for path in iter(cp_tag.wheels_dir for cp_tag in CPythonTag):
