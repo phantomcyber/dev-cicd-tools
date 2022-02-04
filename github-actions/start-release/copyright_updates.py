@@ -37,7 +37,8 @@ def update_python_file_copyright(file_path, copyright_str):
             if match:
                 line_number = comment.start[0] - 1  # returned line numbers are 1-indexed
                 new_comment = comment.line.replace(match.group('copyright'), copyright_str)
-                replaced_lines[line_number] = f'{new_comment}\n'
+                if new_comment.strip() != comment.line.strip():
+                    replaced_lines[line_number] = f'{new_comment}\n'
 
     if not replaced_lines:
         return False
@@ -70,6 +71,8 @@ class HtmlCopyrightProcessor(HTMLParser):
             if match:
                 new_comment = comment_lines[i].replace(match.group('copyright'),
                                                        self.new_copyright_str)
+                if new_comment == comment_lines[i]:
+                    continue
                 # Check if the comment immediately follows or precedes
                 # the start/end of a comment
                 if i == 0:
@@ -104,9 +107,16 @@ def update_html_file_copyright(file_path, copyright_str):
 
 
 def update_copyrights(app_dir, copyright_str):
-    updated_files = {
-        'LICENSE': generate_apache_license_content(copyright_str)
-    }
+    updated_files = {}
+
+    license_content = generate_apache_license_content(copyright_str)
+    license_path = os.path.join(app_dir, 'LICENSE')
+    if os.path.isfile(license_path):
+        with open(license_path) as f:
+            if license_content != f.read():
+                updated_files['LICENSE'] = license_content
+    else:
+        updated_files['LICENSE'] = license_content
 
     for py_file in glob.glob(os.path.join(app_dir, '*.py')):
         if update_python_file_copyright(py_file, copyright_str):
