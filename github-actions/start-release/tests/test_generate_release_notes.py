@@ -24,7 +24,8 @@ def app_json():
 @pytest.fixture(scope='function', params=[
     'tests/data/release_notes/existing_release_notes_html',
     'tests/data/release_notes/missing_release_notes_html',
-    'tests/data/release_notes/nested_notes'
+    'tests/data/release_notes/nested_notes',
+    'tests/data/release_notes/existing_release_notes_md'
 ])
 def app_dir(request):
     return copy_app_dir(request)
@@ -34,11 +35,7 @@ def test_generate_release_notes(app_dir, app_json):
     updates = generate_release_notes(app_dir, APP_VERSION, app_json)
 
     with open(os.path.join(app_dir, 'release_notes/expected_release_notes.md')) as f:
-        assert updates[f'release_notes/{APP_VERSION}.md'] == f.read()\
-            .replace('<APP_NAME>', APP_NAME)\
-            .replace('<VERSION>', APP_VERSION)\
-            .replace('<PUBLISHER>', PUBLISHER) \
-            .replace('<PUBLISH_DATE>', PUBLISH_DATE)
+        assert updates[f'release_notes/{APP_VERSION}.md'] == f.read()
 
     with open(os.path.join(app_dir, 'release_notes/expected_new_release_notes.html')) as f:
         assert updates[f'release_notes/release_notes.html'] == f.read()\

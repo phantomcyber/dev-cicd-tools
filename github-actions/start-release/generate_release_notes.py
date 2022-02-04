@@ -25,17 +25,18 @@ MD_NESTED_LIST_MAX_INDENT = 5
 FIRST_VERSION = '1.0.0'
 
 
-def build_release_notes_md(release_version, unreleased_notes, app_json):
+def append_release_notes_md(app_dir, release_version, unreleased_notes):
     if unreleased_notes[0] != UNRELEASED_MD_HEADER:
         raise ValueError('Expected the first line of {} to be the header {}'
                          .format(UNRELEASED_MD, UNRELEASED_MD_HEADER))
 
-    publish_date = datetime.date.today().strftime(RELEASE_NOTES_DATE_FORMAT)
-    release_notes_headers = [
-        RELEASE_NOTES_TOP_HEADER.format(app_json['name'], app_json['publisher'], publish_date),
-        RELEASE_NOTES_VERSION_HEADER.format(release_version, publish_date)
-    ]
-    release_notes_body = []
+    existing_release_notes = os.path.join(app_dir, f'release_notes/{release_version}.md')
+    if os.path.isfile(existing_release_notes):
+        with open(existing_release_notes) as f:
+            release_notes = f.read().split('\n')
+    else:
+        release_notes = []
+
     parent_depths = []
     for note in unreleased_notes[1:]:
         if not note or not note.strip():
@@ -66,12 +67,32 @@ def build_release_notes_md(release_version, unreleased_notes, app_json):
         else:
             pass
 
-        release_notes_body.append(note)
+        release_notes.append(note)
 
-    if not release_notes_body:
+    if not release_notes:
         return None
 
-    return '\n'.join(release_notes_headers + release_notes_body)
+    return '\n'.join(release_notes)
+
+
+def _find_notes_for_current_release(release_notes_html, current_release):
+    current_release_regex = re.compile(rf'^<b>Version {current_release} - Released.+</b>$')
+    for idx, line in enumerate(release_notes_html or []):
+        current_releaser_header = current_release_regex.match(line)
+        if current_releaser_header:
+            next_idx = idx + 1
+            if release_notes_html[next_idx] != '<ul>':
+                raise ValueError(f'Expected line {idx + 1} to be the start of a list <ul> but got {release_notes_html[next_idx]}')
+
+            while True:
+                next_idx += 1
+                if next_idx >= len(release_notes_html):
+                    raise ValueError(f'Could not find closing </ul> in {release_notes_html}')
+
+                element = release_notes_html[next_idx]
+                if element == '</ul>':
+                    return next_idx
+    return -1
 
 
 def update_release_notes_html(old_release_notes_html, release_version, unreleased_notes, app_json):
@@ -92,8 +113,18 @@ def update_release_notes_html(old_release_notes_html, release_version, unrelease
         '<b>{} Release Notes - Published by {} {}</b>'.format(
             app_json['name'], app_json['publisher'], publish_date),
         '<br><br>',
-        '<b>Version {} - Released {}</b>'.format(release_version, publish_date)
+        '<b>Version {} - Released {}</b>'.format(release_version, publish_date),
+        '<ul>'
     ]
+
+    # Check if there's existing notes for the current release, we'll want to append the
+    # new notes to the existing notes
+    notes_for_current_release_end_idx = _find_notes_for_current_release(old_release_notes_html,
+                                                                        release_version)
+    if notes_for_current_release_end_idx > -1:
+        # Skip past the existing headers since we've re-generated them with updated dates
+        # Do not include the closing </ul> tag since we'll be appending new notes
+        new_notes_html.extend(old_release_notes_html[len(new_notes_html):notes_for_current_release_end_idx])
 
     # Write the new release notes, converting bulleted lists in Markdown to HTML
     if unreleased_notes[0] != UNRELEASED_MD_HEADER:
@@ -101,7 +132,6 @@ def update_release_notes_html(old_release_notes_html, release_version, unrelease
                          .format(UNRELEASED_MD, UNRELEASED_MD_HEADER))
 
     parent_depths = []
-    new_notes_html.append('<ul>')
     for note_md in unreleased_notes[1:]:
         if not note_md.strip():
             continue
@@ -130,7 +160,11 @@ def update_release_notes_html(old_release_notes_html, release_version, unrelease
 
     new_notes_html.append('</ul>')
 
-    if old_release_notes_html:
+    if notes_for_current_release_end_idx != -1:
+        # We've included the existing notes for the current release into the new release notes,
+        # append the remaining notes for past releases
+        new_notes_html.extend(old_release_notes_html[notes_for_current_release_end_idx + 1:])
+    elif old_release_notes_html:
         # Read the previous release notes to find the linebreak separating the
         # top header from the release notes, then copy the previous release notes
         # into the new release notes
@@ -154,12 +188,13 @@ def generate_release_notes(app_dir, release_version, app_json):
     with open(os.path.join(app_dir, UNRELEASED_MD)) as f:
         unreleased_notes_md = f.read().split('\n')
 
-    release_notes_md = build_release_notes_md(release_version,
-                                              unreleased_notes_md,
-                                              app_json)
-    if not release_notes_md:
+    if all(n == UNRELEASED_MD_HEADER or not n.strip() for n in unreleased_notes_md):
         logging.info('Did not detect any new notes to release!')
         return updates
+
+    release_notes_md = append_release_notes_md(app_dir,
+                                               release_version,
+                                               unreleased_notes_md)
 
     logging.info('Generated release notes for version %s:', release_version)
 

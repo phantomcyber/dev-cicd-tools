@@ -98,6 +98,7 @@ def render_template_to_file(connector_path, json_content):
     rendered_content = t.render(connector=json_content)
 
     output_readme_path = Path(connector_path, README_OUTPUT_NAME)
+
     logging.info("Saved readme as %s", output_readme_path)
     with open(output_readme_path, "w") as readme_file:
         readme_file.write(rendered_content)
@@ -123,10 +124,8 @@ def build_docs(connector_path, app_version=None):
         json_content["app_version"] = app_version
 
     md_content = load_file(input_readme_path)
-    if check_markdown_for_template_text(md_content):
-        raise ValueError("Input readme contains auto-generated content!")
-
-    json_content["md_content"] = md_content
+    if not check_markdown_for_template_text(md_content):
+        json_content["md_content"] = md_content
 
     return render_template_to_file(connector_path, json_content)
 
@@ -153,43 +152,29 @@ def has_markdown_comment(md_content):
     return "[comment]: #" in md_content
 
 
-def manage_existing_markdown(connector_path):
+def load_existing_markdown(connector_path):
     md_path = Path(connector_path, README_INPUT_NAME)
-    author_notes_path = Path(connector_path, README_MD_ORIGINAL_NAME)
 
     if not md_path.is_file():
-        return None, None
+        return None
 
     with open(md_path) as md_file:
-        md_content = md_file.read()
-
-    if (author_notes_path.is_file()
-        or check_markdown_for_template_text(md_content)
-        or has_markdown_comment(md_content)
-        or first_n_rendered_words_match_readme_html(50, connector_path, md_content)):
-
-        logging.info("Removing existing auto-gen readme: %s", md_path)
-        md_path.unlink(missing_ok=True)
-        return None, None
-
-    logging.info("Backing-up existing readme from %s to %s",
-                 md_path, author_notes_path)
-    return md_content, md_path.rename(author_notes_path)
+        return md_file.read()
 
 
 def build_docs_from_html(connector_path, app_version=None):
     connector_path = Path(connector_path)
-    backup_content, backup_path = manage_existing_markdown(connector_path)
-    readme_html_to_markdown(connector_path)
+    original_content = load_existing_markdown(connector_path)
+    readme_html_to_markdown(connector_path, overwrite=True)
     output_content, output_path = build_docs(connector_path, app_version)
 
-    updates = {
+    if original_content == output_content:
+        logging.info('Detected no readme updates')
+        return {}
+
+    return {
         str(output_path.relative_to(connector_path)): output_content
     }
-    if backup_content:
-        updates[str(backup_path.relative_to(connector_path))] = backup_content
-
-    return updates
 
 
 def main(args):
