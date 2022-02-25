@@ -1,0 +1,17 @@
+rules:
+  - id: soar-standard-logging
+    patterns:
+      - pattern-inside: |
+          import phantom
+          ...
+          class $CLASS(phantom.BaseConnector):
+            ...
+      - pattern-either:
+        - pattern: |
+            print(...)
+        - pattern: |
+            logging.$FUNC(...)
+    message: |
+        Only the logging methods provided by BaseConnector should be used for logging within a connector implementation.
+    languages: [python]
+    severity: WARNING

@@ -1,0 +1,32 @@
+name: Upload Semgrep Rules
+on: [push]
+env:
+  SEMGREP_DEPLOYMENT_ID: ${{ secrets.SEMGREP_DEPLOYMENT_ID }}
+  SEMGREP_TOKEN: ${{ secrets.SEMGREP_TOKEN }}
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+      - name: Cache pip
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/dev-requirements.txt') }}
+      - name: Install Dependencies
+        run: pip install -r dev-requirements.txt
+      - name: Run Tests
+        run: |
+          semgrep --test semgrep/rules
+  upload-rules:
+    needs: run-tests
+    if: github.ref_name == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Upload Rules
+        run: make semgrep-upload

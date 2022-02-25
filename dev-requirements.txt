@@ -2,4 +2,4 @@ isort==5.8.0
 autopep8==1.5.7
 black==21.6b0
 flake8==3.9.2
-semgrep==0.64.0
+semgrep==0.83.0
