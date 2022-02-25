@@ -1,0 +1,17 @@
+rules:
+  - id: logging-sensitive-data
+    patterns:
+      - pattern-either:
+        - pattern: self.$FUNC($X)
+        - pattern: $FUNC($X)
+        - pattern: logging.$FUNC(..., $X)
+      - metavariable-regex:
+          metavariable: $FUNC
+          regex: '(print|log|debug|info|warning|error|fatal|critical|exception|debug_print|error_print|save_progress|send_progress)'
+      - metavariable-regex:
+          metavariable: $X
+          regex: '.*(secret|token|key|password).*'
+    message: |
+      Detects sensitive data (eg, API keys, passwords, etc) logged by a connector.
+    languages: [python]
+    severity: ERROR
