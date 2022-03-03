@@ -45,12 +45,3 @@ class RequestHandler:
 
         # ok: reflected-cross-site-scripting
         return HttpResponse(state, content_type="text/plain")
-
-
-from phantom import BaseConnector as Base
-
-
-class Connector(Base):
-    def handle_request(self):
-        # ok: reflected-cross-site-scripting
-        return HttpResponse('foobar')
