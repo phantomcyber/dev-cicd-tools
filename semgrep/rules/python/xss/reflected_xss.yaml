@@ -1,0 +1,12 @@
+rules:
+  - id: reflected-cross-site-scripting
+    patterns:
+      - pattern: |
+          django.http.HttpResponse($C, ...)
+      - pattern-not: |
+         django.http.HttpResponse($C, ..., content_type='text/plain', ...)
+    message: |
+        Verifies that a SOAR Connector REST handler sets the content_type of their response to 'text/plain'
+        to prevent potential reflected cross site scripting.
+    languages: [python]
+    severity: ERROR
