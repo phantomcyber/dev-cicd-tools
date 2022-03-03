@@ -1,0 +1,24 @@
+rules:
+  - id: reflected-cross-site-scripting
+    patterns:
+      - pattern-not-inside: |
+          import phantom
+          ...
+          class $CLASS(phantom.BaseConnector):
+            ...
+      - pattern-either:
+        - pattern-inside: |
+            def $FUNC($REQUEST, ...):
+              ...
+        - pattern-inside: |
+            def $FUNC(self, ...):
+              ...
+      - pattern: |
+          return django.http.HttpResponse($C, ...)
+      - pattern-not: |
+         return django.http.HttpResponse($C, ..., content_type='text/plain', ...)
+    message: |
+        Verifies that a SOAR Connector REST handler sets the content_type of their response to 'text/plain'
+        to prevent potential reflected cross site scripting.
+    languages: [python]
+    severity: ERROR
