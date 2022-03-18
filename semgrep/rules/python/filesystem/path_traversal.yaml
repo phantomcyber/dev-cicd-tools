@@ -1,0 +1,103 @@
+rules:
+  - id: path-traversal
+    message: A user supplied path can potentially write to any location in the file system.
+    severity: ERROR
+    languages:
+        - python
+    pattern-either:
+      - patterns:
+          - pattern-inside: |
+              $PAYLOAD = <... request.$METHOD.get(...) ...>
+              ...
+          - pattern-either:
+              - pattern: open(<... $PAYLOAD ...>, ...)
+              - pattern: os.$FUNC(<... $PAYLOAD ...>, ...)
+              - pattern: tempfile.$FUNC(..., dir=<... $PAYLOAD ...>, ...)
+              - pattern: pathlib.$FUNC(<... $PAYLOAD ...>, ...)
+              - pattern: shutil.$FUNC(<... $PAYLOAD ...>, ...)
+              - pattern: shutil.$FUNC(..., <... $PAYLOAD ...>)
+      - patterns:
+        - pattern-inside: |
+            $PAYLOAD = <... request.$METHOD.get(...) ...>
+            ...
+            $INTERM = <... $PAYLOAD ...>
+            ...
+        - pattern-either:
+            - pattern: open(<... $INTERM ...>, ...)
+            - pattern: os.$FUNC(<... $INTERM ...>, ...)
+            - pattern: tempfile.$FUNC(..., dir=<... $INTERM ...>, ...)
+            - pattern: pathlib.$FUNC(<... $INTERM ...>, ...)
+            - pattern: shutil.$FUNC(<... $INTERM ...>, ...)
+            - pattern: shutil.$FUNC(..., <... $INTERM ...>)
+      - patterns:
+        - pattern-inside: |
+            $PAYLOAD = <... request.$METHOD.get(...) ...>
+            ...
+            $INTERM1 = <... $PAYLOAD ...>
+            ...
+            $INTERM2 = <... $INTERM1 ...>
+            ...
+        - pattern-either:
+            - pattern: open(<... $INTERM2 ...>, ...)
+            - pattern: os.$FUNC(<... $INTERM2 ...>, ...)
+            - pattern: tempfile.$FUNC(..., dir=<... $INTERM2 ...>, ...)
+            - pattern: pathlib.$FUNC(<... $INTERM2 ...>, ...)
+            - pattern: shutil.$FUNC(<... $INTERM2 ...>, ...)
+            - pattern: shutil.$FUNC(..., <... $INTERM2 ...>)
+      - patterns:
+        - pattern-inside: |
+            $PAYLOAD = <... request.$METHOD.get(...) ...>
+            ...
+            $INTERM1 = <... $PAYLOAD ...>
+            ...
+            $INTERM2 = <... $INTERM1 ...>
+            ...
+            $INTERM3 = <... $INTERM2 ...>
+            ...
+        - pattern-either:
+            - pattern: open(<... $INTERM3 ...>, ...)
+            - pattern: os.$FUNC(<... $INTERM3 ...>, ...)
+            - pattern: tempfile.$FUNC(..., dir=<... $INTERM3 ...>, ...)
+            - pattern: pathlib.$FUNC(<... $INTERM3 ...>, ...)
+            - pattern: shutil.$FUNC(<... $INTERM3 ...>, ...)
+            - pattern: shutil.$FUNC(..., <... $INTERM3 ...>)
+      - patterns:
+        - pattern-inside: |
+            $PAYLOAD = <... request.$METHOD.get(...) ...>
+            ...
+            $INTERM1 = <... $PAYLOAD ...>
+            ...
+            $INTERM2 = <... $INTERM1 ...>
+            ...
+            $INTERM3 = <... $INTERM2 ...>
+            ...
+            $INTERM4 = <... $INTERM3 ...>
+            ...
+        - pattern-either:
+            - pattern: open(<... $INTERM4 ...>, ...)
+            - pattern: os.$FUNC(<... $INTERM4 ...>, ...)
+            - pattern: tempfile.$FUNC(..., dir=<... $INTERM4 ...>, ...)
+            - pattern: pathlib.$FUNC(<... $INTERM4 ...>, ...)
+            - pattern: shutil.$FUNC(<... $INTERM4 ...>, ...)
+            - pattern: shutil.$FUNC(..., <... $INTERM4 ...>)
+      - patterns:
+          - pattern-inside: |
+              $PAYLOAD = <... request.$METHOD.get(...) ...>
+              ...
+              $INTERM1 = <... $PAYLOAD ...>
+              ...
+              $INTERM2 = <... $INTERM1 ...>
+              ...
+              $INTERM3 = <... $INTERM2 ...>
+              ...
+              $INTERM4 = <... $INTERM3 ...>
+              ...
+              $INTERM5 = <... $INTERM4 ...>
+              ...
+          - pattern-either:
+              - pattern: open(<... $INTERM5 ...>, ...)
+              - pattern: os.$FUNC(<... $INTERM5 ...>, ...)
+              - pattern: tempfile.$FUNC(..., dir=<... $INTERM5 ...>, ...)
+              - pattern: pathlib.$FUNC(<... $INTERM5 ...>, ...)
+              - pattern: shutil.$FUNC(<... $INTERM5 ...>, ...)
+              - pattern: shutil.$FUNC(..., <... $INTERM5 ...>)
