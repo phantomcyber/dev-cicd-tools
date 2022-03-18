@@ -38,5 +38,10 @@ class Connector:
         # ok: logging-sensitive-data
         self.send_progress('foobar')
 
+        self.auth = configure_auth()
 
+        # ruleid: logging-sensitive-data
+        self.debug_print(self.auth)
+
+        self.debug_print('password')
 
