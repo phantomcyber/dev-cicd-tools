@@ -10,7 +10,7 @@ rules:
           regex: '(print|log|debug|info|warning|error|fatal|critical|exception|debug_print|error_print|save_progress|send_progress)'
       - metavariable-regex:
           metavariable: $X
-          regex: '.*(secret|token|key|password).*'
+          regex: ^[^'"]*(secret|token|key|password|headers|auth)[^'"]*$
     message: |
       Detects sensitive data (eg, API keys, passwords, etc) logged by a connector.
     languages: [python]
