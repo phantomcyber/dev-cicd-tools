@@ -11,6 +11,11 @@ def handle_request_1(request):
     with open(payload) as f:
         f.write('foo')
 
+    if payload.isalnum():
+        # ok: path-traversal
+        with open(payload) as f:
+            f.write('foo')
+
 
 def handle_request_2(request):
     payload = json.loads(request.POST.get('payload'))
@@ -19,6 +24,11 @@ def handle_request_2(request):
     # ruleid: path-traversal
     with open(a) as f:
         f.write('foo')
+
+    if payload.isalnum():
+        # ok: path-traversal
+        with open(a) as f:
+            f.write('foo')
 
 
 def handle_request_3(request):
@@ -29,6 +39,11 @@ def handle_request_3(request):
     # ruleid: path-traversal
     with open(b) as f:
         f.write('foo')
+
+    if a.isalnum():
+        # ok: path-traversal
+        with open(b) as f:
+            f.write('foo')
 
 
 def handle_request_4(request):
@@ -41,6 +56,11 @@ def handle_request_4(request):
     with open(c) as f:
         f.write('foo')
 
+    if b.isalnum():
+        # ok: path-traversal
+        with open(c) as f:
+            f.write('foo')
+
 
 def handle_request_5(request):
     payload = json.loads(request.POST.get('payload'))
@@ -52,6 +72,11 @@ def handle_request_5(request):
     # ruleid: path-traversal
     with open(d) as f:
         f.write('foo')
+
+    if c.isalnum():
+        # ok: path-traversal
+        with open(d) as f:
+            f.write('foo')
 
 
 def handle_request_6(request):
@@ -68,3 +93,8 @@ def handle_request_6(request):
     # ruleid: path-traversal
     with open(state_path) as f:
         f.write('foo')
+
+    if asset_id.isalnum():
+        # ok: path-traversal
+        with open(state_path) as f:
+            f.write('foo')
