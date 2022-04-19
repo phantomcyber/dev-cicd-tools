@@ -25,7 +25,7 @@ PLATFORM = 'manylinux2014_x86_64'
 REPAIRED_WHEELS_REL_PATH = 'repaired-wheels'
 
 WHEEL_PATTERN = re.compile(
-    r'^(?P<distribution>([A-Z0-9][A-Z0-9._-]*[A-Z0-9]))-([0-9]+\.?)+-'
+    r'^(?P<distribution>([A-Z0-9][A-Z0-9._-]*[A-Z0-9]))-([A-Z0-9]+\.?)+-'
     r'(?P<python_version>[A-Z0-9]+\.?[A-Z0-9]+)-.+-'
     r'(?P<platform>.+)\.whl$',
     re.IGNORECASE)
