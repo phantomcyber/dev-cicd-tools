@@ -8,7 +8,7 @@
       },
       {
         "module": "certifi",
-        "input_file": "wheels/shared/certifi-2021.10.8-py2.py3-none-any.whl"
+        "input_file": "wheels/py3/certifi-2022.5.18.1-py3-none-any.whl"
       },
       {
         "module": "charset_normalizer",
@@ -44,7 +44,7 @@
       },
       {
         "module": "certifi",
-        "input_file": "wheels/shared/certifi-2021.10.8-py2.py3-none-any.whl"
+        "input_file": "wheels/py3/certifi-2022.5.18.1-py3-none-any.whl"
       },
       {
         "module": "charset_normalizer",

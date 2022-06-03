@@ -1,0 +1,29 @@
+name: 'Resume Release'
+description: 'Resumes the paused StepFunction workflow for a given app release by sending back its approval status.'
+inputs:
+  approved:
+    description: 'true/false indicating if the release is approved or not'
+    required: true
+  task_token:
+    description: 'Task token to use to resume the paused release workflow'
+    required: true
+  iam_role_arn:
+    description: 'IAM Role to assume.'
+    required: true
+  aws_region:
+    description: 'AWS Region to use when configuring credentials'
+    default: 'us-west-2'
+    required: false
+runs:
+  using: 'composite'
+  steps:
+    - name: 'Configure AWS Credentials'
+      uses: aws-actions/configure-aws-credentials@v1.6.1
+      with:
+        aws-region: ${{ inputs.aws_region }}
+        role-to-assume: ${{ inputs.iam_role_arn }}
+    - name: 'Resume Release'
+      shell: bash
+      run: |
+        output="{\"approved\": ${{ inputs.approved }}, \"workflow_run_id\": ${{ github.run_id }}}"
+        aws stepfunctions send-task-success --task-token "${{ inputs.task_token }}" --task-output "$output"
