@@ -11,10 +11,15 @@ outputs:
 runs:
   using: 'composite'
   steps:
+    - name: 'Export Requirements file path'
+      shell: bash
+      run: echo "REQUIREMENTS_FILE_PATH=${{ github.action_path }}/../scripts/review_release/requirements.txt" >> $GITHUB_ENV
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v3
       with:
         python-version: '3.9'
+        cache: 'pip'
+        cache-dependency-path: ${{ env.REQUIREMENTS_FILE_PATH }}
     - name: 'Check PIP Cache'
       uses: actions/cache@v2
       id: cache
@@ -25,7 +30,7 @@ runs:
       shell: bash
       run: |
         python -m pip install --upgrade pip
-        pip install -r ${{ github.action_path }}/../scripts/review_release/requirements.txt
+        pip install -r ${{ env.REQUIREMENTS_FILE_PATH }}
     - name: Checkout App Repo
       uses: actions/checkout@v2
       with:

@@ -1,4 +1,5 @@
-from unittest.mock import MagicMock
+from contextlib import contextmanager
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -66,6 +67,13 @@ def mock_commit_status(status_name, state):
     return status
 
 
+@contextmanager
+def mock_splunk_base_data(**kwargs):
+    with patch('scripts.review_release.main._get_splunk_base_data') as mock:
+        mock.return_value = kwargs
+        yield
+
+
 def test_review_release_auto_approved(github_repo, app_json, combined_commit_status):
     if app_json['publisher'] == 'Splunk':
         pytest.skip()
@@ -74,7 +82,8 @@ def test_review_release_auto_approved(github_repo, app_json, combined_commit_sta
                      for s in review_release.REQUIRED_COMMIT_STATUSES]
     combined_commit_status.statuses = mock_statuses
 
-    assert review_release.review_release(github_repo, '/local/path', 'ref') == 0
+    with mock_splunk_base_data(support='community'):
+        assert review_release.review_release(github_repo, '/local/path', 'ref') == 0
 
 
 def test_review_release_manual_approval_splunk_supported_app(github_repo, app_json, combined_commit_status):
@@ -85,20 +94,33 @@ def test_review_release_manual_approval_splunk_supported_app(github_repo, app_js
                      for s in review_release.REQUIRED_COMMIT_STATUSES]
     combined_commit_status.statuses = mock_statuses
 
-    assert review_release.review_release(github_repo, '/local/path', 'ref') == 1
+    with mock_splunk_base_data(support='splunk'):
+        assert review_release.review_release(github_repo, '/local/path', 'ref') == 1
 
 
-def test_review_release_manual_approval_missing_commit_statuses(github_repo, combined_commit_status):
+def test_review_release_manual_approval_missing_commit_statuses(github_repo, app_json, combined_commit_status):
     mock_statuses = [mock_commit_status(f'AWS CodeBuild us-west-2 ({s})', 'success')
                      for s in review_release.REQUIRED_COMMIT_STATUSES[:-1]]
     combined_commit_status.statuses = mock_statuses
 
-    assert review_release.review_release(github_repo, '/local/path', 'ref') == 1
+    with mock_splunk_base_data(support=app_json['publisher'].lower()):
+        assert review_release.review_release(github_repo, '/local/path', 'ref') == 1
 
 
-def test_review_release_manual_approval_unsuccessful_commit_statuses(github_repo, combined_commit_status):
+def test_review_release_manual_approval_unsuccessful_commit_statuses(github_repo, app_json, combined_commit_status):
     mock_statuses = [mock_commit_status(f'AWS CodeBuild us-west-2 ({s})', 'failed')
                      for s in review_release.REQUIRED_COMMIT_STATUSES]
     combined_commit_status.statuses = mock_statuses
 
-    assert review_release.review_release(github_repo, '/local/path', 'ref') == 1
+    with mock_splunk_base_data(support=app_json['publisher'].lower()):
+        assert review_release.review_release(github_repo, '/local/path', 'ref') == 1
+
+
+def test_review_release_manual_approval_support_status_change(github_repo, app_json, combined_commit_status):
+    mock_statuses = [mock_commit_status(f'AWS CodeBuild us-west-2 ({s})', 'success')
+                     for s in review_release.REQUIRED_COMMIT_STATUSES]
+    combined_commit_status.statuses = mock_statuses
+
+    support_tag = 'community' if app_json['publisher'] == 'Splunk' else 'splunk'
+    with mock_splunk_base_data(support=support_tag):
+        assert review_release.review_release(github_repo, '/local/path', 'ref') == 1

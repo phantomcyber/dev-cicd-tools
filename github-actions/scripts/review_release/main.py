@@ -6,6 +6,7 @@ import os
 import re
 import sys
 
+import requests
 from github import Github
 
 from ..common import get_app_json
@@ -18,14 +19,42 @@ REQUIRED_COMMIT_STATUSES = [
     'integration-tests',
     'sanity-tests'
 ]
+SPLUNK_BASE_API_URL = os.getenv('SPLUNK_BASE_API_URL', 'https://splunkbase.splunk.com/api/v2/apps')
+SPLUNK_SUPPORT_TAG = 'splunk'
+
+
+def _get_splunk_base_data(app_id):
+    params = {'appid': app_id, 'product': 'soar', 'include': 'support', 'offset': 0, 'limit': 1}
+    resp = requests.get(SPLUNK_BASE_API_URL, params=params)
+    resp.raise_for_status()
+
+    results = resp.json()['results']
+    if not results:
+        return None
+    elif len(results) != 1:
+        raise ValueError(f'Expected to find one app on Splunkbase for {app_id} but got: {results}')
+
+    return results[-1]
 
 
 def review_release(app_repo, app_dir_path, release_git_ref):
     # Require manual approval for Splunk-supported apps
     manual_approval = False
     app_json = get_app_json(app_dir_path)
-    if app_json['publisher'] == 'Splunk':
+    splunk_base_data = _get_splunk_base_data(app_json['appid'])
+
+    new_release_splunk_supported = app_json['publisher'].lower() == SPLUNK_SUPPORT_TAG
+    curr_splunk_supported = splunk_base_data['support'] == SPLUNK_SUPPORT_TAG
+
+    if curr_splunk_supported and new_release_splunk_supported:
         logging.info('Found %s to be Splunk supported app', app_repo)
+        manual_approval = True
+    elif not curr_splunk_supported and new_release_splunk_supported:
+        logging.info('Newly Splunk supported app requires manual review')
+        manual_approval = True
+    elif not new_release_splunk_supported and curr_splunk_supported:
+        logging.info('Newly %s supported supported app that was previously Splunk supported requires manual review',
+                     splunk_base_data['support'])
         manual_approval = True
 
     commit = app_repo.get_commit(release_git_ref)
