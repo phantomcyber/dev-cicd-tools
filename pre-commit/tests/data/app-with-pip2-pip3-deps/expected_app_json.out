@@ -32,7 +32,7 @@
     "wheel": [
       {
         "module": "certifi",
-        "input_file": "wheels/py3/certifi-2022.5.18.1-py3-none-any.whl"
+        "input_file": "wheels/py3/certifi-2022.6.15-py3-none-any.whl"
       },
       {
         "module": "charset_normalizer",
@@ -60,7 +60,7 @@
     "wheel": [
       {
         "module": "certifi",
-        "input_file": "wheels/py3/certifi-2022.5.18.1-py3-none-any.whl"
+        "input_file": "wheels/py3/certifi-2022.6.15-py3-none-any.whl"
       },
       {
         "module": "charset_normalizer",
