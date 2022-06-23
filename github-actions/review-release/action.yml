@@ -30,6 +30,14 @@ runs:
       uses: actions/checkout@v2
       with:
         ref: ${{ github.ref }}
+    - name: 'Update Commit Status'
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+      shell: bash
+      run: |
+        cd ${{ github.action_path }}/..
+        python -m scripts.review_release.put_commit_status ${{ github.repository }} ${{ github.sha }} \
+          -s pending -d 'Pending review' -t "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
     - name: 'Review Release'
       id: review_release
       env:
