@@ -32,7 +32,7 @@
       },
       {
         "module": "urllib3",
-        "input_file": "wheels/shared/urllib3-1.26.9-py2.py3-none-any.whl"
+        "input_file": "wheels/shared/urllib3-1.26.10-py2.py3-none-any.whl"
       }
     ]
   }
