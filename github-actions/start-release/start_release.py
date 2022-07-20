@@ -16,7 +16,6 @@ from generate_release_notes import generate_release_notes
 
 RELEASE_NOTES_DIR = 'release_notes'
 UNRELEASED_MD = '{}/unreleased.md'.format(RELEASE_NOTES_DIR)
-RELEASE_NOTES_HTML = '{}/release_notes.html'.format(RELEASE_NOTES_DIR)
 UNRELEASED_MD_HEADER = '**Unreleased**'
 RELEASE_NOTES_MD = RELEASE_NOTES_DIR + '/{}.md'
 RELEASE_NOTES_TOP_HEADER = '**{} Release Notes - Published by {} {}**\n\n'
