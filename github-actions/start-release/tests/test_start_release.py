@@ -70,17 +70,13 @@ def mock_app_json(version):
 
 
 TestData = namedtuple('TestData', ['unreleased_md',
-                                   'release_notes_html',
-                                   'expected_release_notes_md',
-                                   'expected_release_notes_html'])
+                                   'expected_release_notes_md'])
 
 
 @pytest.fixture(scope='function',
                 params=[
                     TestData('tests/data/unreleased.md',
-                             'tests/data/old_release_notes.html',
-                             'tests/data/expected_release_notes.md',
-                             'tests/data/expected_new_release_notes.html')
+                             'tests/data/expected_release_notes.md')
                 ])
 def test_data(request):
     return request.param
@@ -101,7 +97,7 @@ def app_dir(request):
     app_dir = tempfile.mkdtemp()
     release_notes_dir = os.path.join(app_dir, 'release_notes')
     os.mkdir(release_notes_dir)
-    shutil.copytree('tests/data/release_notes/existing_release_notes_html', release_notes_dir)
+    shutil.copytree('tests/data/release_notes/existing_release_notes', release_notes_dir)
 
     shutil.copytree('tests/data/copyrights/app_dir', app_dir)
     return copy_app_dir(request)
