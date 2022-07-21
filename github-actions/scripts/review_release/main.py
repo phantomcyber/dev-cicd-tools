@@ -11,7 +11,7 @@ from github import Github
 
 from ..common import get_app_json
 
-COMMIT_STATUS_PATTERN = re.compile(r'AWS CodeBuild (BuildBatch )?us-west-[1-2] \((?P<context>.+)\)')
+COMMIT_STATUS_PATTERN = re.compile(r'(AWS CodeBuild (BuildBatch )?us-west-[1-2] )?\(?(?P<context>[\w-]+)\)?')
 REQUIRED_COMMIT_STATUSES = [
     'prodsec-scans',
     'build-app',
