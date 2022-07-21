@@ -11,13 +11,14 @@ from github import Github
 
 from ..common import get_app_json
 
-COMMIT_STATUS_PATTERN = re.compile(r'AWS CodeBuild (BuildBatch )?us-west-[1-2] \((?P<context>.+)\)')
+COMMIT_STATUS_PATTERN = re.compile(r'(AWS CodeBuild (BuildBatch )?us-west-[1-2] )?\(?(?P<context>[\w\s-]+)\)?')
 REQUIRED_COMMIT_STATUSES = [
+    'Static Tests',
+    'Compile Tests',
+    'app-integration-tests',
+    'sanity-tests',
     'prodsec-scans',
-    'build-app',
-    'static-tests',
-    'integration-tests',
-    'sanity-tests'
+    'build-app'
 ]
 SPLUNK_BASE_API_URL = os.getenv('SPLUNK_BASE_API_URL', 'https://splunkbase.splunk.com/api/v2/apps')
 SPLUNK_SUPPORT_TAG = 'splunk'
