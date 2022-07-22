@@ -12,7 +12,7 @@
             },
             {
                 "module": "charset_normalizer",
-                "input_file": "wheels/charset_normalizer-2.0.10-py3-none-any.whl"
+                "input_file": "wheels/charset_normalizer-2.0.7-py3-none-any.whl"
             },
             {
                 "module": "idna",
@@ -24,11 +24,11 @@
             },
             {
                 "module": "soupsieve",
-                "input_file": "wheels/soupsieve-2.3.1-py3-none-any.whl"
+                "input_file": "wheels/soupsieve-2.3-py3-none-any.whl"
             },
             {
                 "module": "urllib3",
-                "input_file": "wheels/urllib3-1.26.8-py2.py3-none-any.whl"
+                "input_file": "wheels/urllib3-1.26.7-py2.py3-none-any.whl"
             }
         ]
     }
