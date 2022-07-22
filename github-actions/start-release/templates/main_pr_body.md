@@ -4,6 +4,6 @@
 and readme, and make any necessary updates
 
 ### Requirements
-* [ ] Merge all associated Tests to `main`
+* [ ] Merge all associated App tests to `main`
 * [ ] Merge all associated playbooks to `main`
 * [ ] Merge all associated assets to `main`
