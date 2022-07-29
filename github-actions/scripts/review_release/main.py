@@ -45,7 +45,7 @@ def review_release(app_repo, app_dir_path, release_git_ref):
     splunk_base_data = _get_splunk_base_data(app_json['appid'])
 
     new_release_splunk_supported = app_json['publisher'].lower() == SPLUNK_SUPPORT_TAG
-    curr_splunk_supported = splunk_base_data['support'] == SPLUNK_SUPPORT_TAG
+    curr_splunk_supported = splunk_base_data and splunk_base_data['support'] == SPLUNK_SUPPORT_TAG
 
     if curr_splunk_supported and new_release_splunk_supported:
         logging.info('Found %s to be Splunk supported app', app_repo)
