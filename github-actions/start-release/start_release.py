@@ -85,13 +85,13 @@ def start_release(session, app_dir=os.getenv('GITHUB_WORKSPACE')):
     # greater than main, if it already isn't.
     app_json_file = json_files[-1]
 
-    sha = session.get('contents/{}?ref=next'.format(app_json_file))['sha']
-    app_json_next, app_json_indent = deserialize_app_json(session.get('git/blobs/{}?ref=next'.format(sha)))
+    sha_field = session.get('contents/{}?ref=next'.format(app_json_file))['sha']
+    app_json_next, app_json_indent = deserialize_app_json(session.get('git/blobs/{}?ref=next'.format(sha_field)))
     app_version_next = app_json_next['app_version']
 
     try:
-        sha = session.get('contents/{}?ref=main'.format(app_json_file))['sha']
-        app_json_main, _ = deserialize_app_json(session.get('git/blobs/{}?ref=main'.format(sha)))
+        sha_field = session.get('contents/{}?ref=main'.format(app_json_file))['sha']
+        app_json_main, _ = deserialize_app_json(session.get('git/blobs/{}?ref=main'.format(sha_field)))
         app_version_main = app_json_main['app_version']
     except HTTPError as ex:
         _handle_http_not_found(ex)
