@@ -21,6 +21,7 @@ logging.getLogger().setLevel(logging.INFO)
 APP_NAME = 'App'
 PUBLISHER = 'Splunk'
 COPYRIGHT = 'Copyright (c) Splunk Inc.'
+SHA = '59308dba2df36f51e77e6a8b8501c960c7999999'
 DATE = datetime.date.today().strftime(RELEASE_NOTES_DATE_FORMAT)
 NEXT_VERSION_OKAY = '1.0.1'
 NEXT_VERSION_TOO_SMALL = '1.0.0'
@@ -62,8 +63,9 @@ def mock_app_json(version):
         'app_version': version,
         'name': APP_NAME,
         'publisher': PUBLISHER,
-        'license': COPYRIGHT
-    }, indent=4)
+        'license': COPYRIGHT,
+        'sha': SHA
+    }, indent=5)
     return {
         'content': base64.b64encode(app_json.encode(DEFAULT_ENCODING))
     }
