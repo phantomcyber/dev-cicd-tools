@@ -184,11 +184,15 @@ def test_start_release_happy_path(session,
 
     start_release(session)
 
-    assert session.get.call_count == 5
+    assert session.get.call_count == 8
     assert session.get.call_args_list[0] == call('contents?ref=next')
     assert session.get.call_args_list[1] == call('contents/{}.json?ref=next'.format(APP_NAME))
     assert session.get.call_args_list[2] == call('contents/{}.json?ref=main'.format(APP_NAME))
-    assert session.get.call_args_list[3] == call('git/ref/heads/next')
+    assert session.get.call_args_list[3] == call('contents/{}?ref=next'.format(app_json_next)['sha'])
+    assert session.get.call_args_list[4] == call('contents/{}?ref=main'.format(app_json_main)['sha'])
+    assert session.get.call_args_list[5] == call('git/blobs/{}?ref=next'.format(SHA))
+    assert session.get.call_args_list[6] == call('git/blobs/{}?ref=main'.format(SHA))
+    assert session.get.call_args_list[7] == call('git/ref/heads/next')
 
     assert session.post.call_count == len(post_l)
 
