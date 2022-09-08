@@ -11,6 +11,7 @@ from unittest.mock import MagicMock, call, Mock
 
 import pytest
 from requests import HTTPError
+from http import HTTPStatus
 
 from start_release import start_release, RELEASE_NOTES_DATE_FORMAT, DEFAULT_ENCODING, \
     RELEASE_NOTE_COMMIT_MSG, COMMIT_AUTHOR, load_main_pr_body, MAIN_PR_TITLE, deserialize_app_json, FIRST_VERSION
@@ -22,6 +23,8 @@ APP_NAME = 'App'
 PUBLISHER = 'Splunk'
 COPYRIGHT = 'Copyright (c) Splunk Inc.'
 SHA = '59308dba2df36f51e77e6a8b8501c960c7999999'
+#SHA_NEXT = '59308dba2df36f51e77e6a8b8501c960c7999999'
+#SHA_MAIN = '59308dba2df36f51e77e6a8b8501c960c7888888'
 DATE = datetime.date.today().strftime(RELEASE_NOTES_DATE_FORMAT)
 NEXT_VERSION_OKAY = '1.0.1'
 NEXT_VERSION_TOO_SMALL = '1.0.0'
@@ -63,11 +66,11 @@ def mock_app_json(version):
         'app_version': version,
         'name': APP_NAME,
         'publisher': PUBLISHER,
-        'license': COPYRIGHT,
-        'sha': SHA
-    }, indent=5)
+        'license': COPYRIGHT
+    }, indent=4)
     return {
-        'content': base64.b64encode(app_json.encode(DEFAULT_ENCODING))
+        'content': base64.b64encode(app_json.encode(DEFAULT_ENCODING)),
+        'sha': SHA
     }
 
 
@@ -123,6 +126,9 @@ def test_start_release_happy_path(session,
     app_json_next = mock_app_json(next_version)
     app_json_main = mock_app_json(main_version) if main_version else HTTPError(response=Mock(status_code=404))
 
+    sha_field_next = SHA
+    sha_field_main = SHA
+
     open_prs = [{
         'head': {'ref': 'a'},
         'base': {'ref': 'b'},
@@ -134,13 +140,25 @@ def test_start_release_happy_path(session,
             'base': {'ref': 'main'},
             'html_url': 'url'
         })
-    session.get.side_effect = [
-        [{'name': '{}.json'.format(APP_NAME)}, {'name': '{}.postman_collection.json'.format(APP_NAME)}],
-        app_json_next,
-        app_json_main,
-        {'object': {'sha': base_sha}},
-        open_prs
-    ]
+    if isinstance(app_json_main, dict):
+        session.get.side_effect = [
+            [{'name': '{}.json'.format(APP_NAME)}, {'name': '{}.postman_collection.json'.format(APP_NAME)}],
+            app_json_next,
+            app_json_next,
+            app_json_main,
+            app_json_main,
+            {'object': {'sha': base_sha}},
+            open_prs
+        ]
+    else:
+        session.get.side_effect = [
+            [{'name': '{}.json'.format(APP_NAME)}, {'name': '{}.postman_collection.json'.format(APP_NAME)}],
+            app_json_next,
+            app_json_next,
+            app_json_main,
+            {'object': {'sha': base_sha}},
+            open_prs
+        ]
 
     main_version = main_version or FIRST_VERSION
     if LooseVersion(next_version) <= LooseVersion(main_version):
@@ -184,15 +202,23 @@ def test_start_release_happy_path(session,
 
     start_release(session)
 
-    assert session.get.call_count == 8
-    assert session.get.call_args_list[0] == call('contents?ref=next')
-    assert session.get.call_args_list[1] == call('contents/{}.json?ref=next'.format(APP_NAME))
-    assert session.get.call_args_list[2] == call('contents/{}.json?ref=main'.format(APP_NAME))
-    assert session.get.call_args_list[3] == call('contents/{}?ref=next'.format(app_json_next)['sha'])
-    assert session.get.call_args_list[4] == call('contents/{}?ref=main'.format(app_json_main)['sha'])
-    assert session.get.call_args_list[5] == call('git/blobs/{}?ref=next'.format(SHA))
-    assert session.get.call_args_list[6] == call('git/blobs/{}?ref=main'.format(SHA))
-    assert session.get.call_args_list[7] == call('git/ref/heads/next')
+    if isinstance(app_json_main, dict):
+        assert session.get.call_count == 7
+        assert session.get.call_args_list[0] == call('contents?ref=next')
+        assert session.get.call_args_list[1] == call('contents/{}.json?ref=next'.format(APP_NAME))
+        assert session.get.call_args_list[2] == call('git/blobs/{}?ref=next'.format(sha_field_next))
+        assert session.get.call_args_list[3] == call('contents/{}.json?ref=main'.format(APP_NAME))
+        assert session.get.call_args_list[4] == call('git/blobs/{}?ref=main'.format(sha_field_main))
+        assert session.get.call_args_list[5] == call('git/ref/heads/next')
+        assert session.get.call_args_list[6] == call('pulls')
+    else:
+        assert session.get.call_count == 6
+        assert session.get.call_args_list[0] == call('contents?ref=next')
+        assert session.get.call_args_list[1] == call('contents/{}.json?ref=next'.format(APP_NAME))
+        assert session.get.call_args_list[2] == call('git/blobs/{}?ref=next'.format(sha_field_next))
+        assert session.get.call_args_list[3] == call('contents/{}.json?ref=main'.format(APP_NAME))
+        assert session.get.call_args_list[4] == call('git/ref/heads/next')
+        assert session.get.call_args_list[5] == call('pulls')
 
     assert session.post.call_count == len(post_l)
 
