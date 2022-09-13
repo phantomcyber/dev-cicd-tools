@@ -54,8 +54,6 @@ def test_app_with_pip2_pip3_dependencies(app_dir):
 
     with open(app_json) as actual_f, open(expected_app_json) as expected_f:
         actual = json.load(actual_f)
-        print("actual is: "+str(actual))
-        print("expected is: "+str(json.load(expected_f)))
         assert actual == json.load(expected_f)
 
         for whl in actual['pip_dependencies']['wheel']:
