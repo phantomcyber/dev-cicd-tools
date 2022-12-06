@@ -3,15 +3,6 @@
 APP_DIR=$(pwd)
 SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
-function package_py2_app_dependencies() {
-  echo 'Python2 supported app detected'
-  if ! pip2 --version &> /dev/null; then
-    echo 'Please ensure pip2 is installed'
-    exit 1
-  fi
-  python "$SCRIPT_DIR/package_app_dependencies.py" "$APP_DIR" pip2 pip_dependencies
-}
-
 function package_py3_app_dependencies() {
   PYTHON_VERSION_STRING=$1
   PIP_DEPENDENCIES_KEY=$2
@@ -33,7 +24,7 @@ if [[ "$app_py_version" == 'null' ]]; then
 fi
 
 if [[ "$app_py_version" == '"2.7"' ]]; then
-  package_py2_app_dependencies
+  echo "Python 2 is no longer supported"
   exit $?
 fi
 
@@ -47,9 +38,6 @@ if [[ "$pip3_dependencies" == 'null' ]]; then
   pip3_dependencies_key='pip_dependencies'
 else
   pip3_dependencies_key='pip3_dependencies'
-  if [[ "$(jq .pip_dependencies "$app_json")" != 'null' ]]; then
-    package_py2_app_dependencies
-  fi
 fi
 
 pip39_dependencies_key='pip39_dependencies'
