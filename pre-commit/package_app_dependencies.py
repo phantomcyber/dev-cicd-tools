@@ -52,7 +52,6 @@ class CPythonTag(Enum):
     NOTE: Definition order matters!
     """
     PY2_PY3 = ('py2.py3', r'py2\.py3', 'shared')
-    PY2 = ('py2', r'cp2\d?')
     PY39 = ('py39', r'cp39')
     PY36 = ('py36', r'cp36')
     PY3 = ('py3', r'cp3\d{0,2}')
@@ -202,7 +201,7 @@ def _copy_new_wheels(new_wheels, new_wheels_dir, app_dir):
         else:
             logging.info('Found wheel %s to already exist in %s', wheel_name, os.path.dirname(new_wheel_paths[-1]))
 
-    # Make sure to write the new wheels under appropriate wheels/(py2|py3|py36|py39|shared) sub paths
+    # Make sure to write the new wheels under appropriate wheels/(py3|py36|py39|shared) sub paths
     for path in iter(cp_tag.wheels_dir for cp_tag in CPythonTag):
         pathlib.Path(os.path.join(app_dir, 'wheels', path)).mkdir(parents=True, exist_ok=True)
 
@@ -270,7 +269,7 @@ def main(args):
                           'to build a required dependency for your app, please raise an issue in the app repo for further assistance.')
             return
 
-        # Some apps may have different dependencies for Python2 and Python3, and
+        # Some apps may have different dependencies for Python3 versions, and
         # we don't want to override the wheels for the Python version we aren't building for
         app_json = _load_app_json(app_dir)
 

@@ -8,7 +8,7 @@
       },
       {
         "module": "certifi",
-        "input_file": "wheels/py3/certifi-2022.6.15.1-py3-none-any.whl"
+        "input_file": "wheels/py3/certifi-2022.9.24-py3-none-any.whl"
       },
       {
         "module": "charset_normalizer",
@@ -16,7 +16,7 @@
       },
       {
         "module": "idna",
-        "input_file": "wheels/py3/idna-3.3-py3-none-any.whl"
+        "input_file": "wheels/py3/idna-3.4-py3-none-any.whl"
       },
       {
         "module": "requests",
@@ -32,7 +32,7 @@
       },
       {
         "module": "urllib3",
-        "input_file": "wheels/shared/urllib3-1.26.12-py2.py3-none-any.whl"
+        "input_file": "wheels/shared/urllib3-1.26.13-py2.py3-none-any.whl"
       }
     ]
   },
@@ -44,7 +44,7 @@
       },
       {
         "module": "certifi",
-        "input_file": "wheels/py3/certifi-2022.6.15.1-py3-none-any.whl"
+        "input_file": "wheels/py3/certifi-2022.9.24-py3-none-any.whl"
       },
       {
         "module": "charset_normalizer",
@@ -52,7 +52,7 @@
       },
       {
         "module": "idna",
-        "input_file": "wheels/py3/idna-3.3-py3-none-any.whl"
+        "input_file": "wheels/py3/idna-3.4-py3-none-any.whl"
       },
       {
         "module": "requests",
@@ -68,7 +68,7 @@
       },
       {
         "module": "urllib3",
-        "input_file": "wheels/shared/urllib3-1.26.12-py2.py3-none-any.whl"
+        "input_file": "wheels/shared/urllib3-1.26.13-py2.py3-none-any.whl"
       }
     ]
   }
