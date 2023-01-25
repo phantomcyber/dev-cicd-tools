@@ -387,6 +387,7 @@ def readme_html_to_markdown(connector_path, connector_name=None,
 
     with open(readme_html, "r") as html_file:
         html_content = html_file.read()
+        html_content = "<br>".join(html_content.split("\\n"))
 
     parsed_html_content = parse_html(html_content)
 
