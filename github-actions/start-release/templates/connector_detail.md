@@ -69,7 +69,7 @@ No parameters are required for this action
 DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
 --------- | ---- | -------- | --------------
 {%- for output in action.output %}
-{{output.data_path}} | {{output.data_type}} | {% for contain in output.contains %} `{{contain}}` {% endfor %} |  {% for example in output.example_values %} `{{example}}` {% endfor %}
+{{output.data_path}} | {{output.data_type}} | {% for contain in output.contains %} `{{contain}}` {% endfor %} |  {% for example in output.example_values %} {{example}} {% endfor %}
 {%- endfor %}
 {%- else %}
 No Output

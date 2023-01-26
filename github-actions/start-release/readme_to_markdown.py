@@ -20,6 +20,7 @@ To install pandoc:
 WARNING: This script uses features only available in Python 3.8+.
          Make sure you are running Python 3.8 or later.
 """
+import time
 
 import argparse
 import json
@@ -387,7 +388,6 @@ def readme_html_to_markdown(connector_path, connector_name=None,
 
     with open(readme_html, "r") as html_file:
         html_content = html_file.read()
-        html_content = "<br>".join(html_content.split("\\n"))
 
     parsed_html_content = parse_html(html_content)
 
@@ -419,6 +419,7 @@ def readme_html_to_markdown(connector_path, connector_name=None,
     # Some fixes are better applied after tidying/validating
     remove_double_bullets(parsed_html_content)
     remove_original_attribute(parsed_html_content, "li")
+    remove_original_attribute(parsed_html_content, "div")
     fix_relative_links(parsed_html_content, connector_path, "a", "href")
     fix_relative_links(parsed_html_content, connector_path, "img", "src")
     html_content = parsed_html_content.prettify(formatter="html")
@@ -429,9 +430,11 @@ def readme_html_to_markdown(connector_path, connector_name=None,
     md_comments = generate_md_comments(comments)
 
     md_content = html_to_md(html_content)
+    md_content = md_content.replace("<div>","").replace("</div>","")
     with open(readme_md, "w") as md_file:
         num_chars_written = md_file.write(md_comments)
         num_chars_written += md_file.write(md_content)
+        time.sleep(300)
 
     # To check how successful the conversion was, we'll get some stats about
     # the original and converted documents

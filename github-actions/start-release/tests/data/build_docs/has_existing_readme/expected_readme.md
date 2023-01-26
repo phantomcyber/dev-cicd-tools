@@ -689,52 +689,52 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 **offense\_id** |  optional  | Comma\-separated list of offense IDs to fetch | string |  `qradar offense id` 
 
 #### Action Output
-DATA PATH | TYPE | CONTAINS
---------- | ---- | --------
-action\_result\.status | string | 
-action\_result\.parameter\.count | numeric | 
-action\_result\.parameter\.end\_time | numeric | 
-action\_result\.parameter\.offense\_id | string |  `qradar offense id` 
-action\_result\.parameter\.start\_time | numeric | 
-action\_result\.data\.\*\.assigned\_to | string | 
-action\_result\.data\.\*\.categories | string | 
-action\_result\.data\.\*\.category\_count | numeric | 
-action\_result\.data\.\*\.close\_time | string | 
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action\_result\.status | string |  success  failed
+action\_result\.parameter\.count | numeric | 100
+action\_result\.parameter\.end\_time | numeric | 1669900000000
+action\_result\.parameter\.offense\_id | string |  `qradar offense id` | 44
+action\_result\.parameter\.start\_time | numeric |  1559900000000
+action\_result\.data\.\*\.assigned\_to | string |  admin
+action\_result\.data\.\*\.categories | string |  License Status
+action\_result\.data\.\*\.category\_count | numeric |  10
+action\_result\.data\.\*\.close\_time | string |  
 action\_result\.data\.\*\.closing\_reason\_id | string |  `qradar offense closing reason id` 
 action\_result\.data\.\*\.closing\_user | string | 
-action\_result\.data\.\*\.credibility | numeric | 
-action\_result\.data\.\*\.description | string | 
-action\_result\.data\.\*\.destination\_networks | string | 
-action\_result\.data\.\*\.device\_count | numeric | 
+action\_result\.data\.\*\.credibility | numeric |  4
+action\_result\.data\.\*\.description | string |  Local Malware Events
+action\_result\.data\.\*\.destination\_networks | string |  other
+action\_result\.data\.\*\.device\_count | numeric |  3
 action\_result\.data\.\*\.domain\_id | numeric | 
-action\_result\.data\.\*\.event\_count | numeric | 
-action\_result\.data\.\*\.flow\_count | numeric | 
-action\_result\.data\.\*\.follow\_up | boolean | 
-action\_result\.data\.\*\.id | numeric |  `qradar offense id` 
-action\_result\.data\.\*\.inactive | boolean | 
-action\_result\.data\.\*\.last\_updated\_time | numeric | 
-action\_result\.data\.\*\.local\_destination\_count | numeric | 
-action\_result\.data\.\*\.magnitude | numeric | 
-action\_result\.data\.\*\.offense\_source | string |  `ip` 
-action\_result\.data\.\*\.offense\_type | numeric | 
-action\_result\.data\.\*\.policy\_category\_count | numeric | 
-action\_result\.data\.\*\.protected | boolean | 
-action\_result\.data\.\*\.relevance | numeric | 
-action\_result\.data\.\*\.remote\_destination\_count | numeric | 
+action\_result\.data\.\*\.event\_count | numeric |  28603163
+action\_result\.data\.\*\.flow\_count | numeric |  110
+action\_result\.data\.\*\.follow\_up | boolean |  false true
+action\_result\.data\.\*\.id | numeric |  `qradar offense id` |  44
+action\_result\.data\.\*\.inactive | boolean |  false true
+action\_result\.data\.\*\.last\_updated\_time | numeric |  1559194600958
+action\_result\.data\.\*\.local\_destination\_count | numeric |  0
+action\_result\.data\.\*\.magnitude | numeric |  5
+action\_result\.data\.\*\.offense\_source | string |  `ip` | 122.122.122.122
+action\_result\.data\.\*\.offense\_type | numeric | 0
+action\_result\.data\.\*\.policy\_category\_count | numeric | 0
+action\_result\.data\.\*\.protected | boolean | false true
+action\_result\.data\.\*\.relevance | numeric | 4
+action\_result\.data\.\*\.remote\_destination\_count | numeric |  1
 action\_result\.data\.\*\.rules\.\*\.id | numeric | 
 action\_result\.data\.\*\.rules\.\*\.type | string | 
-action\_result\.data\.\*\.security\_category\_count | numeric | 
-action\_result\.data\.\*\.severity | numeric | 
-action\_result\.data\.\*\.source\_count | numeric | 
-action\_result\.data\.\*\.source\_network | string | 
-action\_result\.data\.\*\.start\_time | numeric | 
-action\_result\.data\.\*\.status | string | 
-action\_result\.data\.\*\.username\_count | numeric |  `user name` 
+action\_result\.data\.\*\.security\_category\_count | numeric | 10
+action\_result\.data\.\*\.severity | numeric | 6
+action\_result\.data\.\*\.source\_count | numeric | 1
+action\_result\.data\.\*\.source\_network | string | Net-10-172-192.Net_10_0_0_0
+action\_result\.data\.\*\.start\_time | numeric | 1558009780686
+action\_result\.data\.\*\.status | string | OPEN
+action\_result\.data\.\*\.username\_count | numeric |  `user name` | 0
 action\_result\.summary | string | 
-action\_result\.summary\.total\_offenses | numeric | 
-action\_result\.message | string | 
-summary\.total\_objects | numeric | 
-summary\.total\_objects\_successful | numeric |   
+action\_result\.summary\.total\_offenses | numeric | 1
+action\_result\.message | string | Fetching all open offenses. Total offenses: 1 Total Offenses: 1
+summary\.total\_objects | numeric | 1
+summary\.total\_objects\_successful | numeric | 1 
 
 ## action: 'list closing reasons'
 Get a list of offense closing reasons
