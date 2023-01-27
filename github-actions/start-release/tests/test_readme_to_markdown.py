@@ -1,4 +1,3 @@
-import json
 import os
 import shutil
 
@@ -50,7 +49,6 @@ def test_readme_to_markdown(app_dir, check_output, expected_result,
 
     if backup:
          assert os.path.isfile(backup)
-
     if check_output:
         with open(output_readme) as actual_f, open(expected_readme) as expected_f:
             actual_content = actual_f.read()

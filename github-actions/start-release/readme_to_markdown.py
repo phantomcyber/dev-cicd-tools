@@ -20,7 +20,6 @@ To install pandoc:
 WARNING: This script uses features only available in Python 3.8+.
          Make sure you are running Python 3.8 or later.
 """
-import time
 
 import argparse
 import json
@@ -434,7 +433,6 @@ def readme_html_to_markdown(connector_path, connector_name=None,
     with open(readme_md, "w") as md_file:
         num_chars_written = md_file.write(md_comments)
         num_chars_written += md_file.write(md_content)
-        time.sleep(300)
 
     # To check how successful the conversion was, we'll get some stats about
     # the original and converted documents
