@@ -20,7 +20,6 @@ To install pandoc:
 WARNING: This script uses features only available in Python 3.8+.
          Make sure you are running Python 3.8 or later.
 """
-
 import argparse
 import json
 import os
