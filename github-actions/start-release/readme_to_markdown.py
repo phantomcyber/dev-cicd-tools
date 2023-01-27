@@ -20,6 +20,7 @@ To install pandoc:
 WARNING: This script uses features only available in Python 3.8+.
          Make sure you are running Python 3.8 or later.
 """
+
 import argparse
 import json
 import os
@@ -417,7 +418,6 @@ def readme_html_to_markdown(connector_path, connector_name=None,
     # Some fixes are better applied after tidying/validating
     remove_double_bullets(parsed_html_content)
     remove_original_attribute(parsed_html_content, "li")
-    remove_original_attribute(parsed_html_content, "div")
     fix_relative_links(parsed_html_content, connector_path, "a", "href")
     fix_relative_links(parsed_html_content, connector_path, "img", "src")
     html_content = parsed_html_content.prettify(formatter="html")
