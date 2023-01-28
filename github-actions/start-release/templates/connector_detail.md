@@ -66,10 +66,10 @@ No parameters are required for this action
 
 #### Action Output
 {%- if action.output %}
-DATA PATH | TYPE | CONTAINS
---------- | ---- | --------
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
 {%- for output in action.output %}
-{{output.data_path}} | {{output.data_type}} | {% for contain in output.contains %} `{{contain}}` {% endfor %}
+{{output.data_path}} | {{output.data_type}} | {% for contain in output.contains %} `{{contain}}` {% endfor %} |  {% for example in output.example_values %} {{example}} {% endfor %}
 {%- endfor %}
 {%- else %}
 No Output

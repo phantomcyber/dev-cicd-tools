@@ -428,6 +428,7 @@ def readme_html_to_markdown(connector_path, connector_name=None,
     md_comments = generate_md_comments(comments)
 
     md_content = html_to_md(html_content)
+    md_content = md_content.replace("<div>","").replace("</div>","")
     with open(readme_md, "w") as md_file:
         num_chars_written = md_file.write(md_comments)
         num_chars_written += md_file.write(md_content)
