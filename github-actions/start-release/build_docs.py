@@ -24,7 +24,9 @@ SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 TEMPLATE_DIR = Path(SCRIPT_DIR, "templates")
 TEMPLATE_NAME = "connector_detail.md"
 README_OUTPUT_NAME = "README.md"
+MANUAL_README_CONTENT_FILE_NAME = "manual_readme_content.md"
 README_INPUT_NAME = README_OUTPUT_NAME
+DEFAULT_ENCODING = "utf-8"
 
 # From https://enterprise.github.com/downloads/en/markdown-cheatsheet.pdf
 MARKDOWN_RESERVED_CHARACTERS = ["\\", "`", "*", "_", "{", "}", "[", "]", "(",
@@ -123,9 +125,15 @@ def build_docs(connector_path, app_version=None):
     if app_version:
         json_content["app_version"] = app_version
 
+    # If there are non-template changes copy them over to the manual README content file
+    # if one does not already exist.
+    manual_readme_content_path = Path(connector_path, MANUAL_README_CONTENT_FILE_NAME)
     md_content = load_file(input_readme_path)
-    if not check_markdown_for_template_text(md_content):
-        json_content["md_content"] = md_content
+    if not check_markdown_for_template_text(md_content) and not manual_readme_content_path.is_file():
+        manual_readme_content_path.write_text(md_content, encoding=DEFAULT_ENCODING)
+
+    if manual_readme_content_path.is_file():
+        json_content["md_content"] = manual_readme_content_path.read_text(encoding=DEFAULT_ENCODING)
 
     return render_template_to_file(connector_path, json_content)
 
