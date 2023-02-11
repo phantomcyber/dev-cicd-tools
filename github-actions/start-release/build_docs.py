@@ -126,7 +126,7 @@ def build_docs(connector_path, app_version=None):
         json_content["app_version"] = app_version
 
     md_content = load_file(input_readme_path)
-    if not check_markdown_for_template_text(md_content):
+    if md_content and not check_markdown_for_template_text(md_content):
         json_content["md_content"] = md_content
     else:
         manual_readme_content_path = Path(connector_path, MANUAL_README_CONTENT_FILE_NAME)
