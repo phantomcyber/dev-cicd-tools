@@ -43,5 +43,5 @@ runs:
         git config user.email "admin@splunksoar"
         git add README.md
         git commit -m "Update README.md"
-        git push 
+        git push
       shell: bash
