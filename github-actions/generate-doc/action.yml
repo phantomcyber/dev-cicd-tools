@@ -41,6 +41,7 @@ runs:
         cd ${{ github.action_path }}
         cd ../start-release
         python build_docs.py $APP_REPO_DIR
+        cd $APP_REPO_DIR
         git add README.md
         git commit -m 'test'
         git push
