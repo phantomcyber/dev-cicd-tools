@@ -35,6 +35,6 @@ runs:
         APP_REPO: ${{ github.repository }}
       run: |
         cd ${{ github.action_path }}
-        cd start-release
+        cd ../start-release
         python build_docs.py
       shell: bash
