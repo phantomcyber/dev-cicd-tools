@@ -36,6 +36,6 @@ runs:
       run: |
         cd ${{ github.action_path }}
         cd ../start-release
-        echo $APP_REPO
-        python build_docs.py ${{ github.ref }}
+        echo ${{ env.GITHUB_WORKSPACE }}
+        python build_docs.py ${{ env.GITHUB_WORKSPACE }}
       shell: bash
