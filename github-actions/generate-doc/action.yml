@@ -37,5 +37,5 @@ runs:
         cd ${{ github.action_path }}
         cd ../start-release
         echo $APP_REPO
-        python build_docs.py $APP_REPO
+        python build_docs.py ${{ github.ref }}
       shell: bash
