@@ -33,8 +33,9 @@ runs:
       env:
         GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
         APP_REPO: ${{ github.repository }}
+        APP_REPO_BRANCH: ${{ github.branch }}
       run: |
-        git clone --branch $APP_REPO_BRANCH --single-branch "https://$SOAR_APPS_GITHUB_KEY@github.com/$APP_REPO.git"
+        git clone --branch "$APP_REPO_BRANCH" --single-branch "https://$SOAR_APPS_GITHUB_KEY@github.com/$APP_REPO.git"
         echo "OK"
         echo $APP_REPO_BRANCH
         echo $(pwd)
@@ -47,5 +48,5 @@ runs:
         git config user.email "admin@splunksoar"
         git add README.md
         git commit -m "Update README.md"
-        git push origin HEAD:$APP_REPO_BRANCH
+        git push origin HEAD:"$APP_REPO_BRANCH"
       shell: bash
