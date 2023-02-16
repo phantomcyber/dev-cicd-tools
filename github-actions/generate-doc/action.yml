@@ -34,7 +34,7 @@ runs:
         GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
         APP_REPO: ${{ github.repository }}
       run: |
-        git clone --single-branch "https://$SOAR_APPS_GITHUB_KEY@github.com/splunk-soar-connectors/$APP_REPO.git"
+        git clone --single-branch "https://$SOAR_APPS_GITHUB_KEY@github.com/$APP_REPO.git"
         cd "$APP_REPO"
         export APP_REPO_DIR="$(pwd)"
         cd ${{ github.action_path }}
