@@ -42,6 +42,8 @@ runs:
         cd ../start-release
         python build_docs.py $APP_REPO_DIR
         cd $APP_REPO_DIR
+        git config user.name "splunk-soar-connectors-admin"
+        git config user.email "admin@splunksoar"
         git add README.md
         git commit -m 'test'
         git push
