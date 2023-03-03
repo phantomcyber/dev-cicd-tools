@@ -174,12 +174,16 @@ def build_docs_from_html(connector_path, app_version=None):
     readme_html_to_markdown(connector_path, overwrite=True)
     output_content, output_path = build_docs(connector_path, app_version)
 
-    if original_content.replace('\r','') == output_content.replace('\r',''):
+    if original_content:
+        original_content = original_content.replace('\r','')
+    if output_content:
+        output_content = output_content.replace('\r','')
+    if original_content == output_content:
         logging.info('Detected no readme updates')
         return {}
 
     return {
-        str(output_path.relative_to(connector_path)): output_content.replace('\r','')
+        str(output_path.relative_to(connector_path)): output_content
     }
 
 
