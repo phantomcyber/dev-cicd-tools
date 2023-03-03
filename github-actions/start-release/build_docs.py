@@ -179,7 +179,7 @@ def build_docs_from_html(connector_path, app_version=None):
         return {}
 
     return {
-        str(output_path.relative_to(connector_path)): output_content
+        str(output_path.relative_to(connector_path)): output_content.replace('\r','')
     }
 
 
