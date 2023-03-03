@@ -1,0 +1,46 @@
+name: 'Generate Readme Doc'
+description: 'Generate Readme MD File'
+inputs:
+  GITHUB_TOKEN:
+    description: 'PAT used to write to the target repo'
+    required: true
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.9'
+    - name: 'Check PIP Cache'
+      uses: actions/cache@v2
+      id: cache
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-soar-app-ci
+    - name: 'Install Dependencies'
+      run: |
+        sudo apt-get update && sudo apt-get install -y tidy
+        wget https://github.com/jgm/pandoc/releases/download/2.16.2/pandoc-2.16.2-1-amd64.deb
+        sudo dpkg -i pandoc-2.16.2-1-amd64.deb
+        python -m pip install --upgrade pip
+        pip install -r ${{ github.action_path }}/requirements.txt
+      shell: bash
+    - name: Checkout App Repo
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ github.ref }}
+    - name: 'Generate ReadMe Doc'
+      env:
+        GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
+        APP_REPO: ${{ github.repository }}
+      run: |
+        export APP_REPO_DIR="$(pwd)"
+        cd ${{ github.action_path }}
+        cd ../start-release
+        python build_docs.py $APP_REPO_DIR True
+        cd $APP_REPO_DIR
+        git config user.name "splunk-soar-connectors-admin"
+        git config user.email "admin@splunksoar"
+        git add README.md
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Update README.md"; git push)
+      shell: bash
