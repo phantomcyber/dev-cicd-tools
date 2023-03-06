@@ -42,5 +42,5 @@ runs:
         git config user.name "splunk-soar-connectors-admin"
         git config user.email "admin@splunksoar"
         git add README.md
-        git diff --quiet && git diff --staged --quiet || (git commit -m "Update README.md"; git push -f)
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Update README.md"; git push)
       shell: bash
