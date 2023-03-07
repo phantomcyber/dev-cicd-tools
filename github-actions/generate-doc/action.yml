@@ -42,7 +42,7 @@ runs:
         git config user.name "splunk-soar-connectors-admin"
         git config user.email "admin@splunksoar"
         git remote remove origin
-        git remote add origin https://${{ env.GITHUB_TOKEN }}@github.com/${ GITHUB_REPOSITORY }
+        git remote add origin https://${{ env.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}
         git add README.md
         git diff --quiet && git diff --staged --quiet || (git commit -m "Update README.md" --author='splunk-soar-connectors-admin <admin@splunksoar>'; git push)
       shell: bash
