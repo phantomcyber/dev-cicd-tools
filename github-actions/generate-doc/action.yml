@@ -44,5 +44,5 @@ runs:
         git remote remove origin
         git remote add origin https://${{ env.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}
         git add README.md
-        git diff --quiet && git diff --staged --quiet || (git commit -m "Update README.md"; git push)
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Update README.md"; git push origin HEAD)
       shell: bash
