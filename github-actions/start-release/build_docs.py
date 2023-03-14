@@ -56,12 +56,19 @@ def generate_action_heading_text(text):
     return f"action: '{text}'"
 
 
-def escape_markdown(text):
-    if isinstance(text, str):
-        for reserved_char in MARKDOWN_RESERVED_CHARACTERS:
-            text = text.replace(reserved_char, f"\\{reserved_char}")
-    return text
+# def escape_markdown(text):
+#     if isinstance(text, str):
+#         for reserved_char in MARKDOWN_RESERVED_CHARACTERS:
+#             text = text.replace(reserved_char, f"\\{reserved_char}")
+#     return text
 
+def escape_markdown(data):
+    if isinstance(data, dict):
+        return {key: escape_markdown(val) for key, val in data.items()}
+    elif isinstance(data, str):
+        return re.sub(r'([\\*])', r'\\\1', data)
+    else:
+        return data
 
 def get_app_json(app_json_dir):
     logging.info("Looking for app JSON in: %s", app_json_dir)
