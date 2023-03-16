@@ -107,14 +107,14 @@ explanation in Overview, and some individuals Apps have their sections.
         with another value. For example, to replace the value of cef.requestURL of \\"nourl\\",
         with  
         null value, provide { \\"nourl\\": null }. If the user wants to replace a numeric  
-        (integer\|float) value with some other value, due to the SDK issue, the user has to
+        (integer|float) value with some other value, due to the SDK issue, the user has to
         provide  
         the key-value map in this format. e.g. if user wants to replace value 4 with 10 and 5.3
         with  
         6.7, provide this CEF value mapping {"numeric(4)": 10, "numeric(5.3)": 6.7}  
         **Sample \[CEF Value Map\] values**
 
-        -   To replace integer\|float values; value 4 with 10 and 5.3 with 6.7, provide below CEF  
+        -   To replace integer|float values; value 4 with 10 and 5.3 with 6.7, provide below CEF  
             value mapping
 
             `           {"numeric(4)": 10, "numeric(5.3)": 6.7}          `
@@ -194,7 +194,7 @@ explanation in Overview, and some individuals Apps have their sections.
         events_ingest_start_time = 25 and offense's start_time = 1582618635661, then, after  
         back-date, the final timestamp from which we will start fetching the events for that  
         particular offense is 1582618635661 - (25 \* 60 \* 1000) = 1582617135661. NOTE - This  
-        parameter is applicable only for the manual POLL NOW, the first run of the SCHEDULED \|  
+        parameter is applicable only for the manual POLL NOW, the first run of the SCHEDULED |  
         INTERVAL polling, and other actions like \[Offense Details\] which are involved in the  
         events ingestion.
 
@@ -231,7 +231,7 @@ explanation in Overview, and some individuals Apps have their sections.
         be  
         \[offense's start_time - events_ingest_start_time\] for manual polling and the first run
         of  
-        scheduled \| interval polling and for the next runs, it will take time stored in the state  
+        scheduled | interval polling and for the next runs, it will take time stored in the state  
         file against last_ingested_events_data for a particular offense. e.g. if  
         event_ingest_end_time = 25 and the 'start_time' to fetch events is 1582618635661, then
         after  
@@ -345,7 +345,7 @@ explanation in Overview, and some individuals Apps have their sections.
             whose either \[starttime\] or \[last_updated_time\] falls in the time range (inclusive  
             of boundaries) defined by \[start_time\] and \[end_time\] action parameters are
             fetched.  
-            For the time field \[either\], for the On Poll actions (scheduled \| interval polling)  
+            For the time field \[either\], for the On Poll actions (scheduled | interval polling)  
             the maximum of the \[starttime\] or \[last_updated_time\] for the last fetched offense  
             is stored in the state file against the key \[last_saved_ingest_time\].
 
@@ -494,7 +494,7 @@ explanation in Overview, and some individuals Apps have their sections.
         step simply calls \[Get Events\] action. Based on the value of the flag \[Alternative
         ariel  
         query\], the offenses will be fetched either by the default ingestion workflow or by the  
-        alternative ingestion workflow. For manual polling and the first run of the scheduled \|  
+        alternative ingestion workflow. For manual polling and the first run of the scheduled |  
         interval polling, the list of events for every offense will be fetched starting from the  
         default time of 3600000 epoch milliseconds (1 hour past the 0 epoch) because if we start  
         fetching it from 0 epoch, then, the QRadar API throws an error mentioning "Response Code:  
