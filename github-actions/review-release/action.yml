@@ -27,7 +27,7 @@ runs:
         python -m pip install --upgrade pip
         pip install -r "${{ github.action_path }}/../scripts/review_release/requirements.txt"
     - name: Checkout App Repo
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         ref: ${{ github.ref }}
     - name: 'Update Commit Status'
