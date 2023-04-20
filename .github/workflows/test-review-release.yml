@@ -10,7 +10,7 @@ jobs:
         run: |
           echo "REQUIREMENTS_FILE_PATH=github-actions/scripts/review_release/requirements.txt" >> $GITHUB_ENV
           echo "DEV_REQUIREMENTS_FILE_PATH=github-actions/scripts/dev-requirements.txt" >> $GITHUB_ENV
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python
         uses: actions/setup-python@v3
         with:

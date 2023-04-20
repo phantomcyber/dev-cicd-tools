@@ -27,7 +27,7 @@ runs:
         python -m pip install --upgrade pip
         pip install -r "${{ github.action_path }}/../scripts/review_release/requirements.txt"
     - name: Checkout App Repo
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         ref: ${{ github.ref }}
     - name: 'Update Commit Status'
@@ -49,9 +49,9 @@ runs:
         exit_code=0
         python -m scripts.review_release.main || exit_code=$?
         if [[ $exit_code -eq 0 ]]; then
-          echo '::set-output name=manual_review_required::false'
+          echo "{manual_review_required}={false}" >> $GITHUB_OUTPUT
         elif [[ $exit_code -eq 1 ]]; then
-          echo '::set-output name=manual_review_required::true'
+          echo "{manual_review_required}={true}" >> $GITHUB_OUTPUT
         else
           exit $exit_code
         fi
