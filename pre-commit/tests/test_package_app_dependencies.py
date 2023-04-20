@@ -4,6 +4,7 @@ import shutil
 import subprocess
 
 import pytest
+from jsondiff import diff
 
 PRE_COMMIT_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
@@ -52,7 +53,8 @@ def test_app_with_pip_dependencies(app_dir):
 
     with open(app_json) as actual_f, open(expected_app_json) as expected_f:
         actual = json.load(actual_f)
-        assert actual == json.load(expected_f)
+        expected = json.load(expected_f)
+        assert actual == expected, f'Diff: {json.dumps(diff(expected, actual), indent=2)}'
 
         for whl in actual['pip_dependencies']['wheel']:
             assert os.path.exists(os.path.join(app_dir, whl['input_file']))
