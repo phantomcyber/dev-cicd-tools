@@ -3,11 +3,13 @@
 APP_DIR=$(pwd)
 SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
+IMAGE="${1-quay.io/pypa/manylinux2014_x86_64}"
+
 function package_py3_app_dependencies() {
   PYTHON_VERSION_STRING=$1
   PIP_DEPENDENCIES_KEY=$2
   docker run --rm -v "$APP_DIR":/src -v "$SCRIPT_DIR":/pre-commit/ -w "$SCRIPT_DIR" \
-    quay.io/pypa/manylinux2014_x86_64 /bin/bash -c \
+    "$IMAGE" /bin/bash -c \
      "/opt/python/cp39-cp39/bin/python /pre-commit/package_app_dependencies.py \
      /src /opt/python/$PYTHON_VERSION_STRING/bin/pip $PIP_DEPENDENCIES_KEY --repair_wheels"
 }
