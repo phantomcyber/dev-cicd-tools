@@ -19,6 +19,8 @@ function prepare_docker_image(){
       echo "Creating image from context $DOCKERFILE, tag: $IMAGE"
       docker build -t $IMAGE -f $DOCKERFILE $APP_DIR
   fi
+      echo "Using image: $IMAGE"
+
 }
 
 function package_py3_app_dependencies() {
