@@ -41,11 +41,12 @@ def app_dir(request):
     return app_dir
 
 
-def test_app_with_pip_dependencies(app_dir):
+@pytest.mark.parametrize("flags",[[],["-d","./Dockerfile.wheels"],["-i","quay.io/pypa/manylinux2014_x86_64"]])
+def test_app_with_pip_dependencies(flags, app_dir):
     app_json = os.path.join(app_dir, 'app.json')
     expected_app_json = os.path.join(app_dir, 'expected_app_json.out')
-
-    result = subprocess.run([os.path.join(PRE_COMMIT_DIR, 'package_app_dependencies')],
+    print(os.path.join(PRE_COMMIT_DIR, 'package_app_dependencies'), *flags)
+    result = subprocess.run([os.path.join(PRE_COMMIT_DIR, 'package_app_dependencies'), *flags],
                             cwd=app_dir,
                             capture_output=True)
     print(result.stderr.decode())
