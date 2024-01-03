@@ -3,7 +3,23 @@
 APP_DIR=$(pwd)
 SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
-IMAGE="${1-quay.io/pypa/manylinux2014_x86_64}"
+IMAGE="quay.io/pypa/manylinux2014_x86_64"
+DOCKERFILE=""
+
+while getopts 'i:d:' flag; do
+  case "${flag}" in
+    i) IMAGE="${OPTARG}"  ;;
+    d) DOCKERFILE="${OPTARG}" ;;
+  esac
+done
+
+function prepare_docker_image(){
+  if [[ $DOCKERFILE != "" ]]; then
+      IMAGE="$(basename $(dirname $APP_DIR))/$(basename $APP_DIR)"
+      echo "Creating image from context $DOCKERFILE, tag: $IMAGE"
+      docker build -t $IMAGE -f $DOCKERFILE $APP_DIR
+  fi
+}
 
 function package_py3_app_dependencies() {
   PYTHON_VERSION_STRING=$1
@@ -44,5 +60,6 @@ fi
 
 pip39_dependencies_key='pip39_dependencies'
 
+prepare_docker_image
 package_py3_app_dependencies 'cp36-cp36m' $pip3_dependencies_key
 package_py3_app_dependencies 'cp39-cp39' $pip39_dependencies_key
