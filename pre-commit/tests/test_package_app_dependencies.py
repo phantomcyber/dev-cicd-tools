@@ -4,6 +4,7 @@ import shutil
 import subprocess
 
 import pytest
+from uuid import uuid4
 from jsondiff import diff
 
 PRE_COMMIT_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
@@ -28,12 +29,13 @@ def app_dir(request):
         os.rename(app_json_copy, app_json)
 
     app_dir = request.param
+    backup_uid = uuid4().hex
 
     wheels_dir = os.path.join(app_dir, 'wheels')
-    wheels_dir_copy = os.path.join(app_dir, 'wheels-copy')
+    wheels_dir_copy = os.path.join(app_dir, f'wheels-copy-{backup_uid}')
 
     app_json = os.path.join(app_dir, 'app.json')
-    app_json_copy = os.path.join(app_dir, 'app_json_copy.txt')
+    app_json_copy = os.path.join(app_dir, f'app_json_copy_{backup_uid}.txt')
 
     backup_files()
     request.addfinalizer(restore_files)
@@ -41,11 +43,11 @@ def app_dir(request):
     return app_dir
 
 
-def test_app_with_pip_dependencies(app_dir):
+@pytest.mark.parametrize("flags",[[],["-d","./Dockerfile.wheels"],["-i","quay.io/pypa/manylinux2014_x86_64"]])
+def test_app_with_pip_dependencies(flags, app_dir):
     app_json = os.path.join(app_dir, 'app.json')
     expected_app_json = os.path.join(app_dir, 'expected_app_json.out')
-
-    result = subprocess.run([os.path.join(PRE_COMMIT_DIR, 'package_app_dependencies')],
+    result = subprocess.run([os.path.join(PRE_COMMIT_DIR, 'package_app_dependencies'), *flags],
                             cwd=app_dir,
                             capture_output=True)
     print(result.stderr.decode())
