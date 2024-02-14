@@ -164,11 +164,8 @@ def test_start_release_happy_path(session,
         app_json, indent = deserialize_app_json(app_json_next)
         app_json['app_version'] = expected_next_version
 
-        app_json_next = app_json_next.copy()
-        app_json_next['content'] = base64.b64encode(json.dumps(app_json, indent=indent).encode(DEFAULT_ENCODING))
-
         post_blob_sha_l = [json_sha]
-        expected_blobs = [base64.b64decode(app_json_next['content']).decode(DEFAULT_ENCODING)]
+        expected_blobs = [f'{json.dumps(app_json, indent=indent)}\n']
         expected_tree = [('{}.json'.format(APP_NAME), json_sha)]
     else:
         expected_next_version = next_version
