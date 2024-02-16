@@ -104,7 +104,7 @@ def start_release(session, app_dir=os.getenv('GITHUB_WORKSPACE')):
 
         app_json_next['app_version'] = app_version_next = app_version_main[:-1] + str(int(app_version_main[-1]) + 1)
         logging.info('Updated the app version in next to be %s', app_version_next)
-        updates[app_json_file] = json.dumps(app_json_next, indent=app_json_indent)
+        updates[app_json_file] = f'{json.dumps(app_json_next, indent=app_json_indent)}\n'
 
     # Generate release notes
     release_note_updates = generate_release_notes(app_dir, app_version_next, app_json_next)
