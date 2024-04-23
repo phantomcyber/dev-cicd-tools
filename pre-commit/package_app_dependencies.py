@@ -30,6 +30,25 @@ WHEEL_PATTERN = re.compile(
     r'(?P<platform>.+)\.whl$',
     re.IGNORECASE)
 
+# We don't want to include these wheels in bundled app packages, because SOAR already makes them available.
+# Note that hyphens and underscores are synonymous when specifying a Python package in requirements.txt.
+# However, wheel filenames will always use underscores, because hyphens are illegal in a package path.
+# Thus, we will use the underscore convention in this list.
+IGNORED_WHEELS = [
+    "beautifulsoup4",
+    "soupsieve",
+    "parse",
+    "python_dateutil",
+    "six",
+    "requests",
+    "certifi",
+    "charset_normalizer",
+    "idna",
+    "urllib3",
+    "sh",
+    "xmltodict",
+]
+
 Wheel = namedtuple('Wheel', ['file_name', 'distribution', 'python_version', 'platform'])
 AppJsonWheelEntry = namedtuple('AppJsonWheel', ['module', 'input_file'])
 
@@ -279,6 +298,11 @@ def main(args):
         wheel_file_names = set(os.listdir(temp_dir))
         all_built_wheels = set(Wheel(m.group(), m.group('distribution'), m.group('python_version'), m.group('platform'))
                                for m in (WHEEL_PATTERN.match(f) for f in wheel_file_names))
+
+        # At this point, `all_built_wheels` has every dependency from requirements.txt, and all of their dependencies.
+        # This is the perfect time to filter out all of the wheels that we don't want to include.
+        all_built_wheels = set(w for w in all_built_wheels if w.distribution not in IGNORED_WHEELS)
+
         updated_app_json_wheel_entries = []
 
         if repair_wheels:
