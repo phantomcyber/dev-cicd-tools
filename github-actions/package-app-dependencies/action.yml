@@ -17,4 +17,4 @@ runs:
   steps:
     - uses: docker://quay.io/pypa/manylinux2014_x86_64
       with:
-        args: "find /github"
+        args: "find ."
