@@ -17,4 +17,4 @@ runs:
   steps:
     - uses: docker://quay.io/pypa/manylinux2014_x86_64
       with:
-        args: "/opt/python/${{inputs.HOST_PYTHON_VERSION}}/bin/python main.py"
+        args: "/opt/python/${{inputs.HOST_PYTHON_VERSION}}/bin/python /github/workflow/main.py"
