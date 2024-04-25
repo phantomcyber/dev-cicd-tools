@@ -13,12 +13,7 @@ inputs:
     required: true
     default: 'cp36-cp36m,cp39-cp39'
 runs:
-  using: 'docker'
-  image: 'docker://quay.io/pypa/manylinux2014_x86_64'
-  entrypoint: "/opt/python/${{ inputs.HOST_PYTHON_VERSION }}/bin/python"
-  env:
-    GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
-    HOST_PYTHON_VERSION: ${{ inputs.HOST_PYTHON_VERSION }}
-    TARGET_PYTHON_VERSIONS: ${{ inputs.TARGET_PYTHON_VERSIONS }}
-  args:
-    - main.py
+  using: 'composite'
+  steps:
+    - uses: docker://quay.io/pypa/manylinux2014_x86_64
+      run: "/opt/python/${{inputs.HOST_PYTHON_VERSION}}/bin/python main.py"
