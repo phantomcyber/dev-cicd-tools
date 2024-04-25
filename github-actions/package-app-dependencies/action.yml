@@ -16,4 +16,5 @@ runs:
   using: 'composite'
   steps:
     - uses: docker://quay.io/pypa/manylinux2014_x86_64
-      run: "/opt/python/${{inputs.HOST_PYTHON_VERSION}}/bin/python main.py"
+      with:
+        args: "/opt/python/${{inputs.HOST_PYTHON_VERSION}}/bin/python main.py"
