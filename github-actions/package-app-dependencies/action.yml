@@ -28,4 +28,5 @@ runs:
         GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
       shell: bash
       run: |
+        which auditwheel || echo "auditwheel not installed"
         python ${{ github.action_path }}/main.py
