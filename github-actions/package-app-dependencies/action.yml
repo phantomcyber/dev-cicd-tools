@@ -4,17 +4,28 @@ inputs:
   GITHUB_TOKEN:
     description: 'PAT used to write to the target repo'
     required: true
-  HOST_PYTHON_VERSION:
-    description: 'The Python version used to execute the GitHub action'
+  python-version:
+    description: 'Python version used for bundling wheels'
     required: true
-    default: 'cp39-cp39'
-  TARGET_PYTHON_VERSIONS:
-    description: 'Comma-separated list of Python versions to bundle wheels for'
-    required: true
-    default: 'cp36-cp36m,cp39-cp39'
 runs:
   using: 'composite'
   steps:
-    - uses: docker://quay.io/pypa/manylinux2014_x86_64
+    - name: Set up Python
+      uses: actions/setup-python@v5
       with:
-        args: "find ${{ github.action_path }}"
+        python-version: ${{ inputs.python-version }}
+    - name: Check pip cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip${{ inputs.python-version }}-soar-app-ci
+    - name: Checkout app repo
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.ref }}
+    - name: Package app dependencies for this Python version
+      env:
+        GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
+      shell: bash
+      run: |
+        python ${{ github.action_path }}/main.py
