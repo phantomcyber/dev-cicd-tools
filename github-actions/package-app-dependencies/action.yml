@@ -23,6 +23,9 @@ runs:
       uses: actions/checkout@v4
       with:
         ref: ${{ github.ref }}
+    - name: Install Python dependencies
+      shell: bash
+      run: pip install auditwheel
     - name: Package app dependencies for this Python version
       env:
         GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
