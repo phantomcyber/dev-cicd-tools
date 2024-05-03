@@ -25,11 +25,20 @@ runs:
         ref: ${{ github.ref }}
     - name: Install Python dependencies
       shell: bash
-      run: pip install auditwheel
+      run: |
+        pip install --upgrade pip
+        pip install requests
     - name: Package app dependencies for this Python version
-      env:
-        GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
       shell: bash
       run: |
-        which auditwheel || echo "auditwheel not installed"
         python ${{ github.action_path }}/main.py
+    - name: Commit the updated dependencies if necessary
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
+      run: |
+        git config user.name "splunk-soar-connectors-admin"
+        git config user.email "admin@splunksoar"
+        git add "*.json"
+        git add "wheels"
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Bundle dependency wheels"; git push)
