@@ -158,7 +158,7 @@ def fetch_wheels(packages: list[PipPackage]):
 
 def print_stanza_cleanup_notice(filename: str, stanza_name: str):
     print(
-        f"::notice file={filename}::Removed `{stanza_name}` from the JSON file, "
+        f"::notice file={filename},line=1::Removed `{stanza_name}` from the JSON file, "
         "as it is no longer needed."
     )
 
@@ -186,7 +186,7 @@ def write_wheels_to_json(packages: list[PipPackage]):
 
 def print_redundant_requirement_warning(package_name: str):
     print(
-        f"::warning file=requirements.txt::`{package_name}` is provided by the SOAR platform. "
+        f"::warning file=requirements.txt,line=1::`{package_name}` is provided by the SOAR platform. "
         "Its wheels will not be bundled into the repo. "
         "Consider removing it, or moving it to `requirements-dev.txt`."
     )
@@ -198,7 +198,7 @@ def print_flagged_package_warning(package_name: str, direct: bool):
     else:
         warning_preface = f"A requirement has `{package_name}` as a dependency."
     warning_reason = WARN_WHEELS.get(package_name)
-    print(f"::warning file=requirements.txt::{warning_preface} {warning_reason}")
+    print(f"::warning file=requirements.txt,line=1::{warning_preface} {warning_reason}")
 
 
 def main():
