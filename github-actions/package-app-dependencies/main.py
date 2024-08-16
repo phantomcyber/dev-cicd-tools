@@ -249,7 +249,7 @@ def put_summary_comment(redundant_packages: list[str], flagged_packages: list[Fl
     comment_lines: list[str] = []
 
     if redundant_packages:
-        comment_lines.append("# Redundant packages")
+        comment_lines.append("# :warning: Redundant packages")
         comment_lines.append("The following packages are provided by the SOAR platform, and do not need to be included with each connector. Their wheels will not be bundled into the repo.")
         comment_lines.append("Consider removing them from `requirements.txt`, or moving them to `dev-requirements.txt`.")
         for package in redundant_packages:
@@ -258,10 +258,10 @@ def put_summary_comment(redundant_packages: list[str], flagged_packages: list[Fl
 
     for package in flagged_packages:
         if package.is_direct:
-            comment_lines.append(f"# `{package.name}` is listed in `requirements.txt`.")
+            comment_lines.append(f"# :warning: `{package.name}` is listed in `requirements.txt`.")
         else:
-            comment_lines.append(f"# A requirement has `{package.name}` as a dependency.")
-        comment_lines.append(package.reason)
+            comment_lines.append(f"# :warning: A requirement has `{package.name}` as a dependency.")
+        comment_lines.append(f"\n{package.reason}\n")
         comment_lines.append("---")
 
     if comment_lines:
