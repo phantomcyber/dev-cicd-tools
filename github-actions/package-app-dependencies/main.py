@@ -9,6 +9,7 @@ import re
 
 from urllib.parse import urlparse
 import requests
+from github import Github, Auth
 
 
 APP_PATH = Path.cwd()
@@ -222,6 +223,29 @@ def print_flagged_package_warning(package_name: str, direct: bool):
 
 
 def put_summary_comment(redundant_packages: list[str], flagged_packages: list[FlaggedPackage]):
+    if github_token := os.environ.get("GITHUB_TOKEN"):
+        auth = Auth.Token(github_token)
+        github = Github(auth)
+    else:
+        print("Skipping summary comment because no GITHUB_TOKEN was set.")
+        return
+    
+    if repo_name := os.environ.get("GITHUB_REPO"):
+        repo = github.get_repo(repo_name)
+        if ref_name := os.environ.get("GITHUB_REF"):
+            ref = repo.get_commit(ref_name)
+            pulls = ref.get_pulls()
+        else:
+            print("SKipping summary comment because no GITHUB_REF was set.")
+            return
+    else:
+        print("Skipping summary comment because no GITHUB_REPO was set.")
+        return
+    
+    if pulls.totalCount == 0:
+        print("Skipping summary comment because there are no PRs associated with this commit.")
+        return
+
     comment_lines: list[str] = []
 
     if redundant_packages:
@@ -241,8 +265,9 @@ def put_summary_comment(redundant_packages: list[str], flagged_packages: list[Fl
         comment_lines.append("---")
 
     if comment_lines:
-        with Path("summary_comment.md").open("+a") as comment_file:
-            comment_file.writelines(comment_lines)
+        comment_body = '\n'.join(comment_lines)
+        for pull in pulls:
+            pull.create_comment(comment_body)
 
 
 def main():

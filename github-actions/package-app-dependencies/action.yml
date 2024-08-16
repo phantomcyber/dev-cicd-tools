@@ -27,15 +27,15 @@ runs:
       shell: bash
       run: |
         pip install --upgrade pip
-        pip install requests
+        pip install requests PyGithub
     - name: Package app dependencies for this Python version
       shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
+        GITHUB_REPO: ${{ github.repository }}
+        GITHUB_REF: ${{ github.ref }}
       run: |
         python ${{ github.action_path }}/main.py
-    - name: Post a comment summarizing any warnings during the packaging process
-      uses: thollander/actions-comment-pull-request@v2
-      with:
-        filePath: summary_comment.md
     - name: Commit the updated dependencies if necessary
       shell: bash
       env:
