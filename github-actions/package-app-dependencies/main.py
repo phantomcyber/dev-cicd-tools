@@ -253,7 +253,7 @@ def put_summary_comment(redundant_packages: list[str], flagged_packages: list[Fl
         comment_lines.append("The following packages are provided by the SOAR platform, and do not need to be included with each connector. Their wheels will not be bundled into the repo.")
         comment_lines.append("Consider removing them from `requirements.txt`, or moving them to `dev-requirements.txt`.")
         for package in redundant_packages:
-            comment_lines.append(f"- `${package}`")
+            comment_lines.append(f"- `{package}`")
         comment_lines.append("---")
 
     for package in flagged_packages:
