@@ -267,7 +267,7 @@ def put_summary_comment(redundant_packages: list[str], flagged_packages: list[Fl
     if comment_lines:
         comment_body = '\n'.join(comment_lines)
         for pull in pulls:
-            pull.create_comment(comment_body, ref, "requirements.txt", 0)
+            pull.create_comment(comment_body, ref, "requirements.txt", 1)
 
 
 def main():
