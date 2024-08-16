@@ -1,14 +1,14 @@
-name: 'Package App Dependencies'
+name: "Package App Dependencies"
 description: "Bundle an app's Python dependency wheels into the repo"
 inputs:
   GITHUB_TOKEN:
-    description: 'PAT used to write to the target repo'
+    description: "PAT used to write to the target repo"
     required: true
   python-version:
-    description: 'Python version used for bundling wheels'
+    description: "Python version used for bundling wheels"
     required: true
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -32,6 +32,10 @@ runs:
       shell: bash
       run: |
         python ${{ github.action_path }}/main.py
+    - name: Post a comment summarizing any warnings during the packaging process
+      uses: thollander/actions-comment-pull-request@v2
+      with:
+        filePath: summary_comment.md
     - name: Commit the updated dependencies if necessary
       shell: bash
       env:

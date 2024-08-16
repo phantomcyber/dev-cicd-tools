@@ -1,8 +1,9 @@
 from typing import NamedTuple
+from dataclasses import dataclass
 from pathlib import Path
 import json
 import subprocess
-import sys
+import os
 import shutil
 import re
 
@@ -51,11 +52,13 @@ WARN_WHEELS = {
 }
 
 
-class AppJson(NamedTuple):
+@dataclass
+class AppJson:
     path: Path
     content: dict
 
 
+@dataclass
 class PipPackageDownloadInfo:
     url: str
 
@@ -63,6 +66,7 @@ class PipPackageDownloadInfo:
         self.url = props["url"]
 
 
+@dataclass
 class PipPackageMetadata:
     name: str
     version: str
@@ -72,6 +76,7 @@ class PipPackageMetadata:
         self.version = props["version"]
 
 
+@dataclass
 class PipPackage:
     requested: bool
     download_info: PipPackageDownloadInfo
@@ -98,6 +103,16 @@ class PipTransaction:
 
     def __init__(self, props):
         self.install = [PipPackage(pkg) for pkg in props["install"]]
+
+
+@dataclass
+class FlaggedPackage:
+    name: str
+    is_direct: bool
+
+    @property
+    def reason(self) -> str:
+        return WARN_WHEELS[self.name]
 
 
 def load_app_json() -> AppJson:
@@ -128,23 +143,28 @@ def prepare_wheels_directory():
 
 
 def generate_pip_transaction() -> PipTransaction:
-    pip_command = subprocess.run(
-        [
-            "pip",
-            "install",
-            "--quiet",
-            "--ignore-installed",
-            "--dry-run",
-            "--report=-",
-            f"--python-version={TARGET_PYTHON}",
-            f"--platform={TARGET_PLATFORM}",
-            "--only-binary=:all:",
-            f"--requirement={REQUIREMENTS_PATH.absolute()}",
-        ],
-        capture_output=True,
-        check=True,
-    )
-    return PipTransaction(json.loads(pip_command.stdout))
+    try:
+        pip_command = subprocess.run(
+            [
+                "pip",
+                "install",
+                "--quiet",
+                "--ignore-installed",
+                "--dry-run",
+                "--report=-",
+                f"--python-version={TARGET_PYTHON}",
+                f"--platform={TARGET_PLATFORM}",
+                "--only-binary=:all:",
+                f"--requirement={REQUIREMENTS_PATH.absolute()}",
+            ],
+            capture_output=True,
+            check=True,
+        )
+        return PipTransaction(json.loads(pip_command.stdout))
+    except subprocess.CalledProcessError as e:
+        print(e.stdout.decode())
+        print(e.stderr.decode())
+        raise RuntimeError(f"Failed to generate Pip transaction: pip returned exit code {e.returncode}")
 
 
 def fetch_wheels(packages: list[PipPackage]):
@@ -201,16 +221,37 @@ def print_flagged_package_warning(package_name: str, direct: bool):
     print(f"::warning file=requirements.txt,line=1::{warning_preface} {warning_reason}")
 
 
+def put_summary_comment(redundant_packages: list[str], flagged_packages: list[FlaggedPackage]):
+    comment_lines: list[str] = []
+
+    if redundant_packages:
+        comment_lines.append("# Redundant packages")
+        comment_lines.append("The following packages are provided by the SOAR platform, and do not need to be included with each connector. Their wheels will not be bundled into the repo.")
+        comment_lines.append("Consider removing them from `requirements.txt`, or moving them to `dev-requirements.txt`.")
+        for package in redundant_packages:
+            comment_lines.append(f"- `${package}`")
+        comment_lines.append("---")
+
+    for package in flagged_packages:
+        if package.is_direct:
+            comment_lines.append(f"# `{package.name}` is listed in `requirements.txt`.")
+        else:
+            comment_lines.append(f"# A requirement has `{package.name}` as a dependency.")
+        comment_lines.append(package.reason)
+        comment_lines.append("---")
+
+    if comment_lines:
+        with Path("summary_comment.md").open("+a") as comment_file:
+            comment_file.writelines(comment_lines)
+
+
 def main():
-    try:
-        pip_transaction = generate_pip_transaction()
-    except subprocess.CalledProcessError as e:
-        print(e.stderr.decode())
-        print(e.stdout.decode())
-        print("Failed to generate Pip transaction.")
-        sys.exit(e.returncode)
+    pip_transaction = generate_pip_transaction()
 
     wheels_to_fetch: list[PipPackage] = []
+
+    redundant_packages: list[str] = []
+    flagged_packages: list[FlaggedPackage] = []
 
     for dependency in pip_transaction.install:
         name = dependency.metadata.name
@@ -218,12 +259,14 @@ def main():
         if name in IGNORED_WHEELS:
             print(f"Skipping {name} as it is provided by SOAR platform.")
             if direct:
+                redundant_packages.append(name)
                 print_redundant_requirement_warning(name)
         else:
             wheels_to_fetch.append(dependency)
             print(f"Will download {name}.")
             if name in WARN_WHEELS:
                 print(f"Will recommend removing {name}.")
+                flagged_packages.append(FlaggedPackage(name, direct))
                 print_flagged_package_warning(name, direct)
 
     print(f"Will fetch: {[w.metadata.name for w in wheels_to_fetch]}")
@@ -231,6 +274,8 @@ def main():
     prepare_wheels_directory()
     fetch_wheels(wheels_to_fetch)
     write_wheels_to_json(wheels_to_fetch)
+
+    put_summary_comment(redundant_packages, flagged_packages)
 
 
 if __name__ == "__main__":
