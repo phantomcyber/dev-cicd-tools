@@ -225,7 +225,7 @@ def print_flagged_package_warning(package_name: str, direct: bool):
 def put_summary_comment(redundant_packages: list[str], flagged_packages: list[FlaggedPackage]):
     if github_token := os.environ.get("GITHUB_TOKEN"):
         auth = Auth.Token(github_token)
-        github = Github(auth)
+        github = Github(auth=auth)
     else:
         print("Skipping summary comment because no GITHUB_TOKEN was set.")
         return
