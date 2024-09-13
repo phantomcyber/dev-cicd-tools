@@ -1,0 +1,7 @@
+[tool.black]
+line-length = 145
+target-version = ['py39']
+verbose = true
+
+[tool.isort]
+line_length = 145
