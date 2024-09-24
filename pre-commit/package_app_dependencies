@@ -4,7 +4,7 @@ APP_DIR=$(pwd)
 SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
 IMAGE="quay.io/pypa/manylinux2014_x86_64"
-DOCKERFILE=""
+DOCKERFILE="$SCRIPT_DIR/Dockerfile.wheels"
 
 while getopts 'i:d:' flag; do
   case "${flag}" in
