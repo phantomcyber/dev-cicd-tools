@@ -21,7 +21,7 @@ import sys
 from collections import namedtuple
 from enum import Enum, unique
 
-PLATFORM = 'manylinux2014_x86_64'
+PLATFORM = 'manylinux_2_28_x86_64'
 REPAIRED_WHEELS_REL_PATH = 'repaired-wheels'
 
 WHEEL_PATTERN = re.compile(
