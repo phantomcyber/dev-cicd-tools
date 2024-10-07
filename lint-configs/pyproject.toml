@@ -5,3 +5,4 @@ verbose = true
 
 [tool.isort]
 line_length = 145
+profile = "black"
