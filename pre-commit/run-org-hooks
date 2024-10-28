@@ -9,6 +9,8 @@ import os
 import shutil
 import sys
 from pathlib import Path
+import toml
+import configparser
 
 ORGHOOKS_DIR = Path(__file__).resolve().parent
 
@@ -16,12 +18,42 @@ LINT_CONFIG_FILE = 'tox.ini'
 MODERN_LINT_CONFIG_FILE = 'pyproject.toml'
 
 
+def merge_dicts(source, target):
+    """Merge source dictionary into target dictionary."""
+    for key, value in source.items():
+        if isinstance(value, dict) and key in target:
+            target[key] = merge_dicts(value, target[key])
+        else:
+            target[key] = value
+    return target
+
+def apply_configs(org_config_file, target_file):
+    if not os.path.exists(org_config_file):
+        print(f"Error: '{org_config_file}' does not exist.")
+        return
+
+    org_config = toml.load(org_config_file)
+
+    if os.path.exists(target_file):
+        target_config = toml.load(target_file)
+    else:
+        target_config = {}
+
+    merged_config = merge_dicts(org_config, target_config)
+
+    with open(target_file, 'w') as f:
+        toml.dump(merged_config, f)
+
+    print(f"Successfully applied configurations from '{org_config_file}' to '{target_file}'.")
+
+
 def copy_configs(dest_dir):
     """Override configurations for hooks"""
     dev_tools_dir = ORGHOOKS_DIR.parent
     lint_configs_dir = dev_tools_dir / 'lint-configs'
-    shutil.copyfile(lint_configs_dir / LINT_CONFIG_FILE, dest_dir / LINT_CONFIG_FILE)
-    shutil.copyfile(lint_configs_dir / MODERN_LINT_CONFIG_FILE, dest_dir / MODERN_LINT_CONFIG_FILE)
+    apply_configs(lint_configs_dir / MODERN_LINT_CONFIG_FILE, dest_dir / MODERN_LINT_CONFIG_FILE)
+    # shutil.copyfile(lint_configs_dir / LINT_CONFIG_FILE, dest_dir / LINT_CONFIG_FILE)
+    # shutil.copyfile(lint_configs_dir / MODERN_LINT_CONFIG_FILE, dest_dir / MODERN_LINT_CONFIG_FILE)
 
 
 def main():
@@ -32,4 +64,5 @@ def main():
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    # sys.exit(main())
+    copy_configs(Path.cwd())
