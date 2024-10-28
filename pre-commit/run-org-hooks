@@ -6,7 +6,6 @@ Modified from: https://stackoverflow.com/a/59055569
 """
 
 import os
-import shutil
 import sys
 from pathlib import Path
 import toml
@@ -16,6 +15,33 @@ ORGHOOKS_DIR = Path(__file__).resolve().parent
 
 LINT_CONFIG_FILE = 'tox.ini'
 MODERN_LINT_CONFIG_FILE = 'pyproject.toml'
+
+def merge_sections(source, target):
+    """Merge sections from the source INI into the target INI."""
+    for section in source.sections():
+        if not target.has_section(section):
+            target.add_section(section)
+        for key, value in source.items(section):
+            target.set(section, key, value)
+
+def apply_configs_ini(org_config_file, target_file):
+    if not os.path.exists(org_config_file):
+        print(f"Error: '{org_config_file}' does not exist.")
+        return
+
+    org_config = configparser.ConfigParser()
+    org_config.read(org_config_file)
+
+    target_config = configparser.ConfigParser()
+    if os.path.exists(target_file):
+        target_config.read(target_file)
+
+    merge_sections(org_config, target_config)
+
+    with open(target_file, 'w') as f:
+        target_config.write(f)
+
+    print(f"Successfully applied configurations from '{org_config_file}' to '{target_file}'.")
 
 
 def merge_dicts(source, target):
@@ -27,7 +53,7 @@ def merge_dicts(source, target):
             target[key] = value
     return target
 
-def apply_configs(org_config_file, target_file):
+def apply_configs_toml(org_config_file, target_file):
     if not os.path.exists(org_config_file):
         print(f"Error: '{org_config_file}' does not exist.")
         return
@@ -51,9 +77,8 @@ def copy_configs(dest_dir):
     """Override configurations for hooks"""
     dev_tools_dir = ORGHOOKS_DIR.parent
     lint_configs_dir = dev_tools_dir / 'lint-configs'
-    apply_configs(lint_configs_dir / MODERN_LINT_CONFIG_FILE, dest_dir / MODERN_LINT_CONFIG_FILE)
-    # shutil.copyfile(lint_configs_dir / LINT_CONFIG_FILE, dest_dir / LINT_CONFIG_FILE)
-    # shutil.copyfile(lint_configs_dir / MODERN_LINT_CONFIG_FILE, dest_dir / MODERN_LINT_CONFIG_FILE)
+    apply_configs_ini(lint_configs_dir / LINT_CONFIG_FILE, dest_dir / LINT_CONFIG_FILE)
+    apply_configs_toml(lint_configs_dir / MODERN_LINT_CONFIG_FILE, dest_dir / MODERN_LINT_CONFIG_FILE)
 
 
 def main():
