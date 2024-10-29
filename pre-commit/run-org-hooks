@@ -89,5 +89,4 @@ def main():
 
 
 if __name__ == '__main__':
-    # sys.exit(main())
-    copy_configs(Path.cwd())
+    sys.exit(main())
