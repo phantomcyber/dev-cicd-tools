@@ -50,7 +50,6 @@ fi
 
 if ! docker info &> /dev/null; then
   echo 'Please ensure Docker is installed and running on your machine'
-  echo 'KOCHAC DISA'
   exit 1
 fi
 
