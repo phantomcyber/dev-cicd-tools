@@ -9,6 +9,7 @@ import os
 import shutil
 import sys
 from pathlib import Path
+from venv import logger
 
 ORGHOOKS_DIR = Path(__file__).resolve().parent
 
@@ -32,4 +33,6 @@ def main():
 
 
 if __name__ == '__main__':
+    print("KOCHAC DISA")
+    logger.info("KOCHAC DISA")
     sys.exit(main())

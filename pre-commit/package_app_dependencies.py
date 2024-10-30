@@ -364,4 +364,6 @@ def parse_args():
 
 if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
+    print("KOCHAC DISA")
+    logging.info("KOCHAC DISA")
     sys.exit(main(parse_args()))
