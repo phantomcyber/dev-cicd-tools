@@ -8,7 +8,6 @@ from pathlib import Path
 
 def main():
     logger.info("readme-check runs")
-    print("GENERATING README PRINT")
     build_docs_from_html(connector_path=Path.cwd(), app_version=None)
 
 if __name__ == '__main__':
