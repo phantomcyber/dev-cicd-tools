@@ -12,5 +12,4 @@
 -   id: readme-check
     name: readme-check
     language: script
-    entry: pre-commit/readme-check
-    verbose: true
+    entry: pre-commit/readme_check

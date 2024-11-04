@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import sys
 import logging
 from venv import logger
@@ -13,5 +15,6 @@ def main():
 
 if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
-    logging.info("GENRATING README")
+    logging.info("GENERATING README")
+    print("GENERATING README PRINT")
     sys.exit(main())
