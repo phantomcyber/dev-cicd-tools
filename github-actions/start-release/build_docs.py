@@ -207,9 +207,8 @@ def main(args):
 def parse_args():
     help_str = " ".join(line.strip() for line in __doc__.strip().splitlines())
     parser = argparse.ArgumentParser(description=help_str)
-    parser.add_argument("connector_path", help="Path to the connector", default=Path.cwd())
-    parser.add_argument("from_html", nargs='?', default=False,
-                        help="Build from html instead of md")
+    parser.add_argument("connector_path", help="Path to the connector")
+    parser.add_argument("from_html", nargs='?', default=False, help="Build from html instead of md")
     return parser.parse_args()
 
 
