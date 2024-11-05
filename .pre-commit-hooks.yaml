@@ -12,4 +12,4 @@
 -   id: readme_check
     name: readme check
     language: script
-    entry: github-actions/start-release/readme_check.py
+    entry: github-actions/start-release/build_docs.py

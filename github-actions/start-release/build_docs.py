@@ -90,7 +90,6 @@ def load_file(file_path):
         logging.warning("Couldn't find file: %s", file_path)
     return None
 
-# saves generated doc to file
 def render_template_to_file(connector_path, json_content):
     env = Environment(
         loader=FileSystemLoader(TEMPLATE_DIR),
@@ -123,7 +122,6 @@ def check_markdown_for_template_text(md_content):
 
         return first_line_in_template in md_content
 
-# this builds our doc
 def build_docs(connector_path, app_version=None):
     connector_path = Path(connector_path)
     input_readme_path = Path(connector_path, README_INPUT_NAME)
@@ -166,14 +164,11 @@ def has_markdown_comment(md_content):
 
 
 def load_existing_markdown(connector_path):
-# can I use it locally? I believe so
     md_path = Path(connector_path, README_INPUT_NAME)
 
-# if file does not exist return None
     if not md_path.is_file():
         return None
 
-# returns string from file
     with open(md_path) as md_file:
         return md_file.read()
 
@@ -212,7 +207,7 @@ def main(args):
 def parse_args():
     help_str = " ".join(line.strip() for line in __doc__.strip().splitlines())
     parser = argparse.ArgumentParser(description=help_str)
-    parser.add_argument("connector_path", help="Path to the connector")
+    parser.add_argument("connector_path", help="Path to the connector", default=Path.cwd())
     parser.add_argument("from_html", nargs='?', default=False,
                         help="Build from html instead of md")
     return parser.parse_args()
