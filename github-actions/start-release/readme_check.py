@@ -11,5 +11,5 @@ def main():
     build_docs(connector_path=Path.cwd(), app_version=None)
 
 if __name__ == '__main__':
-    logging.getLogger().setLevel(logging.INFO)
+    # logging.getLogger().setLevel(logging.INFO)
     sys.exit(main())
