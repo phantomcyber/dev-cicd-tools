@@ -11,8 +11,7 @@ from pathlib import Path
 #     build_docs(connector_path=Path.cwd(), app_version=None)
 #
 def pass_args():
-    help_str = " ".join(line.strip() for line in __doc__.strip().splitlines())
-    parser = argparse.ArgumentParser(description=help_str)
+    parser = argparse.ArgumentParser()
     parser.add_argument("connector_path", help="Path to the connector", default=Path.cwd())
     parser.add_argument("from_html", nargs='?', default=False, help="Build from html instead of md")
     return parser.parse_args()
