@@ -10,9 +10,9 @@ from pathlib import Path
 #     build_docs(connector_path=Path.cwd(), app_version=None)
 
 def pass_args():
-    default_path = Path.cwd()
+    default_path = str(Path.cwd())
     parser = argparse.ArgumentParser()
-    parser.add_argument("connector_path", default=default_path)
+    parser.add_argument("connector_path", default=lambda:default_path)
     parser.add_argument("from_html", default=False)
     args =  parser.parse_args()
     logging.info(" ARGS %s", args)
