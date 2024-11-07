@@ -197,6 +197,7 @@ def main(args):
     Main entrypoint.
     """
     connector_path = Path(args.connector_path)
+    logging.info("Connector path: %s", connector_path)
     from_html = args.from_html == "True"
     if from_html:
         build_docs_from_html(connector_path)

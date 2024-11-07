@@ -10,10 +10,17 @@ from pathlib import Path
 #     build_docs(connector_path=Path.cwd(), app_version=None)
 
 def pass_args():
+    default_path = Path.cwd()
     parser = argparse.ArgumentParser()
-    parser.add_argument("connector_path", default=Path.cwd())
+    parser.add_argument("connector_path", default=default_path)
     parser.add_argument("from_html", default=False)
-    return parser.parse_args()
+    args =  parser.parse_args()
+    logging.info(" ARGS %s", args)
+    logging.info(" ARGS CONNECTOR PATH %s", args.connector_path)
+    logging.info(" ARGS FROM HTML %s", args.from_html)
+    logging.info(" PATH CWD %s", Path.cwd())
+    logging.info(" PATH CWD DEFAULT %s", default_path)
+    return args
 
 if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
