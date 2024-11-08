@@ -5,21 +5,26 @@ import logging
 from build_docs import main
 from pathlib import Path
 
-# def main():
-#     logger.info("readme-check runs")
-#     build_docs(connector_path=Path.cwd(), app_version=None)
+
+def validate_dir_path(path):
+    if not Path(path).is_dir():
+        raise argparse.ArgumentTypeError(f"Provided {path} is not a directory.")
+    return path
 
 def pass_args():
-    default_path = str(Path.cwd())
-    parser = argparse.ArgumentParser()
-    parser.add_argument("connector_path", default=lambda:default_path)
-    parser.add_argument("from_html", default=False)
-    args =  parser.parse_args()
+    default_path = Path().resolve()
+    logging.info(" PATH CWD DEFAULT %s", default_path)
+    parser = argparse.ArgumentParser(allow_abbrev=False)
+    parser.add_argument("--connector_path", default=default_path, type=validate_dir_path)
+    parser.add_argument("--from_html", default=False, type=bool)
+    args = parser.parse_args()
     logging.info(" ARGS %s", args)
     logging.info(" ARGS CONNECTOR PATH %s", args.connector_path)
     logging.info(" ARGS FROM HTML %s", args.from_html)
     logging.info(" PATH CWD %s", Path.cwd())
     logging.info(" PATH CWD DEFAULT %s", default_path)
+    logging.info(" PATH FROM ARGS %s", args.connector_path)
+    logging.info(" ARGS %s", sys.argv)
     return args
 
 if __name__ == '__main__':
