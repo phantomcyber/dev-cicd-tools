@@ -8,7 +8,7 @@ from pathlib import Path
 
 def validate_dir_path(path):
     if not Path(path).is_dir():
-        raise argparse.ArgumentTypeError(f"Provided {path} is not a directory.")
+        raise argparse.ArgumentTypeError(f"Provided value: {path} is not a directory.")
     return path
 
 def pass_args():

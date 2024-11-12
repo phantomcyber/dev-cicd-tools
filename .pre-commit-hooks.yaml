@@ -13,3 +13,4 @@
     name: readme check
     language: script
     entry: github-actions/start-release/readme_check.py
+    pass_filenames: false
