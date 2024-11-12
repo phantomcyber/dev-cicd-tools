@@ -78,7 +78,7 @@ def get_app_json(app_json_dir):
                          if f.endswith(".json")
                          and "postman_collection" not in f][0]
     except IndexError:
-        logging.error("Unable to find app JSON in $s", app_json_dir)
+        logging.error("Unable to find app JSON")
         sys.exit(1)
     json_file_path = Path(app_json_dir, app_json_name)
     logging.info("Loading json: %s", app_json_name)
