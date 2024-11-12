@@ -12,7 +12,7 @@ def validate_dir_path(path):
     return path
 
 def pass_args():
-    default_path = Path().resolve()
+    default_path = Path().cwd()
     logging.info(" PATH CWD DEFAULT %s", default_path)
     parser = argparse.ArgumentParser(allow_abbrev=False)
     parser.add_argument("--connector_path", default=default_path, type=validate_dir_path)
