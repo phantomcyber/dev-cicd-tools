@@ -11,7 +11,7 @@ select = [
     "C90",
 ]
 
-# Ignore same rules as we used to with tox.ini
+# Ignore same relevant rules as we did to with tox.ini
 ignore = [
     "F403",
     "F405",
@@ -24,6 +24,10 @@ ignore = [
     "D",
 ]
 
+# Keep complexity below 28
+[tool.ruff.lint.mccabe]
+max-complexity = 28
+
 [tool.ruff.lint.isort]
 combine-as-imports = true
 lines-after-imports = 2
@@ -33,6 +37,3 @@ quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
-
-[tool.ruff.lint.mccabe]
-max-complexity = 28
