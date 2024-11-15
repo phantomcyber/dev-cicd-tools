@@ -16,7 +16,7 @@ jobs:
       CI_TOOLS_REPO: phantomcyber/dev-cicd-tools
       CI_TOOLS_BRANCH: main
       CI_TOOLS_DIR: dev-cicd-tools
-      LINT_CONFIG: dev-cicd-tools/lint-configs/tox.ini
+      MODERN_LINT_CONFIG: dev-cicd-tools/lint-configs/pyproject.toml
     strategy:
       fail-fast: false
       matrix:
@@ -38,9 +38,9 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install flake8 isort
+        python -m pip install ruff==0.7.3
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: Lint with flake8 and isort
+    - name: Lint with ruff
       run: |
-        flake8 . --config $LINT_CONFIG
-        isort . --check-only --settings-path $LINT_CONFIG
+        ruff check . --config $MODERN_LINT_CONFIG
+        ruff format --check . --config $MODERN_LINT_CONFIG
