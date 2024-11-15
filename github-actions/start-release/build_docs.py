@@ -72,7 +72,6 @@ def escape_markdown(data):
 
 def get_app_json(app_json_dir):
     logging.info("Looking for app JSON in: %s", app_json_dir)
-    app_json_name = ""
     try:
         app_json_name = [f for f in os.listdir(app_json_dir)
                          if f.endswith(".json")

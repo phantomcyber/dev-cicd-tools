@@ -9,7 +9,7 @@
     language: script
     entry: pre-commit/package_app_dependencies
     verbose: true
--   id: readme_check
+-   id: readme-check
     name: readme check
     language: script
     entry: github-actions/start-release/readme_check.py

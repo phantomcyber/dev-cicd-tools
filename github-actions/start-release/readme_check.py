@@ -2,13 +2,13 @@
 import argparse
 import sys
 import logging
-from build_docs import main
+from build_docs import main as build_docs
 from pathlib import Path
 
 
 def validate_dir_path(path):
     if not Path(path).is_dir():
-        raise argparse.ArgumentTypeError(f"Provided value: {path} is not a directory.")
+        raise argparse.ArgumentTypeError(f"{path} is not a directory.")
     return path
 
 def pass_args():
@@ -20,5 +20,5 @@ def pass_args():
 
 if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
-    sys.exit(main(pass_args()))
+    sys.exit(build_docs(pass_args()))
 
