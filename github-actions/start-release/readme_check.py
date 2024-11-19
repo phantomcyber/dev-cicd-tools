@@ -22,4 +22,3 @@ def pass_args():
 if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
     sys.exit(build_docs(pass_args()))
-
