@@ -157,11 +157,11 @@ def load_existing_markdown(connector_path):
         return md_file.read()
 
 
-def build_docs_from_html(connector_path, json_name=None, app_version=None):
+def build_docs_from_html(connector_path, app_version=None, json_name=None):
     connector_path = Path(connector_path)
     original_content = load_existing_markdown(connector_path)
     readme_html_to_markdown(connector_path, overwrite=True, json_name=json_name)
-    output_content, output_path = build_docs(connector_path, json_name=json_name, app_version=app_version)
+    output_content, output_path = build_docs(connector_path, app_version=app_version, json_name=json_name)
 
     if original_content:
         original_content = original_content.replace('\r','')
@@ -186,9 +186,9 @@ def main(args):
     if json_name is not None and not json_name.endswith(".json"):
         json_name = json_name + ".json"
     if from_html:
-        build_docs_from_html(connector_path, json_name)
+        build_docs_from_html(connector_path, json_name=json_name)
     else:
-        build_docs(connector_path, json_name)
+        build_docs(connector_path, json_name=json_name)
 
 
 def parse_args():
