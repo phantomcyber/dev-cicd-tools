@@ -22,7 +22,6 @@ WARNING: This script uses features only available in Python 3.8+.
 """
 
 import argparse
-import json
 import os
 import re
 from pathlib import Path
@@ -32,6 +31,8 @@ import pypandoc
 from bs4 import BeautifulSoup, Comment
 from gh_md_to_html import core_converter
 from tidylib import tidy_document
+from build_docs import get_app_json
+
 
 README_HTML_NAME = "readme.html"
 README_MD_NAME = "README.md"
@@ -107,13 +108,6 @@ def save_text(base_path, suffix, text_content):
 def save_word_lists(base_path, original_words, converted_words):
     save_text(base_path, ".original_words", "\n".join(original_words))
     save_text(base_path, ".converted_words", "\n".join(converted_words))
-
-
-def get_app_json(app_json_dir):
-    app_json = [f for f in os.listdir(app_json_dir) if f.endswith(".json")
-                and "postman_collection" not in f][0]
-    with open(Path(app_json_dir, app_json), "r") as json_file:
-        return json.load(json_file)
 
 
 def add_original_attribute(parsed_html_content, element_name):
@@ -379,7 +373,8 @@ def fix_relative_links(parsed_html_content, app_json_dir_path,
 
 def readme_html_to_markdown(connector_path, connector_name=None,
                             output_folder=None, overwrite=False,
-                            debug_mode=False):
+                            debug_mode=False,
+                            json_name=None):
 
     readme_html = Path(connector_path, README_HTML_NAME)
     if not readme_html.is_file():
@@ -444,7 +439,7 @@ def readme_html_to_markdown(connector_path, connector_name=None,
     _, converted_word_count, converted_words = \
         calculate_html_stats(parsed_rendered_markdown)
 
-    parsed_json = get_app_json(connector_path)
+    parsed_json = get_app_json(connector_path, json_name)
     written_info = {
         "word_diff": converted_word_count - original_word_count,
         "original_words": original_words,

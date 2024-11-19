@@ -70,15 +70,23 @@ def escape_markdown(data):
     else:
         return data
 
-def get_app_json(app_json_dir):
+def get_app_json(app_json_dir, json_name):
     logging.info("Looking for app JSON in: %s", app_json_dir)
-    try:
-        app_json_name = [f for f in os.listdir(app_json_dir)
-                         if f.endswith(".json")
-                         and "postman_collection" not in f][0]
-    except IndexError:
-        logging.error("Unable to find app JSON")
-        sys.exit(1)
+    if not json_name:
+        try:
+            app_json_name = [f for f in os.listdir(app_json_dir)
+                             if f.endswith(".json")
+                             and "postman_collection" not in f][0]
+        except IndexError:
+            logging.error("Unable to find app JSON")
+            sys.exit(1)
+    else:
+        if os.path.isfile(os.path.join(app_json_dir, f"{json_name}.json")):
+            app_json_name = json_name
+        else:
+            logging.error("Provided JSON name does not exist")
+            sys.exit(1)
+
     json_file_path = Path(app_json_dir, app_json_name)
     logging.info("Loading json: %s", app_json_name)
     with open(json_file_path, "r") as json_file:
@@ -126,11 +134,11 @@ def check_markdown_for_template_text(md_content):
 
         return first_line_in_template in md_content
 
-def build_docs(connector_path, app_version=None):
+def build_docs(connector_path, json_name=None, app_version=None):
     connector_path = Path(connector_path)
     input_readme_path = Path(connector_path, README_INPUT_NAME)
 
-    json_content = get_app_json(connector_path)
+    json_content = get_app_json(connector_path, json_name)
     if app_version:
         json_content["app_version"] = app_version
 
@@ -177,10 +185,10 @@ def load_existing_markdown(connector_path):
         return md_file.read()
 
 
-def build_docs_from_html(connector_path, app_version=None):
+def build_docs_from_html(connector_path, json_name=None, app_version=None):
     connector_path = Path(connector_path)
     original_content = load_existing_markdown(connector_path)
-    readme_html_to_markdown(connector_path, overwrite=True)
+    readme_html_to_markdown(connector_path, overwrite=True, json_name=json_name)
     output_content, output_path = build_docs(connector_path, app_version)
 
     if original_content:
@@ -201,19 +209,20 @@ def main(args):
     Main entrypoint.
     """
     connector_path = Path(args.connector_path)
-    logging.info("Connector path: %s", connector_path)
     from_html = args.from_html == "True"
+    json_name = args.json_name
     if from_html:
-        build_docs_from_html(connector_path)
+        build_docs_from_html(connector_path, json_name)
     else:
-        build_docs(connector_path)
+        build_docs(connector_path, json_name)
 
 
 def parse_args():
     help_str = " ".join(line.strip() for line in __doc__.strip().splitlines())
     parser = argparse.ArgumentParser(description=help_str)
     parser.add_argument("connector_path", help="Path to the connector")
-    parser.add_argument("from_html", nargs='?', default=False, help="Build from html instead of md")
+    parser.add_argument("from_html", default=False, help="Build from html instead of md")
+    parser.add_argument("json_name", default=None, type=str, nargs="?", help="JSON file name")
     return parser.parse_args()
 
 
