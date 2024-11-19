@@ -196,7 +196,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description=help_str)
     parser.add_argument("connector_path", help="Path to the connector")
     parser.add_argument("from_html", default=False, help="Build from html instead of md", nargs="?")
-    parser.add_argument("json_name", default=None, type=str, help="JSON file name")
+    parser.add_argument("json_name", default=None, type=str, help="JSON file name", nargs="?")
     return parser.parse_args()
 
 

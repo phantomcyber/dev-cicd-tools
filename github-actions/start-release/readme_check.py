@@ -15,7 +15,7 @@ def pass_args():
     parser = argparse.ArgumentParser(allow_abbrev=False)
     parser.add_argument("--connector_path", default=Path.cwd(), type=validate_dir_path)
     parser.add_argument("--from_html", default=False, type=bool, nargs="?")
-    parser.add_argument("--json_name", default=None, type=str)
+    parser.add_argument("--json_name", default=None, type=str, nargs="?")
     args = parser.parse_args()
     return args
 
