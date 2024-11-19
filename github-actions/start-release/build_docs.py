@@ -5,7 +5,6 @@ in github-flavored markdown format, and combines it with human-written
 author notes (legacy README.md).
 """
 import argparse
-import json
 import logging
 import os
 import re
@@ -19,6 +18,7 @@ from jinja2.lexer import Token
 from readme_to_markdown import (README_HTML_NAME, README_MD_ORIGINAL_NAME,
                                 get_visible_text_from_html, md_to_html,
                                 parse_html, readme_html_to_markdown)
+from build_docs_lib import get_app_json, generate_gh_fragment
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 TEMPLATE_DIR = Path(SCRIPT_DIR, "templates")
@@ -46,12 +46,6 @@ class EscapeMDFilterVarsExtension(Extension):
             prev_token = token
 
 
-def generate_gh_fragment(text):
-    text = text.lower()
-    text = re.sub(r"[^a-zA-Z0-9\s-]", "", text)
-    return re.sub(r"[\s]", "-", text)
-
-
 def generate_action_heading_text(text):
     return f"action: '{text}'"
 
@@ -69,28 +63,6 @@ def escape_markdown(data):
         return re.sub(r'([\\*])', r'\\\1', data)
     else:
         return data
-
-def get_app_json(app_json_dir, json_name):
-    logging.info("Looking for app JSON in: %s", app_json_dir)
-    if not json_name:
-        try:
-            app_json_name = [f for f in os.listdir(app_json_dir)
-                             if f.endswith(".json")
-                             and "postman_collection" not in f][0]
-        except IndexError:
-            logging.error("Unable to find app JSON")
-            sys.exit(1)
-    else:
-        if os.path.isfile(os.path.join(app_json_dir, f"{json_name}.json")):
-            app_json_name = json_name
-        else:
-            logging.error("Provided JSON name does not exist")
-            sys.exit(1)
-
-    json_file_path = Path(app_json_dir, app_json_name)
-    logging.info("Loading json: %s", app_json_name)
-    with open(json_file_path, "r") as json_file:
-        return json.load(json_file)
 
 
 def load_file(file_path):
@@ -211,6 +183,8 @@ def main(args):
     connector_path = Path(args.connector_path)
     from_html = args.from_html == "True"
     json_name = args.json_name
+    if json_name is not None and not json_name.endswith(".json"):
+        json_name = json_name + ".json"
     if from_html:
         build_docs_from_html(connector_path, json_name)
     else:
@@ -222,7 +196,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description=help_str)
     parser.add_argument("connector_path", help="Path to the connector")
     parser.add_argument("from_html", default=False, help="Build from html instead of md")
-    parser.add_argument("json_name", default=None, type=str, nargs="?", help="JSON file name")
+    parser.add_argument("json_name", default=None, type=str, help="JSON file name")
     return parser.parse_args()
 
 

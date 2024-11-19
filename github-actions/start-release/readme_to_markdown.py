@@ -23,7 +23,6 @@ WARNING: This script uses features only available in Python 3.8+.
 
 import argparse
 import os
-import re
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -31,7 +30,8 @@ import pypandoc
 from bs4 import BeautifulSoup, Comment
 from gh_md_to_html import core_converter
 from tidylib import tidy_document
-from build_docs import get_app_json
+
+from build_docs_lib import get_app_json, generate_gh_fragment
 
 
 README_HTML_NAME = "readme.html"
@@ -288,12 +288,6 @@ def find_closest_element(from_element, tag_names_to_find):
         return next
     else:
         return None
-
-
-def generate_gh_fragment(text):
-    text = text.lower()
-    text = re.sub(r"[^a-zA-Z0-9\s-]", "", text)
-    return re.sub(r"[\s]", "-", text)
 
 
 def fix_relative_links(parsed_html_content, app_json_dir_path,
