@@ -5,7 +5,6 @@ in github-flavored markdown format, and combines it with human-written
 author notes (legacy README.md).
 """
 import argparse
-import json
 import logging
 import os
 import re
@@ -19,6 +18,7 @@ from jinja2.lexer import Token
 from readme_to_markdown import (README_HTML_NAME, README_MD_ORIGINAL_NAME,
                                 get_visible_text_from_html, md_to_html,
                                 parse_html, readme_html_to_markdown)
+from build_docs_lib import get_app_json, generate_gh_fragment
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 TEMPLATE_DIR = Path(SCRIPT_DIR, "templates")
@@ -46,12 +46,6 @@ class EscapeMDFilterVarsExtension(Extension):
             prev_token = token
 
 
-def generate_gh_fragment(text):
-    text = text.lower()
-    text = re.sub(r"[^a-zA-Z0-9\s-]", "", text)
-    return re.sub(r"[\s]", "-", text)
-
-
 def generate_action_heading_text(text):
     return f"action: '{text}'"
 
@@ -70,16 +64,6 @@ def escape_markdown(data):
     else:
         return data
 
-def get_app_json(app_json_dir):
-    logging.info("Looking for app JSON in: %s", app_json_dir)
-    app_json_name = [f for f in os.listdir(app_json_dir)
-                     if f.endswith(".json")
-                     and "postman_collection" not in f][0]
-    json_file_path = Path(app_json_dir, app_json_name)
-    logging.info("Loading json: %s", app_json_name)
-    with open(json_file_path, "r") as json_file:
-        return json.load(json_file)
-
 
 def load_file(file_path):
     try:
@@ -89,7 +73,6 @@ def load_file(file_path):
     except FileNotFoundError:
         logging.warning("Couldn't find file: %s", file_path)
     return None
-
 
 def render_template_to_file(connector_path, json_content):
     env = Environment(
@@ -123,12 +106,11 @@ def check_markdown_for_template_text(md_content):
 
         return first_line_in_template in md_content
 
-
-def build_docs(connector_path, app_version=None):
+def build_docs(connector_path, json_name=None, app_version=None):
     connector_path = Path(connector_path)
     input_readme_path = Path(connector_path, README_INPUT_NAME)
 
-    json_content = get_app_json(connector_path)
+    json_content = get_app_json(connector_path, json_name)
     if app_version:
         json_content["app_version"] = app_version
 
@@ -175,11 +157,11 @@ def load_existing_markdown(connector_path):
         return md_file.read()
 
 
-def build_docs_from_html(connector_path, app_version=None):
+def build_docs_from_html(connector_path, app_version=None, json_name=None):
     connector_path = Path(connector_path)
     original_content = load_existing_markdown(connector_path)
-    readme_html_to_markdown(connector_path, overwrite=True)
-    output_content, output_path = build_docs(connector_path, app_version)
+    readme_html_to_markdown(connector_path, overwrite=True, json_name=json_name)
+    output_content, output_path = build_docs(connector_path, app_version=app_version, json_name=json_name)
 
     if original_content:
         original_content = original_content.replace('\r','')
@@ -200,18 +182,21 @@ def main(args):
     """
     connector_path = Path(args.connector_path)
     from_html = args.from_html == "True"
+    json_name = args.json_name
+    if json_name is not None and not json_name.endswith(".json"):
+        json_name = json_name + ".json"
     if from_html:
-        build_docs_from_html(connector_path)
+        build_docs_from_html(connector_path, json_name=json_name)
     else:
-        build_docs(connector_path)
+        build_docs(connector_path, json_name=json_name)
 
 
 def parse_args():
     help_str = " ".join(line.strip() for line in __doc__.strip().splitlines())
     parser = argparse.ArgumentParser(description=help_str)
     parser.add_argument("connector_path", help="Path to the connector")
-    parser.add_argument("from_html", nargs='?', default=False,
-                        help="Build from html instead of md")
+    parser.add_argument("from_html", default=False, help="Build from html instead of md", nargs="?")
+    parser.add_argument("json_name", default=None, type=str, help="JSON file name", nargs="?")
     return parser.parse_args()
 
 
