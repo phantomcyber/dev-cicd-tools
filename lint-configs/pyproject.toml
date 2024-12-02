@@ -9,6 +9,18 @@ select = [
     "F",
     "I",
     "C90",
+    "A",
+    "UP",
+    "B",
+    "C4",
+    "RET",
+    "SIM",
+    "RUF",
+    "PLC",
+    "PLE",
+    "PLW",
+    "PT",
+    "T201",
 ]
 
 # Ignore same relevant rules as we did to with tox.ini
