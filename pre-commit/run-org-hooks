@@ -12,7 +12,6 @@ from pathlib import Path
 
 ORGHOOKS_DIR = Path(__file__).resolve().parent
 
-LINT_CONFIG_FILE = "tox.ini"
 MODERN_LINT_CONFIG_FILE = "pyproject.toml"
 
 
@@ -20,7 +19,6 @@ def copy_configs(dest_dir):
     """Override configurations for hooks"""
     dev_tools_dir = ORGHOOKS_DIR.parent
     lint_configs_dir = dev_tools_dir / "lint-configs"
-    shutil.copyfile(lint_configs_dir / LINT_CONFIG_FILE, dest_dir / LINT_CONFIG_FILE)
     shutil.copyfile(lint_configs_dir / MODERN_LINT_CONFIG_FILE, dest_dir / MODERN_LINT_CONFIG_FILE)
 
 

@@ -1,3 +1,5 @@
 ruff==0.7.3
 semgrep==0.83.0
 pre-commit==4.1.0
+djlint==1.36.4
+mdformat==0.7.22

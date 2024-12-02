@@ -16,5 +16,18 @@ repos:
     rev: v0.7.3
     hooks:
       - id: ruff
-        args: [ "--fix"]
+        args: [ "--fix", "--ignore-noqa" ]
       - id: ruff-format
+  - repo: https://github.com/djlint/djLint
+    rev: v1.36.4
+    hooks:
+      - id: djlint-reformat-django
+      - id: djlint-django
+        args: ["--ignore-errors"]
+  - repo: https://github.com/hukkin/mdformat
+    rev: 0.7.22
+    hooks:
+      - id: mdformat
+        # additional_dependencies:
+        #   - mdformat-gfm  # GH Flavored Markdown support (want?)
+        #   - mdformat-frontmatter  # YAML support (want?)

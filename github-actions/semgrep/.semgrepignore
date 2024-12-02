@@ -27,6 +27,6 @@ tests/
 
 # SOAR app specific paths
 wheels/
-.thml
+.html
 *.md
 *.svg
