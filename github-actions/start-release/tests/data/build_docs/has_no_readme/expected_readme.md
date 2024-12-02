@@ -11,7 +11,7 @@ Minimum Product Version: 4.9.39220
 This app supports generic, investigative, and ingestion actions on an IBM QRadar device
 
 ### Configuration Variables
-The below configuration variables are required for this Connector to operate.  These variables are specified when configuring a QRadar asset in SOAR.
+This table lists the configuration variables required to operare QRadar. These variables are specified when configuring a QRadar asset in SOAR.
 
 VARIABLE | REQUIRED | TYPE | DESCRIPTION
 -------- | -------- | ---- | -----------

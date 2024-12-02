@@ -19,7 +19,7 @@ Minimum Product Version: {{connector.min_phantom_version}}
 {%- if connector.configuration %}
 
 ### Configuration Variables
-The below configuration variables are required for this Connector to operate.  These variables are specified when configuring a {{connector.product_name}} asset in SOAR.
+This table lists the configuration variables required to operare {{connector.name}}. These variables are specified when configuring a {{connector.product_name}} asset in SOAR.
 
 VARIABLE | REQUIRED | TYPE | DESCRIPTION
 -------- | -------- | ---- | -----------
