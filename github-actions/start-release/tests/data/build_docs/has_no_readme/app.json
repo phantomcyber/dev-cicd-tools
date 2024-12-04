@@ -168,7 +168,8 @@
         "max_events_per_offense": {
             "data_type": "numeric",
             "order": 24,
-            "description": "Maximum accumulated artifacts count per offense (including the default generated offense artifact)"
+            "description": "Maximum accumulated artifacts count per offense (including the default generated offense artifact)",
+            "visibility": []
         }
     },
     "app_config": {

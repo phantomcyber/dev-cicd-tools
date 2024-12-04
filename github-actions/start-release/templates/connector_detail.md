@@ -24,7 +24,7 @@ This table lists the configuration variables required to operare {{connector.nam
 VARIABLE | REQUIRED | TYPE | DESCRIPTION
 -------- | -------- | ---- | -----------
 {%- for name, parameters in connector.configuration.items() %}
-{%- if name != "ph" %}
+{%- if name != "ph" and ("visibility" not in parameters or parameters.visibility|length > 0) %}
 **{{name}}** | {% if parameters.required == True %} required {% else %} optional {% endif %} | {{ parameters.data_type }} | {{ parameters.description }}
 {%- endif %}
 {%- endfor %}

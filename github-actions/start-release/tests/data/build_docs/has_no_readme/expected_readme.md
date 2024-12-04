@@ -39,7 +39,6 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 **events_ingest_start_time** |  optional  | numeric | Events ingestion initial time (relative to offense start time, default is 60 min)
 **offense_ingest_start_time** |  optional  | numeric | Offense ingestion initial time (relative to offense start time, default is 0 min)
 **event_ingest_end_time** |  optional  | numeric | Events ingestion end time (relative to event ingestion start time, default is 0 min)
-**max_events_per_offense** |  optional  | numeric | Maximum accumulated artifacts count per offense (including the default generated offense artifact)
 
 ### Supported Actions  
 [test connectivity](#action-test-connectivity) - Validate the asset configuration for connectivity. This action runs a quick query on the device to check the connection and credentials  
