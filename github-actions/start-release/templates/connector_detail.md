@@ -19,12 +19,12 @@ Minimum Product Version: {{connector.min_phantom_version}}
 {%- if connector.configuration %}
 
 ### Configuration Variables
-The below configuration variables are required for this Connector to operate.  These variables are specified when configuring a {{connector.product_name}} asset in SOAR.
+This table lists the configuration variables required to operate {{connector.name}}. These variables are specified when configuring a {{connector.product_name}} asset in Splunk SOAR.
 
 VARIABLE | REQUIRED | TYPE | DESCRIPTION
 -------- | -------- | ---- | -----------
 {%- for name, parameters in connector.configuration.items() %}
-{%- if name != "ph" %}
+{%- if parameters.data_type != "ph" and ("visibility" not in parameters or parameters.visibility|length > 0) %}
 **{{name}}** | {% if parameters.required == True %} required {% else %} optional {% endif %} | {{ parameters.data_type }} | {{ parameters.description }}
 {%- endif %}
 {%- endfor %}
