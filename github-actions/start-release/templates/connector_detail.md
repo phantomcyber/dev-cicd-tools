@@ -18,7 +18,7 @@ Minimum Product Version: {{connector.min_phantom_version}}
 
 {%- if connector.configuration %}
 
-### Configuration Variables
+### Configuration variables
 This table lists the configuration variables required to operate {{connector.name}}. These variables are specified when configuring a {{connector.product_name}} asset in Splunk SOAR.
 
 VARIABLE | REQUIRED | TYPE | DESCRIPTION

@@ -612,7 +612,7 @@ explanation in Overview, and some individuals Apps have their sections.
       
 
 
-### Configuration Variables
+### Configuration variables
 This table lists the configuration variables required to operate QRadar. These variables are specified when configuring a QRadar asset in Splunk SOAR.
 
 VARIABLE | REQUIRED | TYPE | DESCRIPTION

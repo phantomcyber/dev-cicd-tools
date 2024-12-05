@@ -121,6 +121,15 @@ def build_docs(connector_path, json_name=None, app_version=None):
         manual_readme_content_path = Path(connector_path, MANUAL_README_CONTENT_FILE_NAME)
         if manual_readme_content_path.is_file():
             json_content["md_content"] = manual_readme_content_path.read_text(encoding=DEFAULT_ENCODING)
+    
+    include_config = False
+    for _, parameter in json_content.get("configuration", {}).items():
+        if parameter["data_type"] != "ph" and ("visibility" not in parameter or len(parameter["visibility"]) > 0):
+            include_config = True
+            break
+    
+    if not include_config:
+        json_content.pop("configuration", "No configuration to display in app")
 
     return render_template_to_file(connector_path, json_content)
 
