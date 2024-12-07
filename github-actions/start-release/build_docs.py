@@ -121,6 +121,15 @@ def build_docs(connector_path, json_name=None, app_version=None):
         manual_readme_content_path = Path(connector_path, MANUAL_README_CONTENT_FILE_NAME)
         if manual_readme_content_path.is_file():
             json_content["md_content"] = manual_readme_content_path.read_text(encoding=DEFAULT_ENCODING)
+    
+    # If the entire asset configuration is meant to be hidden, don't render the config section at all
+    include_config = any(
+        field["data_type"] != "ph" and field.get("visibility", ["all"])
+        for field in json_content.get("configuration", {}).values()
+    )
+    
+    if not include_config:
+        json_content.pop("configuration", "No configuration to display in app")
 
     return render_template_to_file(connector_path, json_content)
 

@@ -10,7 +10,7 @@ Minimum Product Version: 4\.9\.39220
 
 This app supports generic, investigative, and ingestion actions on an IBM QRadar device
 
-### Configuration Variables
+### Configuration variables
 This table lists the configuration variables required to operate QRadar. These variables are specified when configuring a QRadar asset in Splunk SOAR.
 
 VARIABLE | REQUIRED | TYPE | DESCRIPTION
