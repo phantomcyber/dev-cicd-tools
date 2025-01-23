@@ -4,6 +4,7 @@ https://my.phantom.us/<soar_version>/docs/app_reference/<connector>,
 in github-flavored markdown format, and combines it with human-written
 author notes (legacy README.md).
 """
+
 import argparse
 import logging
 import os
@@ -15,9 +16,13 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from jinja2.ext import Extension
 from jinja2.lexer import Token
 
-from readme_to_markdown import (README_HTML_NAME, README_MD_ORIGINAL_NAME,
-                                get_visible_text_from_html, md_to_html,
-                                parse_html, readme_html_to_markdown)
+from readme_to_markdown import (
+    README_HTML_NAME,
+    get_visible_text_from_html,
+    md_to_html,
+    parse_html,
+    readme_html_to_markdown,
+)
 from build_docs_lib import get_app_json, generate_gh_fragment
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -29,8 +34,26 @@ README_INPUT_NAME = README_OUTPUT_NAME
 DEFAULT_ENCODING = "utf-8"
 
 # From https://enterprise.github.com/downloads/en/markdown-cheatsheet.pdf
-MARKDOWN_RESERVED_CHARACTERS = ["\\", "`", "*", "_", "{", "}", "[", "]", "(",
-                                ")", "#", "+", "-", ".", "!",  "@", "|", ":"]
+MARKDOWN_RESERVED_CHARACTERS = [
+    "\\",
+    "`",
+    "*",
+    "_",
+    "{",
+    "}",
+    "[",
+    "]",
+    "(",
+    ")",
+    "#",
+    "+",
+    "-",
+    ".",
+    "!",
+    "@",
+    "|",
+    ":",
+]
 
 
 class EscapeMDFilterVarsExtension(Extension):
@@ -38,8 +61,7 @@ class EscapeMDFilterVarsExtension(Extension):
     def filter_stream(self, stream):
         prev_token = None
         for token in stream:
-            if (token.type == "variable_end"
-                    and str(prev_token) not in self.environment.filters):
+            if token.type == "variable_end" and str(prev_token) not in self.environment.filters:
                 yield Token(token.lineno, "pipe", "|")
                 yield Token(token.lineno, "name", "escape_markdown")
             yield token
@@ -56,11 +78,12 @@ def generate_action_heading_text(text):
 #             text = text.replace(reserved_char, f"\\{reserved_char}")
 #     return text
 
+
 def escape_markdown(data):
     if isinstance(data, dict):
         return {key: escape_markdown(val) for key, val in data.items()}
     elif isinstance(data, str):
-        return re.sub(r'([\\*])', r'\\\1', data)
+        return re.sub(r"([\\*])", r"\\\1", data)
     else:
         return data
 
@@ -74,18 +97,18 @@ def load_file(file_path):
         logging.warning("Couldn't find file: %s", file_path)
     return None
 
+
 def render_template_to_file(connector_path, json_content):
     env = Environment(
         loader=FileSystemLoader(TEMPLATE_DIR),
         extensions=[EscapeMDFilterVarsExtension],
-        autoescape=select_autoescape()
+        autoescape=select_autoescape(),
     )
     env.filters["generate_gh_fragment"] = generate_gh_fragment
     env.filters["generate_action_heading_text"] = generate_action_heading_text
     env.filters["escape_markdown"] = escape_markdown
 
-    logging.info("Rendering with template: %s from %s",
-                 TEMPLATE_NAME, TEMPLATE_DIR)
+    logging.info("Rendering with template: %s from %s", TEMPLATE_NAME, TEMPLATE_DIR)
     t = env.get_template(TEMPLATE_NAME)
     rendered_content = t.render(connector=json_content)
 
@@ -106,6 +129,7 @@ def check_markdown_for_template_text(md_content):
 
         return first_line_in_template in md_content
 
+
 def build_docs(connector_path, json_name=None, app_version=None):
     connector_path = Path(connector_path)
     input_readme_path = Path(connector_path, README_INPUT_NAME)
@@ -120,14 +144,16 @@ def build_docs(connector_path, json_name=None, app_version=None):
     else:
         manual_readme_content_path = Path(connector_path, MANUAL_README_CONTENT_FILE_NAME)
         if manual_readme_content_path.is_file():
-            json_content["md_content"] = manual_readme_content_path.read_text(encoding=DEFAULT_ENCODING)
-    
+            json_content["md_content"] = manual_readme_content_path.read_text(
+                encoding=DEFAULT_ENCODING
+            )
+
     # If the entire asset configuration is meant to be hidden, don't render the config section at all
     include_config = any(
         field["data_type"] != "ph" and field.get("visibility", ["all"])
         for field in json_content.get("configuration", {}).values()
     )
-    
+
     if not include_config:
         json_content.pop("configuration", "No configuration to display in app")
 
@@ -170,19 +196,19 @@ def build_docs_from_html(connector_path, app_version=None, json_name=None):
     connector_path = Path(connector_path)
     original_content = load_existing_markdown(connector_path)
     readme_html_to_markdown(connector_path, overwrite=True, json_name=json_name)
-    output_content, output_path = build_docs(connector_path, app_version=app_version, json_name=json_name)
+    output_content, output_path = build_docs(
+        connector_path, app_version=app_version, json_name=json_name
+    )
 
     if original_content:
-        original_content = original_content.replace('\r','')
+        original_content = original_content.replace("\r", "")
     if output_content:
-        output_content = output_content.replace('\r','')
+        output_content = output_content.replace("\r", "")
     if original_content == output_content:
-        logging.info('Detected no readme updates')
+        logging.info("Detected no readme updates")
         return {}
 
-    return {
-        str(output_path.relative_to(connector_path)): output_content
-    }
+    return {str(output_path.relative_to(connector_path)): output_content}
 
 
 def main(args):

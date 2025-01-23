@@ -25,7 +25,7 @@ explanation in Overview, and some individuals Apps have their sections.
     corresponding action blocks or by providing appropriate values to these action parameters to
     ensure the correct functioning of the playbooks created on the earlier versions of the app.
 
-      
+
 
     -   Alt Manage Ingestion - The new drop-down values in the \[operation\] parameter have been
         added and the existing ones are modified.
@@ -64,7 +64,7 @@ explanation in Overview, and some individuals Apps have their sections.
 
 -   **Asset Configuration Parameters**
 
-      
+
 
     -   **artifact_max -** Maximum number of event artifacts to ingest for the \[On Poll\] (both
         manual and scheduled) action and \[Offense Details\] action with \[ingest_offense\] action
@@ -82,9 +82,9 @@ explanation in Overview, and some individuals Apps have their sections.
         created for ingestion. If the mapping provided in the \[CEF event map\] configuration field
         consists of the fields which are already covered by the default CEF mapping, then, the
         provided CEF mapping in the configuration parameter will also be created along with the
-        default CEF mapping.  
-          
-        **Sample \[CEF Event Map\] value**  
+        default CEF mapping.
+
+        **Sample \[CEF Event Map\] value**
         `         {"magnitudeValue":"magnitude","customAttributeValue1":"custom_attribute_1","customAttributeValue2":"Custom Attribute 2"}                          `
         **Important Point** - Internally the field UTF8(payload) is fetched by the name of Payload
         (i.e. UTF8(payload) as Payload). Hence, to map the UTF8(payload) field in the CEF event map,
@@ -93,7 +93,7 @@ explanation in Overview, and some individuals Apps have their sections.
             fields in the ingested artifacts data and right-side is the original internal name of
             the fields of an event)
 
-              
+
             `            {                        "signature_id": "qid",                        "name": "qidname_qid",                        "severity": "severity",                        "applicationProtocol": "Application",                        "destinationMacAddress": "destinationmac",                        "destinationNtDomain": "AccountDomain",                        "destinationPort": "destinationport",                        "destinationAddress": "destinationaddress",                        "endTime": "endtime",                        "fileHash": "File Hash",                        "fileId": "File ID",                        "filePath": "File Path",                        "fileName": "Filename",                        "bytesIn": "BytesReceived",                        "message": "Message",                        "bytesOut": "BytesSent",                        "transportProtocol": "protocolname_protocolid",                        "sourceMacAddress": "sourcemac",                        "sourcePort": "sourceport",                        "sourceAddress": "sourceaddress",                        "startTime": "starttime",                        "payload": "Payload"                        }           `
     -   **cef_value_map -** JSON formatted string representation of a dictionary used to map CEF
         field values to new values. Similar to cef_event_map, replace the value of any CEF field
@@ -101,17 +101,17 @@ explanation in Overview, and some individuals Apps have their sections.
         null value, provide { \\"nourl\\": null }. If the user wants to replace a numeric
         (integer\|float) value with some other value, due to the SDK issue, the user has to provide
         the key-value map in this format. e.g. if user wants to replace value 4 with 10 and 5.3 with
-        6.7, provide this CEF value mapping {"numeric(4)": 10, "numeric(5.3)": 6.7}  
-        **Sample \[CEF Value Map\] values**  
+        6.7, provide this CEF value mapping {"numeric(4)": 10, "numeric(5.3)": 6.7}
+        **Sample \[CEF Value Map\] values**
         -   To replace integer\|float values; value 4 with 10 and 5.3 with 6.7, provide below CEF
             value mapping
 
-              
+
             `            {"numeric(4)": 10, "numeric(5.3)": 6.7}           `
 
         -   To replace string values; Alert with Alert_Info
 
-              
+
             `            {"Alert": "Alert_Info"}           `
     -   **delete_empty_cef_fields -** Set true to delete CEF fields with empty values.
     -   **event_fields_for_query -** Optionally define a new comma-separated list of fields (system
@@ -224,7 +224,7 @@ explanation in Overview, and some individuals Apps have their sections.
 
 -   **Test Connectivity (Authentication Details)**
 
-      
+
 
     -   This action provides 2 modes of providing the authentication: Basic Auth and Auth Token.
     -   It expects the user to enter either a valid auth token or a valid pair of username and
@@ -242,15 +242,15 @@ explanation in Overview, and some individuals Apps have their sections.
     -   The connectivity gives a higher preference to the auth token than that using the pair of
         username and password.
 
-      
+
 
 -   **List Offenses**
 
-      
+
 
     -   Default Offenses Ingestion Workflow
 
-          
+
 
         -   The offenses are fetched based on the logic that either their \[start_time\] or their
             \[last_updated_time\] is between the time range defined by \[start_time\] and
@@ -271,11 +271,11 @@ explanation in Overview, and some individuals Apps have their sections.
             corresponding to all the offense IDs provided here will be fetched based on the value
             provided in the \[count\] parameter.
 
-          
+
 
     -   Alternate Offenses Ingestion Workflow
 
-          
+
 
         -   This workflow has the functionalities similar to the default ingestion workflow with the
             below-mentioned points getting considered while ingestion.
@@ -304,15 +304,15 @@ explanation in Overview, and some individuals Apps have their sections.
             the maximum of the \[starttime\] or \[last_updated_time\] for the last fetched offense
             is stored in the state file against the key \[last_saved_ingest_time\].
 
-      
+
 
 -   **Get Events**
 
-      
+
 
     -   Default Ariel Query Events Ingestion Workflow
 
-          
+
 
         -   The events are fetched in the descending order of the values in the \[starttime\] field.
         -   **Start Time -** This field expects an epoch value in milliseconds. If not provided,
@@ -334,11 +334,11 @@ explanation in Overview, and some individuals Apps have their sections.
         -   **Fields Filter -** This field expects a filter string in the valid AQL query syntax.
         -   **Offense ID -** This field expects a unique offense ID to fetch the events for.
 
-          
+
 
     -   Alternate Ariel Query Events Ingestion Workflow
 
-          
+
 
         -   This workflow has the functionalities similar to the default ingestion workflow with the
             below-mentioned points getting considered while ingestion.
@@ -354,15 +354,15 @@ explanation in Overview, and some individuals Apps have their sections.
             days, back-dating event fetching 'start_time' and after-dating event fetching 'end_time'
             does not work with this workflow.
 
-      
+
 
 -   **Offense Details**
 
-      
+
 
     -   Default Offenses Ingestion Workflow
 
-          
+
 
         -   This action will behave similarly to a manual On Poll action run if the
             \[ingest_offense\] flag is checked and it will ingest all the events as artifacts for
@@ -373,18 +373,18 @@ explanation in Overview, and some individuals Apps have their sections.
             the default tenant. But if multi-tenancy is enabled and this field is left blank and no
             tenant is mapped with the asset then containers will not be created.
 
-              
+
 
             -   **To enable Multi-Tenancy**
 
-                  
+
 
                 -   Go to the Administration section and under Product settings, select
                     Multi-tenancy and enable it.
 
             -   **To map a tenant with asset**
 
-                  
+
 
                 -   After enabling Multi-tenancy, go to asset configurations, and select the Tenants
                     tab. From the available list of tenants, select the tenant to map with the
@@ -399,33 +399,33 @@ explanation in Overview, and some individuals Apps have their sections.
             details. The parameters \[interval_days\] and \[tenant_id\] will be accounted for if the
             \[ingest_offense\] parameter is checked.
 
-          
+
 
     -   Alternate Offenses Ingestion Workflow
 
-          
+
 
         -   This workflow is considered only if the \[Alternative ingest algorithm for offenses\]
             configuration parameter is checked.
         -   The behavior of this alternate workflow is the same as described in the alternate
             workflow section of the \[List Offenses\] action.
 
-          
+
 
     -   Alternate Ariel Query Events Ingestion Workflow
 
-          
+
 
         -   This workflow is considered only if the \[Alternative ariel query\] configuration
             parameter is checked.
         -   The behavior of this alternate workflow is the same as described in the alternate
             workflow section of the \[Get Events\] action.
 
-      
+
 
 -   **Get Flows**
 
-      
+
 
     -   **Start Time -** This field expects an epoch value in milliseconds. If not provided, this
         value is internally derived by subtracting the \[interval_days\] from the \[end_time\].
@@ -440,11 +440,11 @@ explanation in Overview, and some individuals Apps have their sections.
     -   **Fields Filter -** This field expects a filter string in the valid AQL query syntax.
     -   **Offense ID -** This field expects a unique offense ID to fetch the flows for.
 
-      
+
 
 -   **Alt Manage Ingestion**
 
-      
+
 
     -   This action provides a provision to alter the state file associated with the corresponding
         asset. For more details, please refer to the specific documentation for this action.
@@ -454,11 +454,11 @@ explanation in Overview, and some individuals Apps have their sections.
         file goes wrong, then, all the actions which are dependent on the state file e.g. On Poll,
         Offense Details with \[ingest_offense\] value True will start working incorrectly
 
-      
+
 
 -   **On Poll**
 
-      
+
 
     -   The On Poll action works in 2 steps. In the first step, all the offenses in a defined time
         duration will be fetched. In the second step, all the events of the offenses (retrieved in
@@ -495,16 +495,16 @@ explanation in Overview, and some individuals Apps have their sections.
         "last_saved_ingest_time":"epoch_time_last_fetched_offense",
         "last_ingested_events_data":{"offense_id":"epoch_time_last_fetched_event_for_offense_id"}}
 
-          
-          
+
+
 
     -   **Two approaches for On Poll**
 
-          
+
 
         -   Manual polling
 
-              
+
 
             -   Manual polling fetches all the data every time based on the asset and app
                 configurations. It is recommended to keep a very high value in \[container_count\]
@@ -513,7 +513,7 @@ explanation in Overview, and some individuals Apps have their sections.
 
             -   Fetch the offenses
 
-                  
+
 
                 -   The application will fetch the number of offenses controlled by the
                     \[container_count\] parameter in \[On Poll\] action.
@@ -523,7 +523,7 @@ explanation in Overview, and some individuals Apps have their sections.
 
             -   Fetch the events
 
-                  
+
 
                 -   This step will be executed only if the \[containers_only\] configuration
                     parameter is not checked.
@@ -531,11 +531,11 @@ explanation in Overview, and some individuals Apps have their sections.
                     previous step) controlled by the \[artifact_max\] configuration parameter and
                     governed by the behavior of the \[Get Events\] action.
 
-              
+
 
         -   Scheduled polling
 
-              
+
 
             -   Scheduled polling fetches all the data every time (for the first run only) based on
                 the asset and app configurations. It is recommended to keep a very high value in
@@ -562,7 +562,7 @@ explanation in Overview, and some individuals Apps have their sections.
 
             -   Fetch the offenses
 
-                  
+
 
                 -   The application will fetch all the offenses governed by the behavior of the
                     \[List Offenses\] action.
@@ -576,7 +576,7 @@ explanation in Overview, and some individuals Apps have their sections.
 
             -   Fetch the events
 
-                  
+
 
                 -   This step will be executed only if the \[containers_only\] configuration
                     parameter is not checked.
@@ -588,13 +588,11 @@ explanation in Overview, and some individuals Apps have their sections.
 
 -   Case-sensitive
 
-      
+
 
     -   For Assign User, Add Listitem
 
-          
+
 
         -   Parameters \[reference_set_name\] for 'add listitem' and \[assignee\] for 'assign user'
             are case sensitive.
-
-      

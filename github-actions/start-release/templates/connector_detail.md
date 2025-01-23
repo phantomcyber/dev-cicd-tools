@@ -1,12 +1,12 @@
 [comment]: # "Auto-generated SOAR connector documentation"
 # {{connector.name}}
 
-Publisher: {{connector.publisher}}  
-Connector Version: {{connector.app_version}}  
-Product Vendor: {{connector.product_vendor}}  
-Product Name: {{connector.product_name}}  
-Product Version Supported (regex): "{{connector.product_version_regex}}"  
-Minimum Product Version: {{connector.min_phantom_version}}  
+Publisher: {{connector.publisher}}
+Connector Version: {{connector.app_version}}
+Product Vendor: {{connector.product_vendor}}
+Product Name: {{connector.product_name}}
+Product Version Supported (regex): "{{connector.product_version_regex}}"
+Minimum Product Version: {{connector.min_phantom_version}}
 
 {{connector.description}}
 
@@ -33,17 +33,17 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 {%- if connector.actions %}
 
 ### Supported Actions
-{%- for action in connector.actions %}  
-[{{action.action}}](#{{action.action | generate_action_heading_text | generate_gh_fragment}}) - {{action.description}}  
+{%- for action in connector.actions %}
+[{{action.action}}](#{{action.action | generate_action_heading_text | generate_gh_fragment}}) - {{action.description}}
 {%- endfor %}
 
-{%- for action in connector.actions %}  
+{%- for action in connector.actions %}
 
 ## {{action.action | generate_action_heading_text}}
 {{action.description}}
 
-Type: **{{action.type}}**  
-Read only: **{{action.read_only}}**  
+Type: **{{action.type}}**
+Read only: **{{action.read_only}}**
 
 {%- if action.verbose %}
 

@@ -10,7 +10,7 @@ See the Semgrep [getting started](https://semgrep.dev/docs/writing-rules/overvie
 [pattern syntax](https://semgrep.dev/docs/writing-rules/pattern-syntax/) pages.
 
 # Directory Structure
-When writing a new rule, please place its configuration and test file under 
+When writing a new rule, please place its configuration and test file under
 `rules/python/category/<rule-file>.yaml` and `rules/python/category/<rule-file>.py` respectively.
 Note that the test for a given rule needs to have the same name as the rule's configuration file minus
 the file extension (eg, `my-rule.yaml`, `my-rule.py`) for the test to be picked up by Semgrep.
@@ -41,7 +41,7 @@ To run the rules defined here against a connector repo:
 cd <path_to_connector_repo>
 semgrep --config <path_to_dev_cicd_tools>/semgrep/rules
 ```
-or 
+or
 ```
 export APP_FOLDER=<path_to_connector_repo>
 make semgrep

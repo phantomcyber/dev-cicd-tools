@@ -16,17 +16,30 @@ START_RELEASE_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 FROM_MD_TEST_DATA = [
     ("tests/data/build_docs/has_existing_readme", 0, True, []),
-    ("tests/data/build_docs/has_no_readme", 0, True, [README_OUTPUT_NAME])
+    ("tests/data/build_docs/has_no_readme", 0, True, [README_OUTPUT_NAME]),
 ]
 
 FROM_HTML_TEST_DATA = [
     ("tests/data/build_docs/has_existing_readme_html_and_md", True, [], [], None),
-    ("tests/data/build_docs/has_existing_readme_html_and_autogen_md", True, [], [README_MD_ORIGINAL_NAME], None),
+    (
+        "tests/data/build_docs/has_existing_readme_html_and_autogen_md",
+        True,
+        [],
+        [README_MD_ORIGINAL_NAME],
+        None,
+    ),
     ("tests/data/build_docs/has_no_readme", True, [README_OUTPUT_NAME], [], None),
-    ("tests/data/build_docs/has_no_readme_set_app_version", True, [README_OUTPUT_NAME], [], "3.0.0")
+    (
+        "tests/data/build_docs/has_no_readme_set_app_version",
+        True,
+        [README_OUTPUT_NAME],
+        [],
+        "3.0.0",
+    ),
 ]
 
-@pytest.fixture(scope='function')
+
+@pytest.fixture(scope="function")
 def app_dir(request):
     def copy_test_dir():
         shutil.copytree(app_dir, app_dir_copy)
@@ -35,7 +48,7 @@ def app_dir(request):
         shutil.rmtree(app_dir_copy, ignore_errors=True)
 
     app_dir = request.param
-    app_dir_copy = app_dir + '_copy'
+    app_dir_copy = app_dir + "_copy"
 
     copy_test_dir()
     request.addfinalizer(remove_test_dir_copy)
@@ -43,17 +56,18 @@ def app_dir(request):
     return app_dir_copy
 
 
-@pytest.mark.parametrize(("app_dir, expected_exit_code, check_output, "
-                          "expected_new_files"), FROM_MD_TEST_DATA,
-                          indirect=["app_dir"])
-def test_build_docs(app_dir, expected_exit_code,
-                    check_output, expected_new_files):
-    output_readme = os.path.join(app_dir, 'README.md')
-    expected_readme = os.path.join(app_dir, 'expected_readme.md')
+@pytest.mark.parametrize(
+    ("app_dir, expected_exit_code, check_output, " "expected_new_files"),
+    FROM_MD_TEST_DATA,
+    indirect=["app_dir"],
+)
+def test_build_docs(app_dir, expected_exit_code, check_output, expected_new_files):
+    output_readme = os.path.join(app_dir, "README.md")
+    expected_readme = os.path.join(app_dir, "expected_readme.md")
 
-    result = subprocess.run([os.path.join(START_RELEASE_DIR, 'build_docs')],
-                            cwd=app_dir,
-                            capture_output=True)
+    result = subprocess.run(
+        [os.path.join(START_RELEASE_DIR, "build_docs")], cwd=app_dir, capture_output=True
+    )
     print(result.stderr.decode())
     assert result.returncode == expected_exit_code
 
@@ -67,13 +81,16 @@ def test_build_docs(app_dir, expected_exit_code,
         assert os.path.isfile(expected_new_file)
 
 
-@pytest.mark.parametrize(("app_dir, check_output, expected_new_files, "
-                          "unexpected_new_files, app_version"), FROM_HTML_TEST_DATA,
-                          indirect=["app_dir"])
-def test_build_docs_from_html(app_dir, check_output, expected_new_files,
-                              unexpected_new_files, app_version):
-    output_readme = os.path.join(app_dir, 'README.md')
-    expected_readme = os.path.join(app_dir, 'expected_readme.md')
+@pytest.mark.parametrize(
+    ("app_dir, check_output, expected_new_files, " "unexpected_new_files, app_version"),
+    FROM_HTML_TEST_DATA,
+    indirect=["app_dir"],
+)
+def test_build_docs_from_html(
+    app_dir, check_output, expected_new_files, unexpected_new_files, app_version
+):
+    output_readme = os.path.join(app_dir, "README.md")
+    expected_readme = os.path.join(app_dir, "expected_readme.md")
 
     build_docs_from_html(Path(app_dir), app_version)
 

@@ -12,6 +12,7 @@ SEMGREP_EXCLUDES=--exclude='*json' --exclude='.html' --exclude='.svg' --exclude=
 
 install:
 	python3 -m pip install -r dev-requirements.txt
+	pre-commit install
 
 flake8-check:
 	cd $(APP_FOLDER) && python3 -m flake8 . --config $(LINT_CONFIG)

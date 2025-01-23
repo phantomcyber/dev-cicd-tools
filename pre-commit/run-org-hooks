@@ -12,24 +12,24 @@ from pathlib import Path
 
 ORGHOOKS_DIR = Path(__file__).resolve().parent
 
-LINT_CONFIG_FILE = 'tox.ini'
-MODERN_LINT_CONFIG_FILE = 'pyproject.toml'
+LINT_CONFIG_FILE = "tox.ini"
+MODERN_LINT_CONFIG_FILE = "pyproject.toml"
 
 
 def copy_configs(dest_dir):
     """Override configurations for hooks"""
     dev_tools_dir = ORGHOOKS_DIR.parent
-    lint_configs_dir = dev_tools_dir / 'lint-configs'
+    lint_configs_dir = dev_tools_dir / "lint-configs"
     shutil.copyfile(lint_configs_dir / LINT_CONFIG_FILE, dest_dir / LINT_CONFIG_FILE)
     shutil.copyfile(lint_configs_dir / MODERN_LINT_CONFIG_FILE, dest_dir / MODERN_LINT_CONFIG_FILE)
 
 
 def main():
     copy_configs(Path.cwd())
-    cfg = str(ORGHOOKS_DIR / 'orghooks.yaml')
-    cmd = ['pre-commit', 'run', '--config', cfg, '--files'] + sys.argv[1:]
+    cfg = str(ORGHOOKS_DIR / "orghooks.yaml")
+    cmd = ["pre-commit", "run", "--config", cfg, "--files"] + sys.argv[1:]
     os.execvp(cmd[0], cmd)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

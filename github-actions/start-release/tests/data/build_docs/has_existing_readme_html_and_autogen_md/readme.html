@@ -36,10 +36,10 @@
 				<li>
 					If [Alternative ariel query] configuration parameter is checked, for On Poll and Get Events action to fetch the events, the time based filtering in this workflow is applied based on the granularity of days instead of applying it based on the granularity of epoch and Datetime formats.
 				</li>
-				<li>	
+				<li>
 					For On Poll, to fetch the offenses, if there is time stored in the state file it will be given priority, if not provided, this value is internally derived by subtracting the [interval_days] from the [end_time]. If [interval_days] is not specified in the app settings it will take the default value which is 5.
 				</li>
-				<li>	
+				<li>
 					For On Poll, to fetch the events, if there is time stored in the state file it will be given priority, if not provided, the [start_time] will be calculated by back-dating offense's [start_time] by the value of [events_ingest_start_time] configuration parameter.
 				</li>
 				<li>
@@ -161,7 +161,7 @@
 						</li>
 						<li>
 							NOTE - If offense will get updated while Qradar event creation, accordingly offense artifacts will also be ingested in phantom with updated parameters. This can affect the functionality of max_events_per_offense. e.g. if artifact_max = 5 and max_events_per_offense = 8, then in first cycle it will ingest 6 artifacts (one default generated offense artifact). In the next polling cycle, it will ingest 2 more event artifacts but if the offense is updated then it will also ingest one more offense artifact and the total artifact count will be one more than max_events_per_offense.
-						</li>		
+						</li>
 					</ul>
 				</li>
 			</ul>

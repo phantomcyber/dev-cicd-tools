@@ -49,8 +49,7 @@ def validate_html(html_content):
 
 
 def html_to_md(html_content):
-    return pypandoc.convert_text(html_content, "gfm",
-                                 format="html", extra_args=["--columns=100"])
+    return pypandoc.convert_text(html_content, "gfm", format="html", extra_args=["--columns=100"])
 
 
 def md_to_html(md_content, use_pandoc=True):
@@ -65,18 +64,15 @@ def parse_html(html_content):
 
 
 def get_html_comments(parsed_html_content):
-    comments = parsed_html_content.find_all(
-        string=lambda text: isinstance(text, Comment))
+    comments = parsed_html_content.find_all(string=lambda text: isinstance(text, Comment))
     all_lines = [line for comment in comments for line in comment.split("\n")]
     return all_lines
 
 
 def generate_md_comments(comments):
-    updated_comments = [str(c).replace(README_HTML_NAME, README_MD_NAME)
-                        for c in comments]
+    updated_comments = [str(c).replace(README_HTML_NAME, README_MD_NAME) for c in comments]
     updated_comments = [c.replace('"', "'") for c in updated_comments]
-    return "\n".join([f"[comment]: # \"{uc}\""
-                     for uc in updated_comments]) + "\n"
+    return "\n".join([f'[comment]: # "{uc}"' for uc in updated_comments]) + "\n"
 
 
 def tag_visible(element):
@@ -135,9 +131,12 @@ def fix_misplaced_list_content_wrappers(parsed_html_content):
     all_list_elements = parsed_html_content.find_all(list_names)
     for list_element in all_list_elements:
         for item in list_element.contents:
-            if (item.name not in list_names and item.name != "li"
-                    and hasattr(item, 'contents') and item.contents):
-
+            if (
+                item.name not in list_names
+                and item.name != "li"
+                and hasattr(item, "contents")
+                and item.contents
+            ):
                 first_contained_item = item.contents[0]
                 if first_contained_item.name == "li":
                     unwrapped = item.unwrap()
@@ -175,11 +174,11 @@ def fix_incomplete_colgroups(parsed_html_content):
         row, if the first row doesn't contain th elements, convert td to th
         """
         first_row = table.find("tr")
-        th_list = first_row.find_all('th')
+        th_list = first_row.find_all("th")
         if not th_list:
-            td_list = first_row.find_all('td')
+            td_list = first_row.find_all("td")
             for td in td_list:
-                td.name = 'th'
+                td.name = "th"
 
         colgroups = table.find_all("colgroup")
         if len(colgroups) < 1:
@@ -240,11 +239,14 @@ def remove_double_bullets(parsed_html_content):
         parent = list_or_text_element.parent
         parent_previous_siblings = list(parent.previous_siblings)
 
-        if (parent and parent.name == "li" and ORIGINAL_ATTRIBUTE_NAME
-                not in parent.attrs and len(parent_previous_siblings) > 1
-                and str(parent_previous_siblings[0]) == "\n"
-                and parent_previous_siblings[1].name == "li"):
-
+        if (
+            parent
+            and parent.name == "li"
+            and ORIGINAL_ATTRIBUTE_NAME not in parent.attrs
+            and len(parent_previous_siblings) > 1
+            and str(parent_previous_siblings[0]) == "\n"
+            and parent_previous_siblings[1].name == "li"
+        ):
             removed = parent.extract()
             if not list_or_text_element.name:
                 p_tag = parsed_html_content.new_tag("p")
@@ -261,37 +263,36 @@ def remove_double_bullets(parsed_html_content):
     all_list_item_elements = parsed_html_content.find_all(["li"])
     for list_item_element in all_list_item_elements:
         text = list_item_element.get_text()
-        text_with_no_whitespace = ''.join(text.split())
+        text_with_no_whitespace = "".join(text.split())
         if not text_with_no_whitespace:
             list_item_element.extract()
 
 
 def find_closest_element(from_element, tag_names_to_find):
     prev = from_element.find_previous(tag_names_to_find)
-    next = from_element.find_next(tag_names_to_find)
+    _next = from_element.find_next(tag_names_to_find)
 
     start_location = from_element.sourceline + from_element.sourcepos
-    if prev and next:
+    if prev and _next:
         prev_location = prev.sourceline + prev.sourcepos
-        next_location = next.sourceline + next.sourcepos
+        next_location = _next.sourceline + _next.sourcepos
 
         distance_to_prev = abs(start_location - prev_location)
         distance_to_next = abs(start_location - next_location)
 
-        if (distance_to_prev <= distance_to_next):
+        if distance_to_prev <= distance_to_next:
             return prev
 
-        return next
+        return _next
     elif prev:
         return prev
-    elif next:
-        return next
+    elif _next:
+        return _next
     else:
         return None
 
 
-def fix_relative_links(parsed_html_content, app_json_dir_path,
-                       tag_name, attribute):
+def fix_relative_links(parsed_html_content, app_json_dir_path, tag_name, attribute):
     """
     Cases for problematic relative links:
     - images
@@ -341,13 +342,10 @@ def fix_relative_links(parsed_html_content, app_json_dir_path,
 
                 # Find closest heading to linked element & get heading text
                 if linked_element:
-                    if (linked_element.name.startswith("h")
-                            and len(linked_element.name) == 2):
-
+                    if linked_element.name.startswith("h") and len(linked_element.name) == 2:
                         closest_heading = linked_element
                     else:
-                        closest_heading = find_closest_element(linked_element,
-                                                               HEADER_TAGS)
+                        closest_heading = find_closest_element(linked_element, HEADER_TAGS)
 
                     if closest_heading:
                         closest_heading = closest_heading.get_text(strip=True)
@@ -365,16 +363,19 @@ def fix_relative_links(parsed_html_content, app_json_dir_path,
                 linking_element[attribute] = f"{file_to_find}#{fragment}"
 
 
-def readme_html_to_markdown(connector_path, connector_name=None,
-                            output_folder=None, overwrite=False,
-                            debug_mode=False,
-                            json_name=None):
-
+def readme_html_to_markdown(
+    connector_path,
+    connector_name=None,
+    output_folder=None,
+    overwrite=False,
+    debug_mode=False,
+    json_name=None,
+):
     readme_html = Path(connector_path, README_HTML_NAME)
     if not readme_html.is_file():
         return (None, None)
 
-    with open(readme_html, "r") as html_file:
+    with open(readme_html) as html_file:
         html_content = html_file.read()
 
     parsed_html_content = parse_html(html_content)
@@ -393,8 +394,7 @@ def readme_html_to_markdown(connector_path, connector_name=None,
 
     if output_folder:
         readme_md = Path(output_folder, f"{connector_name}-{README_MD_NAME}")
-        readme_html = Path(output_folder,
-                           f"{connector_name}-{README_HTML_NAME}")
+        readme_html = Path(output_folder, f"{connector_name}-{README_HTML_NAME}")
     else:
         readme_md = Path(connector_path, README_MD_NAME)
 
@@ -417,7 +417,7 @@ def readme_html_to_markdown(connector_path, connector_name=None,
     md_comments = generate_md_comments(comments)
 
     md_content = html_to_md(html_content)
-    md_content = md_content.replace("<div>","").replace("</div>","")
+    md_content = md_content.replace("<div>", "").replace("</div>", "")
     md_content = md_content.replace("\\|", "|")
     with open(readme_md, "w") as md_file:
         num_chars_written = md_file.write(md_comments)
@@ -428,10 +428,8 @@ def readme_html_to_markdown(connector_path, connector_name=None,
     rendered_markdown = md_to_html(md_content)
     parsed_rendered_markdown = parse_html(rendered_markdown)
 
-    _, original_word_count, original_words = \
-        calculate_html_stats(parsed_html_content)
-    _, converted_word_count, converted_words = \
-        calculate_html_stats(parsed_rendered_markdown)
+    _, original_word_count, original_words = calculate_html_stats(parsed_html_content)
+    _, converted_word_count, converted_words = calculate_html_stats(parsed_rendered_markdown)
 
     parsed_json = get_app_json(connector_path, json_name)
     written_info = {
@@ -444,7 +442,7 @@ def readme_html_to_markdown(connector_path, connector_name=None,
         "version": parsed_json["app_version"],
         "html_length": len(html_content),
         "md_length": num_chars_written,
-        "errors": len(errors)
+        "errors": len(errors),
     }
 
     # When there are differences detected between original and converted
@@ -457,18 +455,22 @@ def readme_html_to_markdown(connector_path, connector_name=None,
 
 
 def main():
-    parser = argparse.ArgumentParser(description=("Generate README.md files "
-                                                  "from readme.html files in "
-                                                  "SOAR apps"))
-    parser.add_argument("--folder", dest="folder", required=True,
-                        help="The top-level folder to process")
-    parser.add_argument("--output", dest="output_folder",
-                        help="Where to store generated markdown files")
+    parser = argparse.ArgumentParser(
+        description=("Generate README.md files " "from readme.html files in " "SOAR apps")
+    )
+    parser.add_argument(
+        "--folder", dest="folder", required=True, help="The top-level folder to process"
+    )
+    parser.add_argument(
+        "--output", dest="output_folder", help="Where to store generated markdown files"
+    )
     parser.add_argument("--debug", dest="debug", help="Enables debug mode")
-    parser.add_argument("--overwrite", dest="overwrite",
-                        help="If True, will overwrite output markdown file")
-    parser.add_argument("--show-stats", dest="show_stats", default=False,
-                        help="If True, will display stats")
+    parser.add_argument(
+        "--overwrite", dest="overwrite", help="If True, will overwrite output markdown file"
+    )
+    parser.add_argument(
+        "--show-stats", dest="show_stats", default=False, help="If True, will display stats"
+    )
     args = parser.parse_args()
     top_folder = args.folder
     output_folder = args.output_folder
@@ -479,16 +481,13 @@ def main():
     all_writes = {}
     all_skips = []
     all_backups = []
-    folders = [f for f in os.listdir(top_folder)
-               if os.path.isdir(Path(top_folder, f))]
+    folders = [f for f in os.listdir(top_folder) if os.path.isdir(Path(top_folder, f))]
     for folder in folders:
         folder_path = Path(top_folder, folder)
 
-        (conversion_result, backup) = readme_html_to_markdown(folder_path,
-                                                              folder,
-                                                              output_folder,
-                                                              overwrite,
-                                                              debug_mode)
+        (conversion_result, backup) = readme_html_to_markdown(
+            folder_path, folder, output_folder, overwrite, debug_mode
+        )
         if conversion_result:
             if backup:
                 all_backups.append(backup)
@@ -509,11 +508,14 @@ def main():
     print(f"Created {len(all_writes)} markdown files")
 
     if show_stats:
-        sorted_writes = {k: v for k, v in sorted(all_writes.items(),
-                         key=lambda item: abs(item[1]["word_diff"]),
-                         reverse=True)}
+        sorted_writes = {
+            k: v
+            for k, v in sorted(
+                all_writes.items(), key=lambda item: abs(item[1]["word_diff"]), reverse=True
+            )
+        }
         print("Stats:")
-        for (i, (wk, wv)) in enumerate(sorted_writes.items()):
+        for i, (wk, wv) in enumerate(sorted_writes.items()):
             wv["original_words"] = len(wv["original_words"])
             wv["converted_words"] = len(wv["converted_words"])
             print(", ".join([str(v) for k, v in wv.items()]))

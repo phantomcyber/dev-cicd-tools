@@ -33,5 +33,5 @@ make semgrep APP_FOLDER=/path/to/app1
 
 # pre-commit
 The pre-commit folder contains [pre-commit](https://pre-commit.com/) hooks for SOAR Connector
-repos in https://github.com/splunk-soar-connectors. Please refer to https://pre-commit.com/ for 
-details on authoring and installing hooks. 
+repos in https://github.com/splunk-soar-connectors. Please refer to https://pre-commit.com/ for
+details on authoring and installing hooks.

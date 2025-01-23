@@ -11,6 +11,7 @@ def validate_dir_path(path):
         raise argparse.ArgumentTypeError(f"{path} is not a directory.")
     return path
 
+
 def pass_args():
     parser = argparse.ArgumentParser(allow_abbrev=False)
     parser.add_argument("--connector_path", default=Path.cwd(), type=validate_dir_path)
@@ -19,6 +20,7 @@ def pass_args():
     args = parser.parse_args()
     return args
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
     sys.exit(build_docs(pass_args()))
