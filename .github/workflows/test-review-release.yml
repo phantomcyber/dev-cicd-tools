@@ -1,6 +1,6 @@
 name: Test Review Release
 
-on: [push]
+on: pull_request
 
 jobs:
   run-tests:
@@ -10,11 +10,12 @@ jobs:
         run: |
           echo "REQUIREMENTS_FILE_PATH=github-actions/scripts/review_release/requirements.txt" >> $GITHUB_ENV
           echo "DEV_REQUIREMENTS_FILE_PATH=github-actions/scripts/dev-requirements.txt" >> $GITHUB_ENV
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v5
         with:
           python-version: '3.9'
+          cache: pip
           cache-dependency-path: |
             ${{ env.REQUIREMENTS_FILE_PATH }}
             ${{ env.DEV_REQUIREMENTS_FILE_PATH }}
