@@ -116,7 +116,8 @@ def render_template_to_file(connector_path, json_content):
 
     logging.info("Saved readme as %s", output_readme_path)
     with open(output_readme_path, "w") as readme_file:
-        readme_file.write(rendered_content)
+        for line in rendered_content.splitlines():
+            readme_file.write(f"{line.rstrip()}\n")
 
     return rendered_content, output_readme_path
 
