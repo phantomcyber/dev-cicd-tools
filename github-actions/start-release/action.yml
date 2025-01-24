@@ -14,10 +14,7 @@ runs:
         cache: pip
     - name: 'Install Dependencies'
       run: |
-        sudo apt-get update && sudo apt-get install -y tidy
-        wget https://github.com/jgm/pandoc/releases/download/3.6.2/pandoc-3.6.2-1-amd64.deb
-        sudo dpkg -i pandoc-3.6.2-1-amd64.deb
-        python -m pip install --upgrade pip
+        pip install --upgrade pip
         pip install -r ${{ github.action_path }}/requirements.txt
       shell: bash
     - name: Checkout App Repo

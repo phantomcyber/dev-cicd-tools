@@ -1,8 +1,6 @@
 import json
 import os
 
-from bs4 import UnicodeDammit
-
 
 def handle_request_1(request):
     payload = json.loads(request.POST.get("payload"))
@@ -83,7 +81,7 @@ def handle_request_6(request):
     payload = json.loads(request.POST.get("payload"))
 
     callback_id = dict(payload).get("callback_id")
-    callback_json = json.loads(UnicodeDammit(callback_id).unicode_markup)
+    callback_json = json.loads(str(callback_id))
     asset_id = dict(callback_json).get("asset_id")
 
     state_filename = f"{asset_id}_state.json"
