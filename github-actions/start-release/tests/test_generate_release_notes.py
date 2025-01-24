@@ -1,5 +1,5 @@
 import datetime
-import os
+from pathlib import Path
 
 import pytest
 
@@ -33,8 +33,8 @@ def app_dir(request):
 def test_generate_release_notes(app_dir, app_json):
     updates = generate_release_notes(app_dir, APP_VERSION, app_json)
 
-    with open(os.path.join(app_dir, "release_notes/expected_release_notes.md")) as f:
-        assert updates[f"release_notes/{APP_VERSION}.md"] == f.read()
+    expected = Path(app_dir, "release_notes/expected_release_notes.md").read_text()
+    assert updates[f"release_notes/{APP_VERSION}.md"] == expected
 
 
 @pytest.fixture(

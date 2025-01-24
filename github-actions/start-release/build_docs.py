@@ -6,28 +6,24 @@ author notes (legacy README.md).
 """
 
 import argparse
+import dataclasses
+import datetime
 import logging
-import os
 import re
-import sys
 from pathlib import Path
+from collections.abc import Iterator
+from typing import Any, Optional, overload
 
+import mdformat
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from jinja2.ext import Extension
-from jinja2.lexer import Token
+from jinja2.lexer import Token, TokenStream
 
-from readme_to_markdown import (
-    README_HTML_NAME,
-    get_visible_text_from_html,
-    md_to_html,
-    parse_html,
-    readme_html_to_markdown,
-)
 from build_docs_lib import get_app_json, generate_gh_fragment
 
-SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
-TEMPLATE_DIR = Path(SCRIPT_DIR, "templates")
-TEMPLATE_NAME = "connector_detail.md"
+SCRIPT_DIR = Path(__file__).parent.resolve()
+TEMPLATE_DIR = SCRIPT_DIR / "templates"
+TEMPLATE_NAME = "connector_detail.md.j2"
 README_OUTPUT_NAME = "README.md"
 MANUAL_README_CONTENT_FILE_NAME = "manual_readme_content.md"
 README_INPUT_NAME = README_OUTPUT_NAME
@@ -58,7 +54,7 @@ MARKDOWN_RESERVED_CHARACTERS = [
 
 class EscapeMDFilterVarsExtension(Extension):
     # Markdown in all unfiltered injected values should be escaped
-    def filter_stream(self, stream):
+    def filter_stream(self, stream: TokenStream) -> Iterator[Token]:
         prev_token = None
         for token in stream:
             if token.type == "variable_end" and str(prev_token) not in self.environment.filters:
@@ -68,18 +64,19 @@ class EscapeMDFilterVarsExtension(Extension):
             prev_token = token
 
 
-def generate_action_heading_text(text):
+def generate_action_heading_text(text: str) -> str:
     return f"action: '{text}'"
 
 
-# def escape_markdown(text):
-#     if isinstance(text, str):
-#         for reserved_char in MARKDOWN_RESERVED_CHARACTERS:
-#             text = text.replace(reserved_char, f"\\{reserved_char}")
-#     return text
+@overload
+def escape_markdown(data: dict[str, Any]) -> dict[str, Any]: ...
 
 
-def escape_markdown(data):
+@overload
+def escape_markdown(data: str) -> str: ...
+
+
+def escape_markdown(data: Any) -> Any:
     if isinstance(data, dict):
         return {key: escape_markdown(val) for key, val in data.items()}
     elif isinstance(data, str):
@@ -88,154 +85,90 @@ def escape_markdown(data):
         return data
 
 
-def load_file(file_path):
+def load_file(file_path: Path) -> Optional[str]:
     try:
-        logging.info("Loading file: %s", file_path)
-        with open(file_path) as f:
-            return f.read()
+        logging.info(f"Loading file: {file_path}")
+        return file_path.read_text()
     except FileNotFoundError:
-        logging.warning("Couldn't find file: %s", file_path)
+        logging.warning(f"Couldn't find file: {file_path}")
+
     return None
 
 
-def render_template_to_file(connector_path, json_content):
+def render_template_to_file(connector_path: Path, json_content: dict[str, Any]) -> dict[str, str]:
     env = Environment(
         loader=FileSystemLoader(TEMPLATE_DIR),
         extensions=[EscapeMDFilterVarsExtension],
         autoescape=select_autoescape(),
+        trim_blocks=True,
+        lstrip_blocks=True,
     )
     env.filters["generate_gh_fragment"] = generate_gh_fragment
     env.filters["generate_action_heading_text"] = generate_action_heading_text
     env.filters["escape_markdown"] = escape_markdown
 
-    logging.info("Rendering with template: %s from %s", TEMPLATE_NAME, TEMPLATE_DIR)
+    logging.info(f"Rendering with template: {TEMPLATE_NAME} from {TEMPLATE_DIR}")
     t = env.get_template(TEMPLATE_NAME)
-    rendered_content = t.render(connector=json_content)
+    rendered_content = mdformat.text(
+        t.render(connector=json_content, year=datetime.datetime.now().year)
+    )
 
-    output_readme_path = Path(connector_path, README_OUTPUT_NAME)
+    output_readme_path = connector_path / README_OUTPUT_NAME
 
-    logging.info("Saved readme as %s", output_readme_path)
-    with open(output_readme_path, "w") as readme_file:
-        for line in rendered_content.splitlines():
-            readme_file.write(f"{line.rstrip()}\n")
+    output_readme_path.write_text(rendered_content)
+    logging.info(f"Saved readme as {output_readme_path}")
 
-    return rendered_content, output_readme_path
-
-
-def check_markdown_for_template_text(md_content):
-    if md_content:
-        template_path = Path(TEMPLATE_DIR, TEMPLATE_NAME)
-        with open(template_path) as template_file:
-            first_line_in_template = template_file.readline()
-
-        return first_line_in_template in md_content
+    return {output_readme_path.name: rendered_content}
 
 
-def build_docs(connector_path, json_name=None, app_version=None):
-    connector_path = Path(connector_path)
-    input_readme_path = Path(connector_path, README_INPUT_NAME)
-
+def build_docs(
+    connector_path: Path, json_name: Optional[str] = None, app_version: Optional[str] = None
+) -> dict[str, str]:
     json_content = get_app_json(connector_path, json_name)
     if app_version:
         json_content["app_version"] = app_version
 
-    md_content = load_file(input_readme_path)
-    if md_content and not check_markdown_for_template_text(md_content):
-        json_content["md_content"] = md_content
-    else:
-        manual_readme_content_path = Path(connector_path, MANUAL_README_CONTENT_FILE_NAME)
-        if manual_readme_content_path.is_file():
-            json_content["md_content"] = manual_readme_content_path.read_text(
-                encoding=DEFAULT_ENCODING
-            )
+    manual_docs = connector_path / MANUAL_README_CONTENT_FILE_NAME
+    if manual_docs.is_file():
+        json_content["md_content"] = manual_docs.read_text(encoding=DEFAULT_ENCODING)
 
     # If the entire asset configuration is meant to be hidden, don't render the config section at all
     include_config = any(
         field["data_type"] != "ph" and field.get("visibility", ["all"])
         for field in json_content.get("configuration", {}).values()
     )
-
     if not include_config:
-        json_content.pop("configuration", "No configuration to display in app")
+        json_content.pop("configuration", None)
 
     return render_template_to_file(connector_path, json_content)
 
 
-def first_n_rendered_words_match_readme_html(n, connector_path, md_content):
-    html_path = Path(connector_path, README_HTML_NAME)
-    if html_path.is_file():
-        with open(html_path) as html_file:
-            html_content = html_file.read()
-        parsed_html_content = parse_html(html_content)
-
-        txt_from_htm = get_visible_text_from_html(parsed_html_content).split()
-        html_from_md = md_to_html(md_content)
-        parsed_html_from_md = parse_html(html_from_md)
-        txt_from_md = get_visible_text_from_html(parsed_html_from_md).split()
-
-        if txt_from_htm[:n] == txt_from_md[:n]:
-            return True
-
-    return False
+@dataclasses.dataclass
+class BuildDocsArgs:
+    connector_path: Path
+    json_name: Optional[str] = None
 
 
-def has_markdown_comment(md_content):
-    return "[comment]: #" in md_content
-
-
-def load_existing_markdown(connector_path):
-    md_path = Path(connector_path, README_INPUT_NAME)
-
-    if not md_path.is_file():
-        return None
-
-    with open(md_path) as md_file:
-        return md_file.read()
-
-
-def build_docs_from_html(connector_path, app_version=None, json_name=None):
-    connector_path = Path(connector_path)
-    original_content = load_existing_markdown(connector_path)
-    readme_html_to_markdown(connector_path, overwrite=True, json_name=json_name)
-    output_content, output_path = build_docs(
-        connector_path, app_version=app_version, json_name=json_name
-    )
-
-    if original_content:
-        original_content = original_content.replace("\r", "")
-    if output_content:
-        output_content = output_content.replace("\r", "")
-    if original_content == output_content:
-        logging.info("Detected no readme updates")
-        return {}
-
-    return {str(output_path.relative_to(connector_path)): output_content}
-
-
-def main(args):
+def main(args: BuildDocsArgs) -> None:
     """
     Main entrypoint.
     """
     connector_path = Path(args.connector_path)
-    from_html = args.from_html == "True"
     json_name = args.json_name
     if json_name is not None and not json_name.endswith(".json"):
         json_name = json_name + ".json"
-    if from_html:
-        build_docs_from_html(connector_path, json_name=json_name)
     else:
         build_docs(connector_path, json_name=json_name)
 
 
-def parse_args():
-    help_str = " ".join(line.strip() for line in __doc__.strip().splitlines())
+def parse_args() -> BuildDocsArgs:
+    help_str = " ".join(line.strip() for line in (__doc__ or "").strip().splitlines())
     parser = argparse.ArgumentParser(description=help_str)
-    parser.add_argument("connector_path", help="Path to the connector")
-    parser.add_argument("from_html", default=False, help="Build from html instead of md", nargs="?")
-    parser.add_argument("json_name", default=None, type=str, help="JSON file name", nargs="?")
-    return parser.parse_args()
+    parser.add_argument("connector_path", help="Path to the connector", type=Path)
+    parser.add_argument("--json-name", help="JSON file name")
+    return BuildDocsArgs(**vars(parser.parse_args()))
 
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
-    sys.exit(main(parse_args()))
+    main(parse_args())

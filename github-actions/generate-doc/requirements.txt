@@ -7,3 +7,5 @@ pypandoc==1.6.4
 pytidylib==0.3.2
 requests-toolbelt==0.9.1
 requests==2.26.0
+mdformat==0.7.21
+mdformat-gfm==0.4.1

@@ -2,15 +2,17 @@ import base64
 import json
 import logging
 import os
+from pathlib import Path
 import re
 from http import HTTPStatus
 
 from distutils.version import LooseVersion
+from typing import Optional
 
 from requests import HTTPError
 
 from api.github import GitHubApiSession
-from build_docs import build_docs_from_html
+from build_docs import build_docs
 from copyright_updates import update_copyrights
 from generate_release_notes import generate_release_notes
 
@@ -40,6 +42,8 @@ COMMIT_AUTHOR = {"name": "root", "email": "root@splunksoar"}
 
 FIRST_VERSION = "1.0.0"
 
+WORKSPACE = Path(__file__).parent.parent.parent.resolve()
+
 
 def deserialize_app_json(app_json):
     json_str = base64.b64decode(app_json["content"]).decode(DEFAULT_ENCODING)
@@ -65,7 +69,10 @@ def _handle_http_not_found(ex):
         raise ex
 
 
-def start_release(session, app_dir=os.getenv("GITHUB_WORKSPACE")):
+def start_release(session, app_dir: Optional[str] = None):
+    if app_dir is None:
+        app_dir = os.getenv("GITHUB_WORKSPACE", str(WORKSPACE))
+
     # Fetch repo contents and find the app json file - which we
     # expect to be the only json file other than a potential postman collection
     repo_files = session.get("contents?ref=next")
@@ -125,7 +132,7 @@ def start_release(session, app_dir=os.getenv("GITHUB_WORKSPACE")):
         logging.warning("Could not find copyright information in the app JSON!")
 
     # Generate documentation for the app
-    docs_updates = build_docs_from_html(app_dir, app_version_next)
+    docs_updates = build_docs(Path(app_dir), app_version=app_version_next)
     updates.update(docs_updates)
 
     # Build a commit from the head of next including the version and

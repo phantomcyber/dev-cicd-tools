@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 import pytest
 
@@ -19,15 +19,17 @@ def app_dir(request):
 def test_copyright_updates(app_dir):
     updates = update_copyrights(app_dir, new_copyright)
 
-    assert len(updates) == 3
+    expected_files = ("LICENSE", "example_connector.py", "example_view.html")
 
-    for actual, expected_fp in [
-        (updates["LICENSE"], os.path.join(expected_app_dir_path, "LICENSE")),
-        (
-            updates["example_connector.py"],
-            os.path.join(expected_app_dir_path, "example_connector.py"),
-        ),
-        (updates["example_view.html"], os.path.join(expected_app_dir_path, "example_view.html")),
-    ]:
-        with open(expected_fp) as expected:
-            assert actual == expected.read()
+    for filename in expected_files:
+        try:
+            actual = updates[filename]
+        except KeyError:
+            pytest.fail(f"Missing expected license update for file {filename}")
+
+        expected = Path(expected_app_dir_path, filename)
+        assert (
+            actual == expected.read_text()
+        ), f"License update for file {filename} did not match expectations!"
+
+    assert len(updates) == len(expected_files)

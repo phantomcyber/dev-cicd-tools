@@ -1,4 +1,3 @@
-import glob
 import os
 import re
 import tokenize
@@ -9,11 +8,11 @@ from jinja2 import Environment, FileSystemLoader
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 JINJA_ENV = Environment(loader=FileSystemLoader(os.path.join(SCRIPT_DIR, "templates")))
-LICENSE_TEMPLATE = JINJA_ENV.get_template("LICENSE")
+LICENSE_TEMPLATE = JINJA_ENV.get_template("LICENSE.j2")
 
 
-def generate_apache_license_content(copyright_str):
-    return LICENSE_TEMPLATE.render(copyright=copyright_str)
+def generate_apache_license_content(copyright_str: str) -> str:
+    return f"{LICENSE_TEMPLATE.render(copyright=copyright_str)}\n"
 
 
 SUPPORTED_SOURCE_FILE_EXTENSIONS = (".py", ".html")
@@ -25,8 +24,8 @@ COPYRIGHT_REGEX = re.compile(
 )
 
 
-def update_python_file_copyright(file_path, copyright_str):
-    if not os.path.isfile(file_path):
+def update_python_file_copyright(file_path: Path, copyright_str: str) -> bool:
+    if not file_path.is_file():
         raise FileNotFoundError(file_path)
 
     replaced_lines = {}
@@ -85,18 +84,16 @@ class HtmlCopyrightProcessor(HTMLParser):
                 self.updated_lines[self.lineno - 1 + i] = new_comment
 
 
-def update_html_file_copyright(file_path, copyright_str):
-    if not os.path.isfile(file_path):
+def update_html_file_copyright(file_path: Path, copyright_str: str) -> bool:
+    if not file_path.is_file():
         raise FileNotFoundError(file_path)
 
-    with open(file_path) as f:
-        original_content = f.read()
-        original_lines = original_content.split("\n")
-        if original_lines[-1] == "":
-            original_lines = original_lines[:-1]
+    original_lines = file_path.read_text().splitlines()
+    if original_lines[-1] == "":
+        original_lines = original_lines[:-1]
 
     processor = HtmlCopyrightProcessor(copyright_str)
-    processor.feed(original_content)
+    processor.feed("\n".join(original_lines))
 
     if not processor.updated_lines:
         return False
@@ -108,26 +105,23 @@ def update_html_file_copyright(file_path, copyright_str):
     return True
 
 
-def update_copyrights(app_dir, copyright_str):
+def update_copyrights(app_dir: str, copyright_str: str) -> dict[str, str]:
     updated_files = {}
 
     license_content = generate_apache_license_content(copyright_str)
-    license_path = os.path.join(app_dir, "LICENSE")
-    if os.path.isfile(license_path):
-        with open(license_path) as f:
-            if license_content != f.read():
-                updated_files["LICENSE"] = license_content
+    license_path = Path(app_dir, "LICENSE")
+    if license_path.is_file():
+        if license_path.read_text() != license_content:
+            updated_files["LICENSE"] = license_content
     else:
         updated_files["LICENSE"] = license_content
 
-    for py_file in glob.glob(os.path.join(app_dir, "*.py")):
+    for py_file in Path(app_dir).rglob("*.py"):
         if update_python_file_copyright(py_file, copyright_str):
-            with open(py_file) as f:
-                updated_files[str(Path(py_file).relative_to(app_dir))] = f.read()
+            updated_files[str(py_file.relative_to(app_dir))] = py_file.read_text()
 
-    for html_file in glob.glob(os.path.join(app_dir, "*.html")):
+    for html_file in Path(app_dir).rglob("*.html"):
         if update_html_file_copyright(html_file, copyright_str):
-            with open(html_file) as f:
-                updated_files[str(Path(html_file).relative_to(app_dir))] = f.read()
+            updated_files[str(html_file.relative_to(app_dir))] = html_file.read_text()
 
     return updated_files

@@ -32,7 +32,7 @@ runs:
         export APP_REPO_DIR="$(pwd)"
         cd ${{ github.action_path }}
         cd ../start-release
-        python build_docs.py $APP_REPO_DIR True
+        python build_docs.py $APP_REPO_DIR
         cd $APP_REPO_DIR
         git config user.name "splunk-soar-connectors-admin"
         git config user.email "admin@splunksoar"

@@ -1,5 +1,6 @@
 import logging
 import os
+from pathlib import Path
 import re
 
 RELEASE_NOTES_DIR = "release_notes"
@@ -29,11 +30,10 @@ def append_release_notes_md(app_dir, release_version, unreleased_notes):
             f"Expected the first line of {UNRELEASED_MD} to be the header {UNRELEASED_MD_HEADER}"
         )
 
-    existing_release_notes = os.path.join(app_dir, f"release_notes/{release_version}.md")
-    if os.path.isfile(existing_release_notes):
-        with open(existing_release_notes) as f:
-            release_notes = f.read().split("\n")
-    else:
+    existing_release_notes = Path(app_dir, f"release_notes/{release_version}.md")
+    try:
+        release_notes = existing_release_notes.read_text().rstrip().splitlines()
+    except Exception:
         release_notes = []
 
     parent_depths = []
@@ -70,7 +70,7 @@ def append_release_notes_md(app_dir, release_version, unreleased_notes):
     if not release_notes:
         return None
 
-    return "\n".join(release_notes)
+    return "\n".join(release_notes) + "\n"
 
 
 def generate_release_notes(app_dir, release_version, app_json):

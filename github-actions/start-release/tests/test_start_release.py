@@ -54,7 +54,7 @@ def mock_update_copyrights(mocker):
 
 @pytest.fixture(name="build_docs", scope="function")
 def mock_build_docs(mocker):
-    return mocker.patch("start_release.build_docs_from_html", autospec=True)
+    return mocker.patch("start_release.build_docs", autospec=True)
 
 
 @pytest.fixture(scope="function", params=[NEXT_VERSION_OKAY, NEXT_VERSION_TOO_SMALL])
