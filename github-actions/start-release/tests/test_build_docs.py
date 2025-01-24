@@ -55,9 +55,9 @@ def test_build_docs(capsys, app_dir: Path, expected_new_files: list[str]):
             # Catch the auto-generated copyright year
             expected_line = expected_line.replace("{{year}}", str(year))
 
-            assert (
-                actual_line == expected_line
-            ), f"Line {num} differed from {expected_readme}:\n{actual_line=}\n{expected_line=}\n"
+            assert actual_line == expected_line, (
+                f"Line {num} differed from {expected_readme}:\n{actual_line=}\n{expected_line=}\n"
+            )
 
     for expected_new_file in expected_new_files:
         expected_new_file = Path(app_dir, expected_new_file)

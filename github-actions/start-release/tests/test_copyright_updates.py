@@ -28,8 +28,8 @@ def test_copyright_updates(app_dir):
             pytest.fail(f"Missing expected license update for file {filename}")
 
         expected = Path(expected_app_dir_path, filename)
-        assert (
-            actual == expected.read_text()
-        ), f"License update for file {filename} did not match expectations!"
+        assert actual == expected.read_text(), (
+            f"License update for file {filename} did not match expectations!"
+        )
 
     assert len(updates) == len(expected_files)
