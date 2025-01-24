@@ -7,7 +7,11 @@ runs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.9'
-        cache: pip
+    # Reusable actions can't use setup-python's cache because it looks for the running repo's deps
+    - uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-soar-ci
     - name: Install Dependencies
       run: |
           python -m pip install --upgrade pip
