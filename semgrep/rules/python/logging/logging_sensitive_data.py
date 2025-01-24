@@ -1,12 +1,16 @@
 import logging
 
 
+def configure_auth():
+    pass
+
+
 class Connector:
     def main(self):
         # ruleid: logging-sensitive-data
         print(self._secret)
         # ok: logging-sensitive-data
-        print('foobar')
+        print("foobar")
 
         # ruleid: logging-sensitive-data
         logging.debug(self._secret)
@@ -25,7 +29,7 @@ class Connector:
         # ruleid: logging-sensitive-data
         logging.log(logging.INFO, self._secret)
         # ok: logging-sensitive-data
-        logging.info('foobar')
+        logging.info("foobar")
 
         # ruleid: logging-sensitive-data
         self.debug_print(self._secret)
@@ -36,12 +40,11 @@ class Connector:
         # ruleid: logging-sensitive-data
         self.send_progress(self._secret)
         # ok: logging-sensitive-data
-        self.send_progress('foobar')
+        self.send_progress("foobar")
 
         self.auth = configure_auth()
 
         # ruleid: logging-sensitive-data
         self.debug_print(self.auth)
 
-        self.debug_print('password')
-
+        self.debug_print("password")

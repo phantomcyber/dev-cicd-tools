@@ -1,9 +1,9 @@
-name: Test Package App Dependencies
+name: Lint
 
 on: pull_request
 
 jobs:
-  run-tests:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -14,8 +14,6 @@ jobs:
           cache: pip
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -r pre-commit/dev-requirements.txt
-      - name: Run Tests
-        working-directory: pre-commit
-        run: pytest tests
+          pip install --upgrade pip pre-commit
+          pre-commit install
+      - run: pre-commit run --all-files

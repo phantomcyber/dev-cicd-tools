@@ -6,7 +6,7 @@ def copy_app_dir(request):
         shutil.rmtree(app_dir_copy, ignore_errors=True)
 
     app_dir = request.param
-    app_dir_copy = app_dir + '_copy'
+    app_dir_copy = app_dir + "_copy"
 
     shutil.copytree(app_dir, app_dir_copy)
     request.addfinalizer(remove_app_dir_copy)
