@@ -1,9 +1,9 @@
 # {{connector.name}}
 
-Publisher: {{connector.publisher}}
-Connector Version: {{connector.app_version}}
-Product Vendor: {{connector.product_vendor}}
-Product Name: {{connector.product_name}}
+Publisher: {{connector.publisher}} \
+Connector Version: {{connector.app_version}} \
+Product Vendor: {{connector.product_vendor}} \
+Product Name: {{connector.product_name}} \
 Minimum Product Version: {{connector.min_phantom_version}}
 
 {{connector.description}}
@@ -28,14 +28,15 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 {% if connector.actions %}
 ### Supported Actions
 {% for action in connector.actions %}
-[{{action.action}}](#{{action.action | generate_action_heading_text | generate_gh_fragment}}) - {{action.description}}
+[{{action.action}}](#{{action.action | generate_action_heading_text | generate_gh_fragment}}) - {{action.description}}{% if not loop.last %} \{% endif %}
+
 {% endfor %}
 
 {% for action in connector.actions %}
 ## {{action.action | generate_action_heading_text}}
 {{action.description}}
 
-Type: **{{action.type}}**
+Type: **{{action.type}}** \
 Read only: **{{action.read_only}}**
 
 {% if action.verbose %}
@@ -70,7 +71,7 @@ No Output
 
 ______________________________________________________________________
 
-This file contains auto-generated SOAR connector documentation.
+Auto-generated Splunk SOAR Connector documentation.
 
 Copyright {{year}} Splunk Inc.
 
