@@ -35,7 +35,7 @@ class GitHubApiSession:
                 HTTPStatus.SERVICE_UNAVAILABLE,
                 HTTPStatus.GATEWAY_TIMEOUT,
             ],
-            method_whitelist=["GET", "PATCH", "POST"],
+            allowed_methods=["GET", "PATCH", "POST"],
         )
         self._session.mount(self._repo_base_url, HTTPAdapter(max_retries=retry_strategy))
 
