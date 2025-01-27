@@ -38,7 +38,7 @@ def app_dir(request: pytest.FixtureRequest) -> Path:
     ],
     indirect=["app_dir"],
 )
-def test_build_docs(capsys, app_dir: Path, expected_new_files: list[str]):
+def test_build_docs(app_dir: Path, expected_new_files: list[str]):
     output_readme = app_dir / "README.md"
     expected_readme = app_dir / "expected_readme.md"
 
