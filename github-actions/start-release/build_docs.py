@@ -168,8 +168,8 @@ def main(args: BuildDocsArgs) -> None:
     json_name = args.json_name
     if json_name is not None and not json_name.endswith(".json"):
         json_name = json_name + ".json"
-    else:
-        build_docs(connector_path, json_name=json_name)
+
+    build_docs(connector_path, json_name=json_name)
 
 
 def parse_args() -> BuildDocsArgs:
