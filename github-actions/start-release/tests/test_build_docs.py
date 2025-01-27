@@ -9,7 +9,7 @@ import pytest
 
 from pathlib import Path
 
-from build_docs import README_OUTPUT_NAME, main as build_docs_main, BuildDocsArgs
+from build_docs import README_OUTPUT_NAME, build_docs
 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -44,7 +44,7 @@ def test_build_docs(app_dir: Path, expected_new_files: list[str]):
     expected_readme = app_dir / "expected_readme.md"
 
     try:
-        build_docs_main(BuildDocsArgs(connector_path=app_dir))
+        updates = build_docs(app_dir)
     except Exception as e:
         pytest.fail(str(e))
 
@@ -67,4 +67,8 @@ def test_build_docs(app_dir: Path, expected_new_files: list[str]):
 
     for expected_new_file in expected_new_files:
         expected_new_file = Path(app_dir, expected_new_file)
+        assert Path(expected_new_file).name in updates
         assert expected_new_file.is_file()
+
+    # README updates should be idempotent
+    assert build_docs(app_dir) == {}

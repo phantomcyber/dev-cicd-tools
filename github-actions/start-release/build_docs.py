@@ -95,7 +95,7 @@ def load_file(file_path: Path) -> Optional[str]:
     return None
 
 
-def render_template_to_file(connector_path: Path, json_content: dict[str, Any]) -> dict[str, str]:
+def render_docs(json_content: dict[str, Any]) -> str:
     env = Environment(
         loader=FileSystemLoader(TEMPLATE_DIR),
         extensions=[EscapeMDFilterVarsExtension],
@@ -109,16 +109,22 @@ def render_template_to_file(connector_path: Path, json_content: dict[str, Any]) 
 
     logging.info(f"Rendering with template: {TEMPLATE_NAME} from {TEMPLATE_DIR}")
     t = env.get_template(TEMPLATE_NAME)
-    rendered_content = mdformat.text(
-        t.render(connector=json_content, year=datetime.datetime.now().year)
-    )
+    return mdformat.text(t.render(connector=json_content, year=datetime.datetime.now().year))
 
-    output_readme_path = connector_path / README_OUTPUT_NAME
 
-    output_readme_path.write_text(rendered_content)
+def write_docs(output_readme_path: Path, content: str) -> bool:
+    try:
+        original = output_readme_path.read_text()
+    except FileNotFoundError:
+        original = ""
+
+    if original == content:
+        logging.info("Detected no readme updates")
+        return False
+
+    output_readme_path.write_text(content)
     logging.info(f"Saved readme as {output_readme_path}")
-
-    return {output_readme_path.name: rendered_content}
+    return True
 
 
 def build_docs(
@@ -140,7 +146,12 @@ def build_docs(
     if not include_config:
         json_content.pop("configuration", None)
 
-    return render_template_to_file(connector_path, json_content)
+    content = render_docs(json_content)
+
+    output_readme_path = connector_path / README_OUTPUT_NAME
+    if write_docs(output_readme_path, content):
+        return {output_readme_path.name: content}
+    return {}
 
 
 @dataclasses.dataclass
@@ -157,8 +168,8 @@ def main(args: BuildDocsArgs) -> None:
     json_name = args.json_name
     if json_name is not None and not json_name.endswith(".json"):
         json_name = json_name + ".json"
-    else:
-        build_docs(connector_path, json_name=json_name)
+
+    build_docs(connector_path, json_name=json_name)
 
 
 def parse_args() -> BuildDocsArgs:
