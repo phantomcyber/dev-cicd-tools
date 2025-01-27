@@ -3,6 +3,7 @@ import itertools
 import logging
 import os
 import shutil
+import textwrap
 
 import pytest
 
@@ -55,8 +56,13 @@ def test_build_docs(app_dir: Path, expected_new_files: list[str]):
             # Catch the auto-generated copyright year
             expected_line = expected_line.replace("{{year}}", str(year))
 
-            assert actual_line == expected_line, (
-                f"Line {num} differed from {expected_readme}:\n{actual_line=}\n{expected_line=}\n"
+            assert actual_line == expected_line, textwrap.dedent(
+                f"""
+                Line {num} differed from {expected_readme}:
+                  {actual_line=}
+                {expected_line=}
+
+                """
             )
 
     for expected_new_file in expected_new_files:

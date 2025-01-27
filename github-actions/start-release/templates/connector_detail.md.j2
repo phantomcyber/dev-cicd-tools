@@ -20,7 +20,7 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 -------- | -------- | ---- | -----------
 {% for name, parameters in connector.configuration.items() %}
 {% if parameters.data_type != "ph" and ("visibility" not in parameters or parameters.visibility|length > 0) %}
-**{{name}}** | {% if parameters.required == True %} required {% else %} optional {% endif %} | {{ parameters.data_type }} | {{ parameters.description }}
+**{{name}}** | {% if parameters.required == True %} required {% else %} optional {% endif %} | {{ parameters.data_type }} | {{ parameters.description }} |
 {% endif %}
 {% endfor %}
 {% endif %}
@@ -49,7 +49,7 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 --------- | -------- | ----------- | ---- | --------
 {% for name, parameters in action.parameters.items() %}
 {% if parameters.data_type != "ph" %}
-**{{name}}** | {% if parameters.required == True %} required {% else %} optional {% endif %} | {{parameters.description}} | {{parameters.data_type}} | {% for contain in parameters.contains %} `{{contain}}` {% endfor %}
+**{{name}}** | {% if parameters.required %} required {% else %} optional {% endif %} | {{parameters.description}} | {{parameters.data_type}} | {% for contain in parameters.contains %} `{{contain}}` {% endfor %} |
 {% endif %}
 {% endfor %}
 {% else %}
@@ -61,7 +61,9 @@ No parameters are required for this action
 DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
 --------- | ---- | -------- | --------------
 {% for output in action.output %}
-{{output.data_path}} | {{output.data_type}} | {% for contain in output.contains %} `{{contain}}` {% endfor %} |  {% for example in output.example_values %} {{example}} {% endfor %}
+{% if output %}
+{{output.data_path}} | {{output.data_type}} | {% for contain in output.contains %} `{{contain}}` {% endfor %} |  {% for example in output.example_values %} {{example | trim | replace("\n", " ")}} {% endfor %} |
+{% endif %}
 {% endfor %}
 {% else %}
 No Output
