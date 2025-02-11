@@ -1,3 +1,5 @@
+# TODO: remove (part of pre-commit hook)
+
 name: 'Semgrep'
 description: 'Runs semgrep on the target app repository'
 inputs:
