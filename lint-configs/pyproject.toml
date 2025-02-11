@@ -1,5 +1,6 @@
+# Ruff linting
 [tool.ruff]
-line-length = 145
+line-length = 100 # Changed from 145 (more standard)
 target-version = "py39"
 
 [tool.ruff.lint]
@@ -50,6 +51,7 @@ indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
 
+# HTML linting
 [tool.djlint]
 profile = "handlebars"
 extension = "html"
@@ -57,13 +59,5 @@ indent = 2
 
 # Markdown linting
 [tool.mdformat]
-wrap_code = true
-wrap_tables = true
-wrap_md = true
-wrap_md_code = true
-wrap_md_code_blocks = true
-wrap_md_lists = true
-wrap_md_md = true
-wrap_md_md_code = true
-wrap_md_md_code_blocks = true
-wrap_md_md_lists = true
+wrap = true
+number = true
