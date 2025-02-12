@@ -9,8 +9,8 @@
     language: script
     entry: pre-commit/package_app_dependencies
     verbose: true
--   id: readme-check
+-   id: readme-check # TODO: Move to org hooks
     name: readme check
     language: script
-    entry: github-actions/start-release/readme_check.py
+    entry: github-actions/start-release/readme_check.py # TODO: Clean up this stuff (move out of start-release, etc...) -> part of doc ticket
     pass_filenames: false
