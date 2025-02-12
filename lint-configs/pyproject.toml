@@ -61,3 +61,31 @@ indent = 2
 [tool.mdformat]
 wrap = true
 number = true
+
+# Semgrep configuration
+[tool.semgrep]
+config = [
+    "p/python", # Built-in Python rules
+    "semgrep", # Look for our other rules
+    "r/typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml" # TypeScript React security rule
+]
+ignore-patterns = [
+    "node_modules/",
+    "build/",
+    "dist/",
+    "vendor/",
+    "env/",
+    ".env/",
+    "venv/",
+    ".venv/",
+    ".tox/",
+    "*.min.js",
+    "test/",
+    "tests/",
+    "*_test.go",
+    ".semgrep",
+    "wheels/",
+    ".html",
+    "*.md",
+    "*.svg"
+]

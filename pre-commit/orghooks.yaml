@@ -32,7 +32,4 @@ repos:
     rev: 'v1.107.0'
     hooks:
       - id: semgrep
-        args: [
-          '--config', 'p/python', # Built-in Python rules
-          '--config', 'semgrep' # Look for our other rules
-        ]
+        args: ['--config', 'auto']  # Pick up rules from pyproject.toml

@@ -1,4 +1,4 @@
-# TODO: remove (part of pre-commit hook)
+# TODO: remove (will be part of pre-commit hook)
 
 name: 'Lint'
 description: 'Runs ruff on the target app repository'
