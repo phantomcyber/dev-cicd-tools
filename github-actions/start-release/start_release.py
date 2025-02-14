@@ -12,7 +12,6 @@ from typing import Optional
 from requests import HTTPError
 
 from api.github import GitHubApiSession
-from build_docs import build_docs
 from copyright_updates import update_copyrights
 from generate_release_notes import generate_release_notes
 
@@ -130,10 +129,6 @@ def start_release(session, app_dir: Optional[str] = None):
         updates.update(cp_updates)
     else:
         logging.warning("Could not find copyright information in the app JSON!")
-
-    # Generate documentation for the app
-    docs_updates = build_docs(Path(app_dir), app_version=app_version_next)
-    updates.update(docs_updates)
 
     # Build a commit from the head of next including the version and
     # release note updates

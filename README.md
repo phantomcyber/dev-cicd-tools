@@ -2,8 +2,11 @@
 
 This repo contains tools and scripts to standardize and simplify CI/CD pipelines and developer experience.
 
+# Note on Usage
+The recommended way to use pre-commit is to run `pre-commit install` within your app directory and use `pre-commit run`,
+as apps should already include their own pre-commit configuration. However, if you want to use these tools locally you can use as below.
 
-# Local developer tools setup
+# Local setup
 It might be beneficial to clone this repo to be adjacent to your apps folders, though not strictly required:
 ```
 .
@@ -12,23 +15,13 @@ It might be beneficial to clone this repo to be adjacent to your apps folders, t
 └── dev-cicd-tools
 ```
 
-To setup your local dev environment, first you need the following pre-requisites:
-- [make](https://www.gnu.org/software/make/)
-- [python3](https://www.python.org/downloads/)
+To setup your local environment, you need:
+- [pre-commit](https://pre-commit.com/)
 
-Once you've installed the pre-requisites, you can run
-```
-make install
-```
-
-# Running developer tools
-Most of the targets in the Makefile expect the path of the app folder to operate on, specified with `APP_FOLDER`.
-
-Take a look in the Makefile for the complete list of targets. Some useful commands:
-```
-make lint APP_FOLDER=/path/to/app1
-make lint-fix APP_FOLDER=/path/to/app1
-make semgrep APP_FOLDER=/path/to/app1
+# Running checks
+Most commands expect the path to the app folder you want to check. Take a look at the available hooks in `.pre-commit-hooks.yaml` for the complete list. Some useful commands:
+```bash
+pre-commit run --config dev-cicd-tools/.pre-commit-hooks.yaml --source /path/to/app1 --all-files
 ```
 
 # pre-commit
