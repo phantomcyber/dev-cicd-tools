@@ -33,3 +33,10 @@ repos:
     hooks:
       - id: semgrep
         args: ['--config', 'auto']  # Pick up rules from pyproject.toml
+  - repo: local
+    hooks:
+      - id: build-docs
+        name: Build Documentation
+        language: python
+        entry: pre-commit/build_docs.py
+        pass_filenames: false
