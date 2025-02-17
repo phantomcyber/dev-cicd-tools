@@ -1,16 +1,10 @@
 #!/usr/bin/env python3
-"""
-Hook script to run org hooks.
 
-Modified from: https://stackoverflow.com/a/59055569
-"""
-
-import os
 import shutil
 import sys
 from pathlib import Path
 
-ORGHOOKS_DIR = Path(__file__).resolve().parent
+SCRIPT_DIR = Path(__file__).resolve().parent
 
 MODERN_LINT_CONFIG_FILE = "pyproject.toml"
 SEMGREP_RULES_DIR = "semgrep"
@@ -18,7 +12,7 @@ SEMGREP_RULES_DIR = "semgrep"
 
 def copy_configs(dest_dir):
     """Override configurations for hooks"""
-    dev_tools_dir = ORGHOOKS_DIR.parent
+    dev_tools_dir = SCRIPT_DIR.parent
     lint_configs_dir = dev_tools_dir / "lint-configs"
 
     try:
@@ -39,6 +33,18 @@ def copy_configs(dest_dir):
             # Copy all files from source to destination
             shutil.copytree(source_rules_dir, dest_rules_dir)
 
+        # Copy pre-commit directory
+        source_precommit_dir = dev_tools_dir / "pre-commit"
+        dest_precommit_dir = dest_dir / "pre-commit"
+
+        if source_precommit_dir.exists():
+            # Remove existing pre-commit directory to ensure clean copy
+            if dest_precommit_dir.exists():
+                shutil.rmtree(dest_precommit_dir, ignore_errors=True)
+
+            # Copy all files from source to destination
+            shutil.copytree(source_precommit_dir, dest_precommit_dir)
+
     except Exception:
         # We can safely ignore these errors since the files are already there
         pass
@@ -46,9 +52,7 @@ def copy_configs(dest_dir):
 
 def main():
     copy_configs(Path.cwd())
-    cfg = str(ORGHOOKS_DIR / "orghooks.yaml")
-    cmd = ["pre-commit", "run", "--config", cfg, "--files"] + sys.argv[1:]
-    os.execvp(cmd[0], cmd)
+    return 0
 
 
 if __name__ == "__main__":

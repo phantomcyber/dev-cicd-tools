@@ -1,16 +1,8 @@
--   id: org-hook
-    name: org-wide hooks
-    language: script
-    entry: pre-commit/run-org-hooks
-    verbose: true
--   id: package-app-dependencies
-    name: package app dependencies
-    files: '^requirements.txt$'
-    language: script
-    entry: pre-commit/package_app_dependencies
-    verbose: true
--   id: readme-check # TODO: Move to org hooks
-    name: readme check
-    language: script
-    entry: github-actions/start-release/readme_check.py # TODO: Clean up this stuff (move out of start-release, etc...) -> part of doc ticket
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+-   id: setup-hooks
+    name: Setup standard hooks
+    description: Sets up standard pre-commit hooks, configs, and scripts for connector
+    entry: bash -c 'pip install pyyaml && python ${PRE_COMMIT_HOME:-$HOME/.cache/pre-commit}/repo*/pre-commit-setup/setup_hooks.py'
+    language: system
     pass_filenames: false

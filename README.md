@@ -18,12 +18,6 @@ It might be beneficial to clone this repo to be adjacent to your apps folders, t
 To setup your local environment, you need:
 - [pre-commit](https://pre-commit.com/)
 
-# Running checks
-Most commands expect the path to the app folder you want to check. Take a look at the available hooks in `.pre-commit-hooks.yaml` for the complete list. Some useful commands:
-```bash
-pre-commit run --config dev-cicd-tools/.pre-commit-hooks.yaml --source /path/to/app1 --all-files
-```
-
 # pre-commit
 The pre-commit folder contains [pre-commit](https://pre-commit.com/) hooks for SOAR Connector
 repos in https://github.com/splunk-soar-connectors. Please refer to https://pre-commit.com/ for

@@ -42,6 +42,10 @@ semgrep --config <path_to_dev_cicd_tools>/semgrep/rules
 `upload_private_rules.sh` will upload the rules from every `yaml` file under the `rules` folder
 to the Semgrep registry. Note that the rules will only be visible to members of `splunk-soar-connectors`.
 
+```
+./semgrep/upload_private_rules.sh
+```
+
 To upload a specific ruleset under the path `rules/python/category/ruleset.yaml`:
 ```
 docker pull returntocorp/semgrep-upload:latest

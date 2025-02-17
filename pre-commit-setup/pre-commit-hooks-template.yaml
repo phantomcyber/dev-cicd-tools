@@ -16,20 +16,33 @@ repos:
     rev: v0.9.6
     hooks:
       - id: ruff
-        args: [ "--fix", "--exit-zero"] # Ignore errors for now, need to fix later (and remove exit-zero)
+        args: [ "--fix", "--exit-zero"] # Ignore errors for now, need to fix for all apps (and remove exit-zero)
       - id: ruff-format
   - repo: https://github.com/djlint/djLint
     rev: v1.36.4
     hooks:
       - id: djlint-reformat-django
       - id: djlint-django
-        args: ["--ignore-errors"] # Ignore errors for now, need to fix later (and remove ignore-errors)
+        args: ["--warn"]  # Ignore errors for now, need to fix for all apps (and remove warn)
   - repo: https://github.com/hukkin/mdformat
     rev: 0.7.22
     hooks:
       - id: mdformat
   - repo: https://github.com/returntocorp/semgrep
-    rev: 'v1.107.0'
+    rev: v1.107.0
     hooks:
       - id: semgrep
-        args: ['--config', 'auto']  # Pick up rules from pyproject.toml
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ['--no-verify']
+        exclude_types: [json]
+  - repo: local
+    hooks:
+      # Other hooks will go here (like build-docs)
+      - id: package-app-dependencies
+        name: package app dependencies
+        language: python
+        entry: pre-commit/package_app_dependencies
+        files: '^requirements.txt$'
