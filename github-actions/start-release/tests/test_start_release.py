@@ -29,7 +29,6 @@ logging.getLogger().setLevel(logging.INFO)
 
 APP_NAME = "App"
 PUBLISHER = "Splunk"
-COPYRIGHT = "Copyright (c) Splunk Inc."
 SHA = "59308dba2df36f51e77e6a8b8501c960c7999999"
 DATE = datetime.date.today().strftime(RELEASE_NOTES_DATE_FORMAT)
 NEXT_VERSION_OKAY = "1.0.1"
@@ -47,11 +46,6 @@ def mock_generate_release_notes(mocker):
     return mocker.patch("start_release.generate_release_notes", autospec=True)
 
 
-@pytest.fixture(name="update_copyrights", scope="function")
-def mock_update_copyrights(mocker):
-    return mocker.patch("start_release.update_copyrights", autospec=True)
-
-
 @pytest.fixture(scope="function", params=[NEXT_VERSION_OKAY, NEXT_VERSION_TOO_SMALL])
 def next_version(request):
     return request.param
@@ -64,7 +58,7 @@ def main_version(request):
 
 def mock_app_json(version):
     app_json = json.dumps(
-        {"app_version": version, "name": APP_NAME, "publisher": PUBLISHER, "license": COPYRIGHT},
+        {"app_version": version, "name": APP_NAME, "publisher": PUBLISHER},
         indent=4,
     )
     return {"content": base64.b64encode(app_json.encode(DEFAULT_ENCODING)), "sha": SHA}
@@ -96,7 +90,6 @@ def app_dir(request):
     os.mkdir(release_notes_dir)
     shutil.copytree("tests/data/release_notes/existing_release_notes", release_notes_dir)
 
-    shutil.copytree("tests/data/copyrights/app_dir", app_dir)
     return copy_app_dir(request)
 
 
@@ -110,7 +103,6 @@ def test_start_release_happy_path(
     next_version,
     main_version,
     generate_release_notes,
-    update_copyrights,
     existing_pr,
 ):
     base_sha, json_sha, tree_sha, commit_sha = (i for i in range(4))
@@ -163,12 +155,8 @@ def test_start_release_happy_path(
         expected_tree = []
 
     generate_release_notes.return_value = {"unreleased.md": "unreleased_content"}
-    update_copyrights.return_value = {"connector.py": "connector_content"}
 
-    for file, content in {
-        **generate_release_notes.return_value,
-        **update_copyrights.return_value,
-    }.items():
+    for file, content in generate_release_notes.return_value.items():
         sha = f"{content}_sha"
         post_blob_sha_l.append(sha)
         expected_blobs.append(content)
