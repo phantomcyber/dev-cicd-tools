@@ -52,11 +52,6 @@ def mock_update_copyrights(mocker):
     return mocker.patch("start_release.update_copyrights", autospec=True)
 
 
-@pytest.fixture(name="build_docs", scope="function")
-def mock_build_docs(mocker):
-    return mocker.patch("start_release.build_docs", autospec=True)
-
-
 @pytest.fixture(scope="function", params=[NEXT_VERSION_OKAY, NEXT_VERSION_TOO_SMALL])
 def next_version(request):
     return request.param
@@ -116,7 +111,6 @@ def test_start_release_happy_path(
     main_version,
     generate_release_notes,
     update_copyrights,
-    build_docs,
     existing_pr,
 ):
     base_sha, json_sha, tree_sha, commit_sha = (i for i in range(4))
@@ -170,12 +164,10 @@ def test_start_release_happy_path(
 
     generate_release_notes.return_value = {"unreleased.md": "unreleased_content"}
     update_copyrights.return_value = {"connector.py": "connector_content"}
-    build_docs.return_value = {"readme.md": "readme_content"}
 
     for file, content in {
         **generate_release_notes.return_value,
         **update_copyrights.return_value,
-        **build_docs.return_value,
     }.items():
         sha = f"{content}_sha"
         post_blob_sha_l.append(sha)
