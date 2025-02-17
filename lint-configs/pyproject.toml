@@ -53,7 +53,7 @@ line-ending = "auto"
 
 # HTML linting
 [tool.djlint]
-profile = "handlebars"
+profile = "django"
 extension = "html"
 indent = 2
 
