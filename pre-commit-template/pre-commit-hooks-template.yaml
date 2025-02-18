@@ -1,5 +1,7 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
+
+# This is a template for connector pre-commit hooks
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v3.2.0
@@ -38,11 +40,8 @@ repos:
       - id: detect-secrets
         args: ['--no-verify']
         exclude_types: [json]
-  - repo: local
+        # Central hooks
+  - repo: https://github.com/phantomcyber/dev-cicd-tools
+    rev: feature/frictionless_connector_contributions # TODO: Update when time
     hooks:
-      # Other hooks will go here (like build-docs)
       - id: package-app-dependencies
-        name: package app dependencies
-        language: python
-        entry: pre-commit/package_app_dependencies
-        files: '^requirements.txt$'

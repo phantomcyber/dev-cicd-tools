@@ -1,6 +1,6 @@
 # Ruff linting
 [tool.ruff]
-line-length = 100 # Changed from 145 (more standard)
+line-length = 145
 target-version = "py39"
 
 [tool.ruff.lint]

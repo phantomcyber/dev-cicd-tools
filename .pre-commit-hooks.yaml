@@ -1,8 +1,6 @@
-# See https://pre-commit.com for more information
-# See https://pre-commit.com/hooks.html for more hooks
--   id: setup-hooks
-    name: Setup standard hooks
-    description: Sets up standard pre-commit hooks, configs, and scripts for connector
-    entry: bash -c 'pip install pyyaml && python ${PRE_COMMIT_HOME:-$HOME/.cache/pre-commit}/repo*/pre-commit-setup/setup_hooks.py'
-    language: system
-    pass_filenames: false
+- id: package-app-dependencies
+  name: package app dependencies
+  description: Packages application dependencies
+  entry: pre-commit/package_app_dependencies
+  language: python
+  files: '^requirements.txt$'

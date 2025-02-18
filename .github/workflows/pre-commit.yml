@@ -1,4 +1,4 @@
-name: Precommit (lint & security scan)
+name: Precommit
 
 on: pull_request
 
