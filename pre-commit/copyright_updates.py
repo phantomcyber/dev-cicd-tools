@@ -28,7 +28,7 @@ def generate_apache_license_content(copyright_str: str) -> str:
     return f"{LICENSE_TEMPLATE.render(copyright=copyright_str)}\n"
 
 
-SUPPORTED_SOURCE_FILE_EXTENSIONS = (".py", ".html", ".json", ".txt", "NOTICE", "LICENSE")
+SUPPORTED_SOURCE_FILE_EXTENSIONS = (".py", ".html", ".json", "NOTICE", "LICENSE")
 
 COPYRIGHT_REGEX = re.compile(
     r"^#*\s*(?P<copyright>Copyright\s*(\(c\))?\s*(([0-9]{4},?)+(-[0-9]{4})?)?,?\s*[a-z0-9.,\s]+"
@@ -56,22 +56,20 @@ def update_copyright_years(copyright_match: str) -> str:
     return re.sub(r"\d{4}", f"{start_year}-{current_year}", copyright_match)
 
 
-def get_apache_header(copyright_str: str, extension: str) -> str:
+def get_apache_header(copyright_register: str, extension: str) -> str:
+    # Setup copyright text
     current_year = datetime.now().year
-    updated_copyright = f"Copyright (c) {current_year} {copyright_str}"
+    copyright_text = f"Copyright (c) {current_year} {copyright_register}"
 
-    # Define comment markers based on file type
-    if extension in [".py", ".txt"]:
-        start, mid, end = "#", "#", ""
+    if extension in [".py"]:
+        start, mid, end = "", "#", ""
     elif extension == ".html":
         start, mid, end = "<!--\n", "", "\n-->"
-    elif extension == ".json":
-        start, mid, end = "/*\n", " *", "\n*/"
-    else:  # NOTICE, LICENSE, and other files
+    else:
         start, mid, end = "", "", ""
 
     lines = [
-        f"{mid} {updated_copyright}",
+        f"{mid} {copyright_text}",
         f"{mid}",
         f'{mid} Licensed under the Apache License, Version 2.0 (the "License");',
         f"{mid} you may not use this file except in compliance with the License.",
@@ -87,10 +85,10 @@ def get_apache_header(copyright_str: str, extension: str) -> str:
     ]
 
     lines = [f"{line}" if mid.strip() else line for line in lines]
-    return f"{start}{chr(10).join(lines)}{end}\n\n"
+    return f"{start}{chr(10).join(lines)}{end}\n"
 
 
-def update_file_copyright(file_path: Path, copyright_str: str) -> bool:
+def update_file_copyright(file_path: Path, copyright_register: str) -> bool:
     if not file_path.is_file():
         raise FileNotFoundError(file_path)
 
@@ -111,18 +109,34 @@ def update_file_copyright(file_path: Path, copyright_str: str) -> bool:
                         with open(file_path, "w") as f:
                             json.dump(data, f, indent=4)
                         return True
-                return False
+
+            return False
 
         except json.JSONDecodeError:
             pass
 
     # Normal processing for non-JSON files
     updated = False
-    updated_lines = []
+    has_copyright = False
 
     with open(file_path) as f:
         lines = f.readlines()
 
+    for line in lines:
+        if COPYRIGHT_REGEX.match(line):
+            has_copyright = True
+            break
+
+    if not has_copyright:
+        # Add copyright header if missing
+        header = get_apache_header(copyright_register, file_path.suffix)
+        with open(file_path, "w") as f:
+            f.write(header)
+            f.writelines(lines)
+        return True
+
+    # Update existing copyright
+    updated_lines = []
     for line in lines:
         match = COPYRIGHT_REGEX.match(line)
         if match:
@@ -141,13 +155,13 @@ def update_file_copyright(file_path: Path, copyright_str: str) -> bool:
     return updated
 
 
-def update_copyrights(app_dir: str, copyright_str: str) -> dict[str, str]:
+def update_copyrights(app_dir: str, copyright_str: str, copyright_register: str) -> dict[str, str]:
     updated_files = {}
 
     # Handle LICENSE file specially (generation)
     license_path = Path(app_dir, "LICENSE")
     if license_path.is_file():
-        if update_file_copyright(license_path, copyright_str):
+        if update_file_copyright(license_path, copyright_register):
             updated_files["LICENSE"] = license_path.read_text()
     else:
         license_content = generate_apache_license_content(copyright_str)
@@ -163,25 +177,24 @@ def update_copyrights(app_dir: str, copyright_str: str) -> dict[str, str]:
             file_path = Path(root, file)
             relative_path = str(file_path.relative_to(app_dir))
 
-            if (
-                not any(file.endswith(ext) for ext in SUPPORTED_SOURCE_FILE_EXTENSIONS)
-                and file not in SUPPORTED_SOURCE_FILE_EXTENSIONS
-            ):
+            # Skip unsupported extensions
+            if not file.endswith(SUPPORTED_SOURCE_FILE_EXTENSIONS):
                 continue
 
-            if update_file_copyright(file_path, copyright_str):
+            if update_file_copyright(file_path, copyright_register):
                 updated_files[relative_path] = file_path.read_text()
 
     return updated_files
 
 
 if __name__ == "__main__":
-    import sys
+    import argparse
 
-    if len(sys.argv) < 2:
-        print("Usage: copyright_updates.py <directory>")
-        sys.exit(1)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("directory")
+    parser.add_argument("--copyright", default="Splunk Inc.")
 
-    app_dir = sys.argv[1]
-    copyright_str = "Copyright (c) Splunk Inc."
-    update_copyrights(app_dir, copyright_str)
+    args = parser.parse_args()
+    copyright_register = args.copyright
+    copyright_str = f"Copyright (c) {copyright_register}"
+    update_copyrights(args.directory, copyright_str, copyright_register)
