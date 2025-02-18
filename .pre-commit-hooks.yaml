@@ -10,6 +10,7 @@
   description: Updates copyright headers for application files
   entry: pre-commit/copyright
   language: script
+  pass_filenames: false
 - id: package-app-dependencies
   name: package app dependencies
   description: Packages application dependencies

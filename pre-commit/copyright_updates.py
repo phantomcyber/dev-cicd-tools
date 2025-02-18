@@ -1,10 +1,18 @@
+# More advanced copyright updates
+# Accurately replaces years
+# Adds header to files that don't have one
+# Updates connector json license as well
+# - Python files
+# - HTML files
+# - JSON files
+# - Text files
+# - NOTICE files
+# - LICENSE files/generation
+
 import os
 import re
-import tokenize
 from datetime import datetime
-from html.parser import HTMLParser
 from pathlib import Path
-import json
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -14,7 +22,6 @@ LICENSE_TEMPLATE = JINJA_ENV.get_template("LICENSE.j2")
 
 
 def generate_apache_license_content(copyright_str: str) -> str:
-    # First update the years in the copyright string
     match = COPYRIGHT_REGEX.match(copyright_str)
     if match:
         copyright_str = update_copyright_years(match.group("copyright"))
@@ -49,10 +56,67 @@ def update_copyright_years(copyright_match: str) -> str:
     return re.sub(r"\d{4}", f"{start_year}-{current_year}", copyright_match)
 
 
-def update_text_file_copyright(file_path: Path, copyright_str: str) -> bool:
+def get_apache_header(copyright_str: str, extension: str) -> str:
+    current_year = datetime.now().year
+    updated_copyright = f"Copyright (c) {current_year} {copyright_str}"
+
+    # Define comment markers based on file type
+    if extension in [".py", ".txt"]:
+        start, mid, end = "#", "#", ""
+    elif extension == ".html":
+        start, mid, end = "<!--\n", "", "\n-->"
+    elif extension == ".json":
+        start, mid, end = "/*\n", " *", "\n*/"
+    else:  # NOTICE, LICENSE, and other files
+        start, mid, end = "", "", ""
+
+    lines = [
+        f"{mid} {updated_copyright}",
+        f"{mid}",
+        f'{mid} Licensed under the Apache License, Version 2.0 (the "License");',
+        f"{mid} you may not use this file except in compliance with the License.",
+        f"{mid} You may obtain a copy of the License at",
+        f"{mid}",
+        f"{mid}     http://www.apache.org/licenses/LICENSE-2.0",
+        f"{mid}",
+        f"{mid} Unless required by applicable law or agreed to in writing, software",
+        f'{mid} distributed under the License is distributed on an "AS IS" BASIS,',
+        f"{mid} WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.",
+        f"{mid} See the License for the specific language governing permissions and",
+        f"{mid} limitations under the License.",
+    ]
+
+    lines = [f"{line}" if mid.strip() else line for line in lines]
+    return f"{start}{chr(10).join(lines)}{end}\n\n"
+
+
+def update_file_copyright(file_path: Path, copyright_str: str) -> bool:
     if not file_path.is_file():
         raise FileNotFoundError(file_path)
 
+    # Special handling for connector json license
+    if file_path.suffix == ".json":
+        import json
+
+        try:
+            with open(file_path) as f:
+                data = json.load(f)
+
+            if "license" in data:
+                match = COPYRIGHT_REGEX.match(data["license"])
+                if match:
+                    updated_copyright = update_copyright_years(match.group("copyright"))
+                    if updated_copyright != match.group("copyright"):
+                        data["license"] = updated_copyright
+                        with open(file_path, "w") as f:
+                            json.dump(data, f, indent=4)
+                        return True
+                return False
+
+        except json.JSONDecodeError:
+            pass
+
+    # Normal processing for non-JSON files
     updated = False
     updated_lines = []
 
@@ -77,131 +141,24 @@ def update_text_file_copyright(file_path: Path, copyright_str: str) -> bool:
     return updated
 
 
-def update_python_file_copyright(file_path: Path, copyright_str: str) -> bool:
-    if not file_path.is_file():
-        raise FileNotFoundError(file_path)
-
-    replaced_lines = {}
-    with open(file_path, "rb") as src:
-        tokens = tokenize.tokenize(src.readline)
-        for comment in (t for t in tokens if t.type == tokenize.COMMENT):
-            match = COPYRIGHT_REGEX.match(comment.line)
-            if match:
-                line_number = comment.start[0] - 1
-                updated_copyright = update_copyright_years(match.group("copyright"))
-                new_comment = comment.line.replace(match.group("copyright"), updated_copyright)
-                if new_comment.strip() != comment.line.strip():
-                    replaced_lines[line_number] = new_comment
-
-    if not replaced_lines:
-        return False
-
-    with open(file_path, "r+") as f:
-        original_lines = f.readlines()
-        f.seek(0)
-        f.truncate()
-        for i in range(len(original_lines)):
-            if i in replaced_lines:
-                f.write(replaced_lines[i])
-            else:
-                f.write(original_lines[i])
-    return True
-
-
-class HtmlCopyrightProcessor(HTMLParser):
-    def __init__(self, new_copyright_str):
-        super().__init__()
-        self.new_copyright_str = new_copyright_str
-        self.updated_lines = {}
-
-    def feed(self, data):
-        self.updated_lines.clear()
-        super().feed(data)
-        return self.updated_lines
-
-    def handle_comment(self, data):
-        comment_lines = data.split("\n")
-        for i in range(len(comment_lines)):
-            match = COPYRIGHT_REGEX.match(comment_lines[i])
-            if match:
-                updated_copyright = update_copyright_years(match.group("copyright"))
-                new_comment = comment_lines[i].replace(match.group("copyright"), updated_copyright)
-                if new_comment == comment_lines[i]:
-                    continue
-                if i == 0:
-                    new_comment = f"<!--{new_comment}"
-                elif i == len(comment_lines) - 1:
-                    new_comment = f"{new_comment}-->"
-
-                self.updated_lines[self.lineno - 1 + i] = new_comment
-
-
-def update_html_file_copyright(file_path: Path, copyright_str: str) -> bool:
-    if not file_path.is_file():
-        raise FileNotFoundError(file_path)
-
-    original_lines = file_path.read_text().splitlines()
-    if original_lines[-1] == "":
-        original_lines = original_lines[:-1]
-
-    processor = HtmlCopyrightProcessor(copyright_str)
-    processor.feed("\n".join(original_lines))
-
-    if not processor.updated_lines:
-        return False
-
-    with open(file_path, "w") as f:
-        for i in range(len(original_lines)):
-            f.write(f"{processor.updated_lines.get(i, original_lines[i])}\n")
-
-    return True
-
-
-def update_json_file_copyright(file_path: Path, copyright_str: str) -> bool:
-    if not file_path.is_file():
-        raise FileNotFoundError(file_path)
-
-    try:
-        with open(file_path) as f:
-            data = json.load(f)
-
-        if "license" in data:
-            match = COPYRIGHT_REGEX.match(data["license"])
-            if match:
-                updated_copyright = update_copyright_years(match.group("copyright"))
-                if updated_copyright != data["license"]:
-                    with open(file_path) as f:
-                        content = f.read()
-                    # Replace license string
-                    updated_content = content.replace(data["license"], updated_copyright)
-                    with open(file_path, "w") as f:
-                        f.write(updated_content)
-                    return True
-    except json.JSONDecodeError:
-        return False
-
-    return False
-
-
 def update_copyrights(app_dir: str, copyright_str: str) -> dict[str, str]:
     updated_files = {}
 
-    # Handle LICENSE file specially
+    # Handle LICENSE file specially (generation)
     license_path = Path(app_dir, "LICENSE")
     if license_path.is_file():
-        # First try to update existing copyright in LICENSE
-        if update_text_file_copyright(license_path, copyright_str):
+        if update_file_copyright(license_path, copyright_str):
             updated_files["LICENSE"] = license_path.read_text()
     else:
-        # Only use template for new LICENSE files
         license_content = generate_apache_license_content(copyright_str)
         license_path.write_text(license_content)
         updated_files["LICENSE"] = license_content
 
+    # All other files check
     for root, _, files in os.walk(app_dir):
         for file in files:
             if file == "LICENSE":
-                continue  # Handled above
+                continue
 
             file_path = Path(root, file)
             relative_path = str(file_path.relative_to(app_dir))
@@ -212,18 +169,8 @@ def update_copyrights(app_dir: str, copyright_str: str) -> dict[str, str]:
             ):
                 continue
 
-            if file.endswith(".py"):
-                if update_python_file_copyright(file_path, copyright_str):
-                    updated_files[relative_path] = file_path.read_text()
-            elif file.endswith(".html"):
-                if update_html_file_copyright(file_path, copyright_str):
-                    updated_files[relative_path] = file_path.read_text()
-            elif file.endswith(".json"):
-                if update_json_file_copyright(file_path, copyright_str):
-                    updated_files[relative_path] = file_path.read_text()
-            else:
-                if update_text_file_copyright(file_path, copyright_str):
-                    updated_files[relative_path] = file_path.read_text()
+            if update_file_copyright(file_path, copyright_str):
+                updated_files[relative_path] = file_path.read_text()
 
     return updated_files
 
