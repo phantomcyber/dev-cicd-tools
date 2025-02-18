@@ -45,4 +45,5 @@ repos:
     rev: feature/frictionless_connector_contributions # TODO: Update when time
     hooks:
       - id: build-docs
+      - id: copyright
       - id: package-app-dependencies
