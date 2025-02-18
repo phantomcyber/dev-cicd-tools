@@ -1,6 +1,13 @@
+- id: build-docs
+  name: build docs
+  description: Builds and checks application documentation
+  entry: pre-commit/build_docs
+  language: script
+  types: [markdown, json]
+  pass_filenames: false
 - id: package-app-dependencies
   name: package app dependencies
   description: Packages application dependencies
   entry: pre-commit/package_app_dependencies
-  language: python
+  language: script
   files: '^requirements.txt$'
