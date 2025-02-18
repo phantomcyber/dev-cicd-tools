@@ -44,4 +44,5 @@ repos:
   - repo: https://github.com/phantomcyber/dev-cicd-tools
     rev: feature/frictionless_connector_contributions # TODO: Update when time
     hooks:
+      - id: build-docs
       - id: package-app-dependencies
