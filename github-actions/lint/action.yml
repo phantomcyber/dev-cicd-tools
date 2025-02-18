@@ -1,5 +1,7 @@
+# TODO: remove (will be part of pre-commit hook)
+
 name: 'Lint'
-description: 'Runs flake8/isort on the target app repository'
+description: 'Runs ruff on the target app repository'
 runs:
   using: 'composite'
   steps:

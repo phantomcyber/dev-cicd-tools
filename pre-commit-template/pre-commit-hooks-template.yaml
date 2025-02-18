@@ -1,0 +1,47 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+
+# This is a template for connector pre-commit hooks
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.2.0
+    hooks:
+      - id: check-merge-conflict
+      - id: end-of-file-fixer
+        exclude_types: [ markdown ]
+      - id: trailing-whitespace
+        exclude_types: [ markdown ]
+      - id: requirements-txt-fixer
+      - id: check-json
+      - id: check-yaml
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.6
+    hooks:
+      - id: ruff
+        args: [ "--fix", "--exit-zero"] # Ignore errors for now, need to fix for all apps (and remove exit-zero)
+      - id: ruff-format
+  - repo: https://github.com/djlint/djLint
+    rev: v1.36.4
+    hooks:
+      - id: djlint-reformat-django
+      - id: djlint-django
+        args: ["--warn"]  # Ignore errors for now, need to fix for all apps (and remove warn)
+  - repo: https://github.com/hukkin/mdformat
+    rev: 0.7.22
+    hooks:
+      - id: mdformat
+  - repo: https://github.com/returntocorp/semgrep
+    rev: v1.107.0
+    hooks:
+      - id: semgrep
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ['--no-verify']
+        exclude_types: [json]
+        # Central hooks
+  - repo: https://github.com/phantomcyber/dev-cicd-tools
+    rev: feature/frictionless_connector_contributions # TODO: Update when time
+    hooks:
+      - id: package-app-dependencies
