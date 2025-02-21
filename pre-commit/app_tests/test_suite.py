@@ -76,7 +76,7 @@ class TestSuite:
             yield data
 
     @staticmethod
-    def test(func=None, tags=None, critical=True, skip=False, remove_tags=None):
+    def test(func=None, tags=None, critical=True, skip=False, remove_tags=None, fixable=False):
         """
         Decorator to tag a function in this class as a test
 

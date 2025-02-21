@@ -44,7 +44,7 @@ class TestRunner:
         self.results[test_name] = result
 
         if console:
-            success = "PASSED" if result.get("success", False) else "FAILED"
+            success = "PASSED" if result.get("success", False) else "FIXED" if result.get("fixed", False) else "FAILED"
             message = "{} - {:<30}: {}".format(success, test_name, result.get("message", ""))
             print(message)
 
@@ -218,6 +218,7 @@ def process_test_results(results):
     results_by_cat = {
         "PASSED": [],
         "FAILED": {"CRITICAL": [], "NONCRITICAL": []},
+        "FIXED": [],
         "metadata": metadata,
     }
     for test, res in results.items():
@@ -227,8 +228,10 @@ def process_test_results(results):
             if res.get("noncritical", False):
                 location = results_by_cat["FAILED"]["NONCRITICAL"]
             else:
-                location = results_by_cat["FAILED"]["CRITICAL"]
+                location = results_by_cat["FAILED"]["CRITICAL"]                
             location.append({test: res})
+            if res.get("fixed"):
+                results_by_cat["FIXED"].append(test)
 
     return results_by_cat
 

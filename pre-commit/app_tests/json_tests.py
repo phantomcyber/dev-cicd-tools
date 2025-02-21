@@ -17,6 +17,8 @@ from operator import itemgetter
 import traceback
 from distutils.version import LooseVersion
 from pathlib import Path
+from typing import Any
+
 class JSONTests(TestSuite):
     def __init__(self, app_repo_name, repo_location, **kwargs):
         super().__init__(app_repo_name, repo_location, **kwargs)
@@ -149,8 +151,10 @@ class JSONTests(TestSuite):
         min_version = LooseVersion(self._app_json["min_phantom_version"])
         if min_version < LooseVersion(CURRENT_MIN_PHANTOM_VERSION):
             msg = f'Min Phantom version in app json is too low. Found: "{min_version}" but expected >= "{CURRENT_MIN_PHANTOM_VERSION}"'
-        
-        return create_test_result_response(success=msg == TEST_PASS_MESSAGE, message=msg)
+            self._app_json["min_phantom_version"] = CURRENT_MIN_PHANTOM_VERSION
+            self._parser.update_app_json(self._app_json)
+        print(f"min phantom test executed")
+        return create_test_result_response(success=msg == TEST_PASS_MESSAGE, message=msg, fixed=True)
 
     @TestSuite.test
     def check_test_connectivity(self): #need to implement
@@ -242,26 +246,47 @@ class JSONTests(TestSuite):
         Every parameter has an action_result.parameter associated with it
         """
         app_json_actions = self._app_json.get("actions")
+        min_phantom_version = self._app_json["min_phantom_version"]
+        print(f"from check action param prefixes min phantom version is {min_phantom_version}")
         
         message = TEST_PASS_MESSAGE
         verbose = []
-        for action in app_json_actions:
-            action_parameters = list(
-                action.get("parameters", {}).keys()
-            )  # Gets the parameters, if any
-            if action_parameters:
-                action_output = set(self._get_data_paths(action, parameters=True))
-                parameters_formatted = set(
-                    f"action_result.parameter.{name}" for name in action_parameters
-                )
-                output = action_output.symmetric_difference(parameters_formatted)
-                if len(output):
-                    message = "Action results should contain an action_result.parameter key for every action parameter"
-                    verbose.extend(
-                        f"Invalid or mismatched action result output {out}" for out in output
-                    )
+        for index, action in enumerate(app_json_actions):
+            if action["action"] in ("test connectivity", "on poll"):
+                continue
+            action_parameters = action.get("parameters", {})  # Gets the parameters, if any
+            if not action_parameters:
+                continue
+            
+            action_output = self._get_data_paths(action, parameters=True)
+            action_output_path_values = set(action_output.keys())
+
+            for param_name in action_parameters:
+                formatted_param = f"action_result.parameter.{param_name}"
+                if formatted_param not in action_output_path_values:
+                    #if this check fails that means the validate_json_schema test will also fail which is why it's fine to do this
+                    if "data_type" in action_parameters[param_name]:
+                        new_output_param = {"data_path": formatted_param, "data_type": action_parameters[param_name]["data_type"]}
+                        self._app_json["actions"][index]["output"].append(new_output_param)
+                        verbose.append(f"Added missing action result output {formatted_param}")
+                
+            parameters_formatted = set(
+                f"action_result.parameter.{name}" for name in action_parameters
+            )
+            action_output_to_remove = []
+            for data_path, idx_param in action_output.items():
+                if data_path not in parameters_formatted:
+                    action_output_to_remove.append(idx_param)
+                    verbose.append(f"Removing extra action result output {data_path}")
+                
+            for idx_param in reversed(action_output_to_remove):
+                self._app_json["actions"][index]["output"].pop(idx_param)
+                    
+        if verbose:
+            message = "Action results should only contain an action_result.parameter key for every action parameter"
+            self._parser.update_app_json(self._app_json)
         
-        return create_test_result_response(success=not verbose, message=message, verbose=verbose)
+        return create_test_result_response(success=not verbose, message=message, verbose=verbose, fixed=True)
 
     @TestSuite.test(remove_tags=[DEVELOPER_SUPPORTED])
     def check_action_param_matching_contains(self): #will need to implement or get rid of 
@@ -271,31 +296,37 @@ class JSONTests(TestSuite):
         action_list = [
             act
             for act in self._app_json["actions"]
-            if act["action"] not in ("test connectivity", "on poll")
         ]
         verbose = []
-        for action in action_list:
-            data_path_contains = self._get_data_paths(action, contains=True)
+        for index, action in enumerate(action_list):
+            if action["action"] in ("test connectivity", "on poll"):
+                continue
+            action_output = self._get_data_paths(action, parameters=True)
             param_contains = {
                 param: config["contains"]
                 for param, config in action["parameters"].items()
                 if config.get("contains")
             }
+            print(f"debugging help for contains {action_output}")      
 
             for param, contain in param_contains.items():
                 action_res_param = f"action_result.parameter.{param}"
-                if contain != data_path_contains.get(action_res_param):
-                    action_name = action["action"]
-                    verbose.append(
-                        f"Action '{action_name}': parameter '{param}' with contains {contain} does not match output '{action_res_param}' with contains {data_path_contains.get(action_res_param)}"
-                    )
+                if action_output.get(action_res_param):
+                    print(print(f"debugging help for contains {action_res_param} and action index {index}"))
+                    data_path_contains = self._get_output_param_value(index, action_output[action_res_param], "contains")
+                    if contain != data_path_contains:
+                        self._update_action_output(index, action_output[action_res_param], "contains", contain)
+                        action_name = action["action"]
+                        verbose.append(
+                            f"Changed action '{action_name}': parameter '{param}' contains value to match output of {contain}"
+                        )
 
-        msg = (
-            TEST_PASS_MESSAGE
-            if not verbose
-            else "Action parameter contains should match those belonging to its related action_result.parameter contains"
-        )
-        return create_test_result_response(success=not verbose, message=msg, verbose=verbose)
+        msg = TEST_PASS_MESSAGE
+        if verbose:
+            self._parser.update_app_json(self._app_json)
+            msg = "Action parameter contains should match those belonging to its related action_result.parameter contains. Attempting fix"
+
+        return create_test_result_response(success=not verbose, message=msg, verbose=verbose, fixed=True)
 
     @TestSuite.test
     def check_minimal_data_paths(self):
@@ -311,7 +342,7 @@ class JSONTests(TestSuite):
         verbose = []
         for action in app_json_actions:
             data_paths = set(
-                [(path["data_path"], path["data_type"]) for path in self._get_data_paths(action)]
+                [(path, data_path_dic["data_type"]) for path, data_path_dic in self._get_data_paths(action).items()]
             )
             if not MINIMAL_DATA_PATHS.issubset(data_paths):
                 message = "One or more actions are missing a required data path"
@@ -324,7 +355,7 @@ class JSONTests(TestSuite):
             success=not verbose, message=TEST_PASS_MESSAGE if not message else message, verbose=verbose,
         )
                 
-    def _get_data_paths(self, action, parameters=False, contains=False):
+    def _get_data_paths(self, action, parameters=False):
         """
         Retrieves the action output from the action.
 
@@ -338,33 +369,46 @@ class JSONTests(TestSuite):
                   if contains.
         """
 
-        action_outputs = {} if contains else []
+        action_outputs = {}
 
-        action_output_raw = action.get("output")
-
-        if parameters and contains:
-            raise ValueError
-
-        if action_output_raw and len(action_output_raw):
-            for data_path in action_output_raw:  # Just the data path dict member of the output list
-                data_path_value = data_path.get("data_path")
-                if data_path_value:  # just the value of the 'data_path' key from the dict
-                    if parameters:  # If parameters is passed, then only add parameters to the action_outputs list
-                        if data_path_value.startswith("action_result.parameter"):
-                            action_outputs.append(data_path_value)
-                    elif contains:
-                        contains_value = data_path.get("contains")
-                        if contains_value and data_path_value.startswith("action_result.parameter"):
-                            action_outputs[data_path_value] = contains_value
-                    else:
-                        action_outputs.append(data_path)
+        action_output_raw = action.get("output", [])
+        
+        for index, data_path in enumerate(action_output_raw):
+            data_path_value = data_path.get("data_path")
+            if data_path_value:
+                if parameters:
+                    if data_path_value.startswith("action_result.parameter"):
+                        action_outputs[data_path_value] = index
+                else:
+                    action_outputs[data_path_value] = data_path
 
         return action_outputs
+    
+    def _get_output_param_value(self, action: int, idx: int, key: str) -> Any:
+        """Gets the value of a certain key in the actions output
+
+        Args:
+            action (int): Index of the action in the actions list
+            idx (int): Element in an actions output being updated
+            key (string): Specific key being updated
+        """
+        return self._app_json["actions"][action]["output"][idx].get(key)
+    
+    def _update_action_output(self, action: int, idx: int, key: str, value: Any) -> None:
+        """Updates an actions output for the given key
+
+        Args:
+            action (int): Index of the action in the actions list
+            idx (int): Element in an actions output being updated
+            key (string): Specific key being updated
+            value (any): New value of the key
+        """
+        self._app_json["actions"][action]["output"][idx][key] = value
     
     @TestSuite.test(critical=False)
     def fields_should_be_passwords(self):
         """
-        Fields that look like passwords should be passwords, and passwords should not have 'default' or 'value_list' fields
+        Fields that look like passwords should be passwords
         """
         verbose = []
 

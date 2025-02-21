@@ -1,40 +1,5 @@
-import functools
-_func_caches = {}
 import json
 from contextlib import contextmanager
-
-def memoize(func=None, ignore_self=False):
-    """
-    Memoization decorator for functions that might be useful to remember rather than recompute.
-    If ignore_self is set to True, the first arg is ignored when determining whether to recompute. Useful for
-    memoizing class functions when you want to remember output across multiple instances
-    """
-    if func is None:
-        return functools.partial(memoize, ignore_self=ignore_self)
-
-    func.cache = {}
-    _func_caches[func] = func.cache
-
-    @functools.wraps(func)
-    def decorator(*args, **kwargs):
-        if ignore_self:
-            key = str((args[1:], kwargs))
-        else:
-            key = str((args, kwargs))
-
-        if key not in func.cache:
-            func.cache[key] = func(*args, **kwargs)
-        return func.cache[key]
-
-    return decorator
-
-def clear_memorization(func):
-    """
-    Clear the cache for a memoized function
-    """
-    assert hasattr(func, "cache")
-    assert isinstance(func.cache, dict)
-    func.cache = {}
 
 def find_app_json_name(json_filenames):
     """

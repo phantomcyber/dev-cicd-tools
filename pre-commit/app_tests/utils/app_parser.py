@@ -11,7 +11,8 @@ from app_tests.utils.phantom_constants import (
     DEFAULT_PYTHON_VERSION,
     SKIPPED_MODULE_PATHS,
 )
-from app_tests.utils.parser_utils import memoize, clear_memorization, find_app_json_name
+from app_tests.utils.parser_utils import find_app_json_name
+from functools import cached_property
 
 
 class ParserError(Exception): 
@@ -22,8 +23,7 @@ class AppParser:
     def __init__(self, local_repo_location):
         self._app_code_dir = local_repo_location
 
-    @property
-    @memoize
+    @cached_property
     def excludes(self):
         try:
             with open(os.path.join(self._app_code_dir, "exclude_files.txt")) as f:
@@ -34,8 +34,7 @@ class AppParser:
         except Exception as e:
             raise ParserError(str(e)) from None
 
-    @property
-    @memoize
+    @cached_property
     def skipped_module_paths(self):
         """
         Modules in the app repo to skip checks for
@@ -45,8 +44,7 @@ class AppParser:
 
         return skipped_paths_json.get(self.app_json["name"], [])
 
-    @property
-    @memoize
+    @cached_property
     def python_version(self):
         return str(self.app_json.get("python_version", DEFAULT_PYTHON_VERSION))
 
@@ -54,13 +52,11 @@ class AppParser:
     def is_py2(self):
         return self.python_version.startswith("2")
 
-    @property
-    @memoize
+    @cached_property
     def min_phantom_version(self):
         return LooseVersion(self._get_from_json("min_phantom_version"))
 
-    @property
-    @memoize
+    @cached_property
     def filepaths(self):
         # Gets all files in app source that are not hidden or excluded
         files = []
@@ -77,13 +73,11 @@ class AppParser:
                     files.append(os.path.realpath(os.path.join(dirpath, file)))
         return files
 
-    @property
-    @memoize
+    @cached_property
     def filenames(self):
         return [os.path.basename(f) for f in self.filepaths]
 
-    @property
-    @memoize
+    @cached_property
     def files(self):
         # Gets all files' contents in a dict
         files = {}
@@ -95,8 +89,7 @@ class AppParser:
                 continue
         return files
 
-    @property
-    @memoize
+    @cached_property
     def app_json_name(self):
         # Get all json files in top level of app directory to send to finder function
         json_filenames = [
@@ -111,17 +104,20 @@ class AppParser:
     @property
     def _app_json_filepath(self):
         return os.path.join(self._app_code_dir, self.app_json_name)
-
-    @property
-    @memoize
+    
+    @cached_property
     def app_json(self):
         # Gets the loaded json, preserving key order
         with open(self._app_json_filepath) as f:
             json_content = json.loads(f.read(), object_pairs_hook=OrderedDict)
         return json_content
 
-    @property
-    @memoize
+    def update_app_json(self, app_json_content):
+        with open(self._app_json_filepath, "w") as f:
+            json.dump(app_json_content, f, indent=4)
+        self.refresh_app_json()
+
+    @cached_property
     def connector_filepath(self):
         # Find the connector filename
         try:
@@ -165,8 +161,7 @@ class AppParser:
             raise ParserError(f"Cannot get classdefs of empty tree: {tree}")
         return [node for node in tree.body if isinstance(node, ast.ClassDef)]
 
-    @property
-    @memoize
+    @cached_property
     def all_funcdefs(self):
         # Gets all the funcdefs of all classdefs
         classdefs = self._get_classdefs(self._get_tree(self.connector_filepath))
@@ -181,8 +176,7 @@ class AppParser:
             raise ParserError(f"Cannot get funcdefs of empty classdef: {classdef}")
         return [node for node in classdef.body if isinstance(node, ast.FunctionDef)]
 
-    @property
-    @memoize
+    @cached_property
     def all_calldefs(self):
         # Get all the calldefs of all funcdefs
         all_calldefs = []
@@ -202,7 +196,6 @@ class AppParser:
             return node.id
         if isinstance(node, ast.Attribute):
             return node.attr
-
-    def refresh_app_json(self, local_repo_location):
-        clear_memorization(self.app_json_name)
-        clear_memorization(self.app_json)
+    
+    def refresh_app_json(self):
+        del self.__dict__['app_json']
