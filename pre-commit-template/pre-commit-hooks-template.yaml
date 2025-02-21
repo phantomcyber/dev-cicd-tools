@@ -42,8 +42,11 @@ repos:
         exclude_types: [json]
         # Central hooks
   - repo: https://github.com/phantomcyber/dev-cicd-tools
-    rev: feature/frictionless_connector_contributions # TODO: Update when time
+    rev: grokas/maint-remove_docker_dependency # TODO: Update when time
     hooks:
       - id: build-docs
+        args: ['--no-docker']
       - id: copyright
+        args: ['--no-docker']
       - id: package-app-dependencies
+        args: ['--no-docker']

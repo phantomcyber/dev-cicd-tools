@@ -3,6 +3,55 @@
 APP_DIR=$(pwd)
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 
+if ! jq --help &>/dev/null; then
+	echo 'Please ensure jq is installed (eg, brew install jq)'
+	exit 1
+fi
+
+app_json="$(find ./*.json ! -name '*.postman_collection.json' | head -n 1)"
+app_py_version="$(jq .python_version "$app_json")"
+if [[ $app_py_version == 'null' ]]; then
+	app_py_version='"2.7"'
+fi
+
+if [[ $app_py_version == '"2.7"' ]]; then
+	echo "Python 2 is no longer supported"
+	exit 1
+fi
+
+pip3_dependencies="$(jq .pip3_dependencies "$app_json")"
+if [[ $pip3_dependencies == 'null' ]]; then
+	pip3_dependencies_key='pip_dependencies'
+else
+	pip3_dependencies_key='pip3_dependencies'
+fi
+
+pip39_dependencies_key='pip39_dependencies'
+
+NO_DOCKER=false
+
+while getopts ':d:-:' flag; do
+	case "${flag}" in
+	-)
+		case "${OPTARG}" in
+		no-docker) NO_DOCKER=true ;;
+		*) ;;
+		esac
+		;;
+	*) ;;
+	esac
+done
+
+if [ "$NO_DOCKER" = true ]; then
+	/opt/python/cp39-cp39/bin/pip install pip-tools
+	/opt/python/cp39-cp39/bin/python "$SCRIPT_DIR"/package_app_dependencies.py \
+		. "/opt/python/cp39-cp39/bin/pip" "$pip3_dependencies_key" --repair_wheels
+	/opt/python/cp39-cp39/bin/python "$SCRIPT_DIR"/package_app_dependencies.py \
+		. "/opt/python/cp39-cp39/bin/pip" "$pip39_dependencies_key" --repair_wheels
+	exit $?
+fi
+
+# Not in needed env, proceed with Docker setup
 IMAGE="quay.io/pypa/manylinux_2_28_x86_64"
 DOCKERFILE=""
 
@@ -39,35 +88,10 @@ function package_py3_app_dependencies() {
      /src /opt/python/$PYTHON_VERSION_STRING/bin/pip $PIP_DEPENDENCIES_KEY --repair_wheels"
 }
 
-if ! jq --help &>/dev/null; then
-	echo 'Please ensure jq is installed (eg, brew install jq)'
-	exit 1
-fi
-
-app_json="$(find ./*.json ! -name '*.postman_collection.json' | head -n 1)"
-app_py_version="$(jq .python_version "$app_json")"
-if [[ $app_py_version == 'null' ]]; then
-	app_py_version='"2.7"'
-fi
-
-if [[ $app_py_version == '"2.7"' ]]; then
-	echo "Python 2 is no longer supported"
-	exit 1
-fi
-
 if ! docker info &>/dev/null; then
 	echo 'Please ensure Docker is installed and running on your machine'
 	exit 1
 fi
-
-pip3_dependencies="$(jq .pip3_dependencies "$app_json")"
-if [[ $pip3_dependencies == 'null' ]]; then
-	pip3_dependencies_key='pip_dependencies'
-else
-	pip3_dependencies_key='pip3_dependencies'
-fi
-
-pip39_dependencies_key='pip39_dependencies'
 
 prepare_docker_image
 package_py3_app_dependencies 'cp36-cp36m' $pip3_dependencies_key

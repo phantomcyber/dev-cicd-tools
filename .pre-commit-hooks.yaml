@@ -4,12 +4,14 @@
   entry: pre-commit/build_docs
   language: script
   types: [markdown, json]
+  always_run: true
   pass_filenames: false
 - id: copyright
   name: update copyright headers
   description: Updates copyright headers for application files
   entry: pre-commit/copyright
   language: script
+  always_run: true
   pass_filenames: false
 - id: package-app-dependencies
   name: package app dependencies
