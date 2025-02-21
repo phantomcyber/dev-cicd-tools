@@ -23,7 +23,7 @@ class TestRunner:
 
         # General Test Options
         self.mode = kwargs.pop("mode")
-        self._app_directory_location = kwargs.pop("app_directory_location")
+        self._app_directory = kwargs.pop("app_directory")
         self._app_name = app_repo_name
         self._app_repo_name = app_repo_name
         self._playbook_branch = kwargs.pop("playbook_branch", PLAYBOOK_REPO_DEFAULT_BRANCH)
@@ -90,7 +90,7 @@ class TestRunner:
 
     def run(self):
 
-        exit_code = self._run_tests(self._app_directory_location)
+        exit_code = self._run_tests(self._app_directory)
 
         # Auto-raise the merge request based on exit_code returned from the test runs
         # and the flag auto_merge_request if set True

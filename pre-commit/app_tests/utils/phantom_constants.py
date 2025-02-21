@@ -20,3 +20,6 @@ MINIMAL_DATA_PATHS = set(
     ]
 )
 PASSWORD_KEYS = ("key", "password", "token", "secret")
+SKIPPED_MODULE_PATHS = os.path.join(DIR, "data", "skipped_module_paths.json")
+APP_EXTS = (".py", ".html", ".json", ".svg", ".png")
+DEFAULT_PYTHON_VERSION = "2.7"

@@ -6,16 +6,15 @@ import re
 from collections import OrderedDict
 from distutils.version import LooseVersion
 
-from phantom_constants import (
+from app_tests.utils.phantom_constants import (
     APP_EXTS,
     DEFAULT_PYTHON_VERSION,
-    MIN_PY3_PHANTOM_VERSION,
     SKIPPED_MODULE_PATHS,
 )
-from utils import memoize, clear_memorization, find_app_json_name
+from app_tests.utils.parser_utils import memoize, clear_memorization, find_app_json_name
 
 
-class ParserError(Exception):
+class ParserError(Exception): 
     pass
 
 

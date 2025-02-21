@@ -1,9 +1,9 @@
-from test_suite import TestSuite
+from app_tests.test_suite import TestSuite
 import json
 import jsonschema
 from jsonschema import validate
-from utils import create_test_result_response
-from utils.phantom_constants import (
+from app_tests.utils import create_test_result_response
+from app_tests.utils.phantom_constants import (
     SPLUNK_SUPPORTED,
     DEVELOPER_SUPPORTED,
     TEST_PASS_MESSAGE,
@@ -26,6 +26,9 @@ class JSONTests(TestSuite):
     
     @TestSuite.test
     def validate_json_schema(self):
+        """
+        Validates teh structure of the app json
+        """
         with open("app_schema.json") as app_schema_file:
             app_schema = json.load(app_schema_file)
         
@@ -280,8 +283,9 @@ class JSONTests(TestSuite):
             for param, contain in param_contains.items():
                 action_res_param = f"action_result.parameter.{param}"
                 if contain != data_path_contains.get(action_res_param):
+                    action_name = action["action"]
                     verbose.append(
-                        f"Action '{action["action"]}': parameter '{param}' with contains {contain} does not match output '{action_res_param}' with contains {data_path_contains.get(action_res_param)}"
+                        f"Action '{action_name}': parameter '{param}' with contains {contain} does not match output '{action_res_param}' with contains {data_path_contains.get(action_res_param)}"
                     )
 
         msg = (
@@ -309,8 +313,9 @@ class JSONTests(TestSuite):
             )
             if not MINIMAL_DATA_PATHS.issubset(data_paths):
                 message = "One or more actions are missing a required data path"
+                action_name = action["action"]
                 verbose.append(
-                    f"{action["action"]} is missing one or more required data path"
+                    f"{action_name} is missing one or more required data path"
                 )
 
         return create_test_result_response(

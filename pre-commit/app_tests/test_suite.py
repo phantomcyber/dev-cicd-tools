@@ -1,16 +1,13 @@
 import functools
 import re
 import inspect
-import os
 
 from contextlib import contextmanager
 from traceback import format_exc
 
-from utils.app_parser import AppParser, ParserError
-from utils.api.github import GitHubApi
-from utils.api.github import GitHubOrganization
-from utils import manage_data_file
-from utils.phantom_constants import (
+from app_tests.utils.app_parser import AppParser, ParserError
+from app_tests.utils.parser_utils import manage_data_file
+from app_tests.utils.phantom_constants import (
     GITHUB_API_KEY,
     SPLUNK_SUPPORTED,
     DEVELOPER_SUPPORTED,
@@ -29,11 +26,6 @@ class TestSuite:
     test_prefix = re.compile(r"^_?(check|phantom|test)_")
 
     def __init__(self, app_repo_name, repo_location, **kwargs):
-        self._github = kwargs.pop("github", GitHubApi(token=GITHUB_API_KEY))
-        self._github_tools = kwargs.pop(
-            "github_tools", GitHubApi(owner_repo=GitHubOrganization.GENERAL, token=GITHUB_API_KEY)
-        )
-
         self._fixer = kwargs.pop("fixer", None)
         self._fix = kwargs.pop("fix", self._fixer is not None)
 
@@ -50,29 +42,6 @@ class TestSuite:
         self._mark_failures_expected = kwargs.pop("expect_failures", False)
         self._playbook_branch_name = kwargs.pop("playbook_test_branch")
         self._app_branch = kwargs.pop("app_branch")
-
-    def _find_test_playbooks(self):
-        clean_regex = re.compile(r"(-|_|phantom)(?!_?\d*\.(py|json))")
-        app_name = re.sub(r"(\s|-|_)", lambda m: "", self._app_name)
-        python_file_regex = re.compile(rf"^({app_name}|{self._app_repo_name})(\d)*.py")
-        json_file_regex = re.compile(rf"^({app_name}|{self._app_repo_name})(\d)*.json")
-
-        python_files, json_files = [], []
-        for file_name in self._github_tools.get_tree(
-            repo_name="apps-test-playbooks", branch=self._playbook_branch_name
-        ):
-            file_name_cleaned = clean_regex.sub(lambda m: "", file_name).lower()
-
-            python_file_match = python_file_regex.match(file_name_cleaned)
-            if python_file_match:
-                python_files.append(file_name)
-                continue
-
-            json_file_match = json_file_regex.match(file_name_cleaned)
-            if json_file_match:
-                json_files.append(file_name)
-
-        return sorted(python_files), sorted(json_files)
 
     @classmethod
     def get_tests(cls, tags=None):

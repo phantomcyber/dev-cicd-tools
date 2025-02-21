@@ -1,11 +1,9 @@
 import importlib
 import pkgutil
 import inspect
-
 import os
 
 from app_tests.test_suite import TestSuite, default_tags
-
 
 # The following constant is a dynamic import of all the tests we have in this test runner
 # all scripts that rely on a dynamic loading of tests should use the iterate_all_tests function, which relies on
