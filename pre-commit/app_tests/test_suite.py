@@ -41,7 +41,6 @@ class TestSuite:
         self._update_data_db = kwargs.pop("update_data_db", True)
         self._mark_failures_expected = kwargs.pop("expect_failures", False)
         self._playbook_branch_name = kwargs.pop("playbook_test_branch")
-        self._app_branch = kwargs.pop("app_branch")
 
     @classmethod
     def get_tests(cls, tags=None):

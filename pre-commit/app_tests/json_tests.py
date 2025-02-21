@@ -16,7 +16,7 @@ from app_tests.utils.phantom_constants import (
 from operator import itemgetter
 import traceback
 from distutils.version import LooseVersion
-
+from pathlib import Path
 class JSONTests(TestSuite):
     def __init__(self, app_repo_name, repo_location, **kwargs):
         super().__init__(app_repo_name, repo_location, **kwargs)
@@ -27,9 +27,11 @@ class JSONTests(TestSuite):
     @TestSuite.test
     def validate_json_schema(self):
         """
-        Validates teh structure of the app json
+        Validates the structure of the app json
         """
-        with open("app_schema.json") as app_schema_file:
+        APP_TESTS_DIR = Path(__file__).parent.resolve()
+        schema_path = APP_TESTS_DIR / "app_schema.json"
+        with open(schema_path) as app_schema_file:
             app_schema = json.load(app_schema_file)
         
         try:
