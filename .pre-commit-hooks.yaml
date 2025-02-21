@@ -17,3 +17,9 @@
   entry: pre-commit/package_app_dependencies
   language: script
   files: '^requirements.txt$'
+- id: static-tests
+  name: Run static tests
+  description: Runs tests to validate app json, assets, test playbooks and security vulnerabilities
+  entry: pre-commit/static_tests
+  language: script
+  pass_filenames: false

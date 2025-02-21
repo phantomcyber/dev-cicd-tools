@@ -47,3 +47,4 @@ repos:
       - id: build-docs
       - id: copyright
       - id: package-app-dependencies
+      - id: static-tests

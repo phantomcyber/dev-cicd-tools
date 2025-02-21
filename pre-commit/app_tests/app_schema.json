@@ -1,0 +1,539 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "appid": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "name": {
+        "type": "string"
+      },
+      "description": {
+        "type": "string",
+        "pattern": "^(|[^a-z][\\s\\S]*)$"
+      },
+      "publisher": {
+        "type": "string"
+      },
+      "package_name": {
+        "type": "string",
+        "pattern": "^phantom_.+$"
+      },
+      "type": {
+        "type": "string",
+        "enum": [
+          "devops",
+          "email",
+          "endpoint",
+          "identity management",
+          "information",
+          "network device",
+          "network security",
+          "reputation",
+          "sandbox",
+          "siem",
+          "ticketing",
+          "firewall",
+          "virtualization",
+          "forensic",
+          "investigative",
+          "threat intel",
+          "generic",
+          "directory service",
+          "internal",
+          "vulnerability scanner"
+        ]
+      },
+      "license": {
+        "type": "string"
+      },
+      "main_module": {
+        "type": "string",
+        "pattern": "\\.py$"
+      },
+      "app_version": {
+        "type": "string",
+        "pattern": "^[0-9]+[.][0-9]+[.][0-9]+$"
+      },
+      "utctime_updated": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "product_vendor": {
+        "type": "string"
+      },
+      "product_name": {
+        "type": "string"
+      },
+      "product_version_regex": {
+        "type": "string"
+      },
+      "min_phantom_version": {
+        "type": "string",
+        "pattern": "^(\\d+\\.){2,3}\\d+$"
+      },
+      "fips_compliant": {
+        "type": "boolean"
+      },
+      "python_version": {
+        "oneOf": [
+          {
+            "type": "string",
+            "pattern": "^3(\\.\\d+)?(,\\s*3(\\.\\d+)?)*$"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^3(\\.\\d+)?$"
+            }
+          }
+        ]
+      },
+      "latest_tested_versions": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "logo": {
+        "type": "string"
+      },
+      "logo_dark": {
+        "type": "string"
+      },
+      "app_wizard_version": {
+        "type": "string"
+      },
+      "rest_handler": {
+        "type": "string"
+      },
+      "consolidate_widgets": {
+        "type": "boolean"
+      },
+      "qa_metadata": {
+        "type": "object"
+      },
+      "contributors": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": {
+            "name": {
+              "type": "string",
+              "required": [
+                "name"
+              ]
+            }
+          }
+        }
+      },
+      "configuration": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object",
+          "properties": {
+            "description": {
+              "type": "string",
+              "pattern": "^(|[^a-z][\\s\\S]*)$"
+            },
+            "data_type": {
+              "type": "string",
+              "enum": [
+                "string",
+                "numeric",
+                "boolean",
+                "password",
+                "ph",
+                "timezone",
+                "file",
+                "object",
+                "array"
+              ]
+            },
+            "required": {
+              "type": "boolean"
+            },
+            "order": {
+              "type": "integer"
+            },
+            "default": {},
+            "value_list": {
+              "type": "array",
+              "items": {}
+            },
+            "contains": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "data_type"
+          ],
+          "if": {
+            "properties": { "data_type": { "const": "password" } }
+          },
+          "then": {
+            "properties": {
+              "default": { "const": "" },
+              "value_list": { "maxItems": 0 }
+            }
+          }
+        }
+      },
+      "actions": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "action": {
+              "type": "string",
+              "pattern": "[a-z 0-9]+"
+            },
+            "description": {
+              "type": "string",
+              "pattern": "^(|[^a-z][\\s\\S]*[^\\.])$"
+            },
+            "verbose": {
+              "type": "string",
+              "pattern": "^(|[^a-z][\\s\\S]*)$"
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "generic",
+                "investigate",
+                "contain",
+                "correct",
+                "test",
+                "ingest"
+              ]
+            },
+            "identifier": {
+              "type": "string"
+            },
+            "read_only": {
+              "type": "boolean"
+            },
+            "lock": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "parameters": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "description": {
+                    "type": "string",
+                    "pattern": "^(|[^a-z][\\s\\S]*)$"
+                  },
+                  "data_type": {
+                    "type": "string"
+                  },
+                  "required": {
+                    "type": "boolean"
+                  },
+                  "order": {
+                    "type": "integer"
+                  },
+                  "primary": {
+                    "type": "boolean"
+                  },
+                  "default": {},
+                  "value_list": {
+                    "type": "array",
+                    "items": {}
+                  },
+                  "contains": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "allow_list": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "data_type"
+                ]
+              }
+            },
+            "output": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "data_path": {
+                    "type": "string",
+                    "not": {
+                      "pattern": "^action_result\\.data\\.[^.]+\\.data\\.[^.]+$"
+                    }
+                  },
+                  "data_type": {
+                    "type": "string"
+                  },
+                  "example_values": {
+                    "type": "array",
+                    "items": {
+                      "type": [
+                        "string",
+                        "boolean",
+                        "number",
+                        "array",
+                        "object",
+                        "null"
+                      ]
+                    }
+                  },
+                  "column_name": {
+                    "type": "string"
+                  },
+                  "column_order": {
+                    "oneOf": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "string",
+                        "pattern": "^[0-9]+$"
+                      }
+                    ]
+                  },
+                  "contains": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "map_info": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "data_path",
+                  "data_type"
+                ]
+              }
+            },
+            "render": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string"
+                },
+                "width": {
+                  "type": "number"
+                },
+                "height": {
+                  "type": "number"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "menu_name": {
+                  "type": "string"
+                }
+              }
+            },
+            "versions": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "action",
+            "description",
+            "type",
+            "identifier",
+            "read_only"
+          ]
+        }
+      },
+      "pip_dependencies": {
+        "type": "object",
+        "properties": {
+          "pypi": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "module": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "module"
+              ]
+            }
+          },
+          "wheel": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "module": {
+                  "type": "string"
+                },
+                "input_file": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "module",
+                "input_file"
+              ]
+            }
+          }
+        }
+      },
+      "pip3_dependencies": {
+        "type": "object",
+        "properties": {
+          "pypi": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "module": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "module"
+              ]
+            }
+          },
+          "wheel": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "module": {
+                  "type": "string"
+                },
+                "input_file": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "module",
+                "input_file"
+              ]
+            }
+          }
+        }
+      },
+      "pip39_dependencies": {
+        "type": "object",
+        "properties": {
+          "pypi": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "module": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "module"
+              ]
+            }
+          },
+          "wheel": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "module": {
+                  "type": "string"
+                },
+                "input_file": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "module",
+                "input_file"
+              ]
+            }
+          }
+        }
+      },
+      "pip313_dependencies": {
+        "type": "object",
+        "properties": {
+          "pypi": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "module": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "module"
+              ]
+            }
+          },
+          "wheel": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "module": {
+                  "type": "string"
+                },
+                "input_file": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "module",
+                "input_file"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "required": [
+      "actions",
+      "app_version",
+      "appid",
+      "configuration",
+      "description",
+      "license",
+      "logo",
+      "main_module",
+      "min_phantom_version",
+      "name",
+      "package_name",
+      "product_name",
+      "product_vendor",
+      "python_version",
+      "product_version_regex",
+      "publisher",
+      "type"
+    ],
+    "if": {
+      "properties": {
+        "publisher": {
+          "const": "Splunk"
+        }
+      }
+    },
+    "then": {
+      "required": ["fips_compliant"]
+    }
+  }
+  
