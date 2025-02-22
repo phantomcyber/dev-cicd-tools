@@ -23,4 +23,6 @@ MINIMAL_DATA_PATHS = set(
 PASSWORD_KEYS = ("key", "password", "token", "secret")
 SKIPPED_MODULE_PATHS = DIR / "data" / "skipped_module_paths.json"
 APP_EXTS = (".py", ".html", ".json", ".svg", ".png")
-DEFAULT_PYTHON_VERSION = "2.7"
+ACTION_ALIASES = {"test_asset_connectivity": ["test_connectivity"]}
+ACTION_MIN_LOG_COUNT = 2
+SUPPORTED_LOG_CALLS = {"debug_print", "error_print", "save_progress", "send_progress"}

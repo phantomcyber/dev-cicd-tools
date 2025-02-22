@@ -514,6 +514,7 @@
       "description",
       "license",
       "logo",
+      "logo_dark",
       "main_module",
       "min_phantom_version",
       "name",
