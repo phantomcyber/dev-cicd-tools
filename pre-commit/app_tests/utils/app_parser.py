@@ -8,14 +8,12 @@ from distutils.version import LooseVersion
 
 from app_tests.utils.phantom_constants import (
     APP_EXTS,
-    DEFAULT_PYTHON_VERSION,
     SKIPPED_MODULE_PATHS,
 )
-from app_tests.utils.parser_utils import find_app_json_name
 from functools import cached_property
 
 
-class ParserError(Exception): 
+class ParserError(Exception):
     pass
 
 
@@ -45,14 +43,6 @@ class AppParser:
         return skipped_paths_json.get(self.app_json["name"], [])
 
     @cached_property
-    def python_version(self):
-        return str(self.app_json.get("python_version", DEFAULT_PYTHON_VERSION))
-
-    @property
-    def is_py2(self):
-        return self.python_version.startswith("2")
-
-    @cached_property
     def min_phantom_version(self):
         return LooseVersion(self._get_from_json("min_phantom_version"))
 
@@ -77,19 +67,7 @@ class AppParser:
     def filenames(self):
         return [os.path.basename(f) for f in self.filepaths]
 
-    @cached_property
-    def files(self):
-        # Gets all files' contents in a dict
-        files = {}
-        for filepath in self.filepaths:
-            try:
-                with open(filepath, encoding="utf-8") as f:
-                    files[filepath] = f.read()
-            except UnicodeDecodeError:
-                continue
-        return files
-
-    @cached_property
+    @property
     def app_json_name(self):
         # Get all json files in top level of app directory to send to finder function
         json_filenames = [
@@ -97,14 +75,40 @@ class AppParser:
         ]
 
         try:
-            return find_app_json_name(json_filenames)
+            return self.find_app_json_name(json_filenames)
         except Exception as e:
             raise ParserError(str(e)) from None
+
+    def find_app_json_name(self, json_filenames):
+        """
+        Given a list of possible json files and the app repo name, return the name of the file
+        that is most likely to be the app repo's main module json
+        """
+        # Multiple json files. Exclude known JSON filenames and expect only one at the end regardless of name.
+        # Other places (e.g. Splunkbase) enforce a single top-level JSON file anyways.
+        filtered_json_filenames = []
+        for fname in json_filenames:
+            # Ignore the postman collection JSON files
+            if "postman_collection" in fname.lower():
+                continue
+            filtered_json_filenames.append(fname)
+
+        if len(filtered_json_filenames) == 0:
+            raise ValueError("No JSON file found in top level of app repo! Aborting tests...")
+
+        if len(filtered_json_filenames) > 1:
+            raise ValueError(
+                f"Multiple JSON files found in top level of app repo: {filtered_json_filenames}."
+                "Aborting because there should be exactly one top level JSON file."
+            )
+
+        # There's only one json file in the top level, so it must be the app's json
+        return filtered_json_filenames[0]
 
     @property
     def _app_json_filepath(self):
         return os.path.join(self._app_code_dir, self.app_json_name)
-    
+
     @cached_property
     def app_json(self):
         # Gets the loaded json, preserving key order
@@ -113,8 +117,11 @@ class AppParser:
         return json_content
 
     def update_app_json(self, app_json_content):
+        app_json_str = json.dumps(app_json_content, indent=4)
+        if not app_json_str.endswith("\n"):
+            app_json_str += "\n"
         with open(self._app_json_filepath, "w") as f:
-            json.dump(app_json_content, f, indent=4)
+            f.write(app_json_str)
         self.refresh_app_json()
 
     @cached_property
@@ -176,14 +183,6 @@ class AppParser:
             raise ParserError(f"Cannot get funcdefs of empty classdef: {classdef}")
         return [node for node in classdef.body if isinstance(node, ast.FunctionDef)]
 
-    @cached_property
-    def all_calldefs(self):
-        # Get all the calldefs of all funcdefs
-        all_calldefs = []
-        for funcdef in self.all_funcdefs:
-            all_calldefs += self._get_calldefs(funcdef)
-        return all_calldefs
-
     def _get_calldefs(self, funcdef):
         # Gets all funcs called from a method, including ones nested far inside
         if not funcdef:
@@ -196,6 +195,6 @@ class AppParser:
             return node.id
         if isinstance(node, ast.Attribute):
             return node.attr
-    
+
     def refresh_app_json(self):
-        del self.__dict__['app_json']
+        self.__dict__.pop("app_json", None)

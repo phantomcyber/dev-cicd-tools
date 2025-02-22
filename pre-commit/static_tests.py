@@ -5,9 +5,9 @@ from app_tests.utils.phantom_constants import (
     SPLUNK_SUPPORTED,
     DEVELOPER_SUPPORTED,
     PLAYBOOK_REPO_DEFAULT_BRANCH,
-    GITHUB_APP_REPO_BRANCH
 )
 from app_tests import get_test_suites, iterate_all_tests
+
 
 class TestRunner:
     """
@@ -15,7 +15,9 @@ class TestRunner:
     """
 
     def __init__(self, app_repo_name, **kwargs):
-        self._github = kwargs.pop("github", None) #we need this or self._github_tools to clone the assets and playbook_tests repo to check if we have the min stuff needed
+        self._github = kwargs.pop(
+            "github", None
+        )  # we need this or self._github_tools to clone the assets and playbook_tests repo to check if we have the min stuff needed
         self._github_tools = kwargs.pop("github_tools", None)
 
         # Splunk-supported Test Options
@@ -35,7 +37,6 @@ class TestRunner:
         self._suite_args = {
             "github": self._github,
             "github_tools": self._github_tools,
-            "expect_failures": kwargs.get("expect_failures", False),
             "mode": self.mode,
             "playbook_test_branch": self._playbook_branch,
         }
@@ -44,7 +45,13 @@ class TestRunner:
         self.results[test_name] = result
 
         if console:
-            success = "PASSED" if result.get("success", False) else "FIXED" if result.get("fixed", False) else "FAILED"
+            success = (
+                "PASSED"
+                if result.get("success", False)
+                else "FIXED"
+                if result.get("fixed", False)
+                else "FAILED"
+            )
             message = "{} - {:<30}: {}".format(success, test_name, result.get("message", ""))
             print(message)
 
@@ -75,7 +82,6 @@ class TestRunner:
                     return_dict = test(suite)
                     self.log_result(test.pretty_name, return_dict)
 
-
         else:
             for test_name in self._test_options:
                 return_dict = self._run_test_from_name(local_repo_location, test_name)
@@ -89,7 +95,6 @@ class TestRunner:
         return exit_code
 
     def run(self):
-
         exit_code = self._run_tests(self._app_directory)
 
         # Auto-raise the merge request based on exit_code returned from the test runs
@@ -135,11 +140,6 @@ def create_cmdline_parser(add_help=True):
     )
     splunk_supported_cmd.set_defaults(mode=SPLUNK_SUPPORTED, func=run_tests)
 
-    splunk_supported_cmd.add_argument(
-        "--no-update-db", action="store_false", help="Don't update app_release data db files"
-    )
-    splunk_supported_cmd.add_argument("--ova-ip", dest="ip", help="OVA IP of instance")
-
     _add_common_opts(splunk_supported_cmd, SPLUNK_SUPPORTED)
 
     # Developer supported command options
@@ -147,7 +147,6 @@ def create_cmdline_parser(add_help=True):
         DEVELOPER_SUPPORTED, help="Use this command when testing a Developer-supported app"
     )
     dev_supported_cmd.set_defaults(mode=DEVELOPER_SUPPORTED, func=run_tests)
-    group = dev_supported_cmd.add_mutually_exclusive_group()
 
     _add_common_opts(dev_supported_cmd, DEVELOPER_SUPPORTED)
 
@@ -155,16 +154,10 @@ def create_cmdline_parser(add_help=True):
 
 
 def _add_common_opts(cmd_parser, tag):
-    cmd_parser.add_argument(
-        "app_directory", type=str, help="Location for app under test"
-    )
-    
+    cmd_parser.add_argument("app_directory", type=str, help="Location for app under test")
+
     cmd_parser.add_argument(
         "--app-repo-name", help="Name of the app repository being tested", required=True
-    )
-    
-    cmd_parser.add_argument(
-        "--expect-failures", action="store_true", help="Mark all failures as expected in the db"
     )
 
     cmd_parser.add_argument(
@@ -174,7 +167,7 @@ def _add_common_opts(cmd_parser, tag):
         nargs="+",
         help=f'Test tags to run. Default is "{tag}"',
     )
-    
+
     cmd_parser.add_argument(
         "--playbook_branch",
         default=PLAYBOOK_REPO_DEFAULT_BRANCH,
@@ -204,7 +197,6 @@ def _add_common_opts(cmd_parser, tag):
 
 
 def run_tests(options):
-   
     app_name = options["app_repo_name"]
     print("Testing {} app: {}".format(options.get("mode"), app_name))
 
@@ -228,15 +220,15 @@ def process_test_results(results):
             if res.get("noncritical", False):
                 location = results_by_cat["FAILED"]["NONCRITICAL"]
             else:
-                location = results_by_cat["FAILED"]["CRITICAL"]                
+                location = results_by_cat["FAILED"]["CRITICAL"]
             location.append({test: res})
             if res.get("fixed"):
                 results_by_cat["FIXED"].append(test)
 
     return results_by_cat
 
-def main():
 
+def main():
     options = vars(create_cmdline_parser().parse_args())
 
     if options["debug"]:

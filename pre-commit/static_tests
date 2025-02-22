@@ -37,10 +37,10 @@ fi
 
 app_json="$(find ./*.json ! -name '*.postman_collection.json' | head -n 1)"
 publisher=$(jq -r '.publisher' "$app_json")
-if [[ "$publisher" == 'Splunk' ]]; then
-    test_mode='splunk_supported'
+if [[ $publisher == 'Splunk' ]]; then
+	test_mode='splunk_supported'
 else
-    test_mode='developer_supported'
+	test_mode='developer_supported'
 fi
 
 if ! docker info &>/dev/null; then
@@ -55,6 +55,5 @@ docker run --rm \
 	-v "$SCRIPT_DIR":/pre-commit/ \
 	-w /src \
 	"$IMAGE" /bin/bash -c \
-	 "/opt/python/cp39-cp39/bin/pip install jsonschema && \
+	"/opt/python/cp39-cp39/bin/pip install jsonschema && \
      /opt/python/cp39-cp39/bin/python /pre-commit/static_tests.py $test_mode . --app-repo-name $(basename "$APP_DIR")"
-

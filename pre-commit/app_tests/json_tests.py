@@ -11,7 +11,7 @@ from app_tests.utils.phantom_constants import (
     APPID_TO_NAME_FILEPATH,
     APPID_TO_PACKAGE_NAME_FILEPATH,
     MINIMAL_DATA_PATHS,
-    PASSWORD_KEYS
+    PASSWORD_KEYS,
 )
 from operator import itemgetter
 import traceback
@@ -19,13 +19,14 @@ from distutils.version import LooseVersion
 from pathlib import Path
 from typing import Any
 
+
 class JSONTests(TestSuite):
     def __init__(self, app_repo_name, repo_location, **kwargs):
         super().__init__(app_repo_name, repo_location, **kwargs)
         self._app_json = self._parser.app_json
 
         self._app_is_certified = self._parser.app_json["publisher"] == "Splunk"
-    
+
     @TestSuite.test
     def validate_json_schema(self):
         """
@@ -35,13 +36,15 @@ class JSONTests(TestSuite):
         schema_path = APP_TESTS_DIR / "app_schema.json"
         with open(schema_path) as app_schema_file:
             app_schema = json.load(app_schema_file)
-        
+
         try:
-           validate(instance=self._app_json, schema=app_schema) 
-           return create_test_result_response(success=True, message="Successfully validated app json against schema")
+            validate(instance=self._app_json, schema=app_schema)
+            return create_test_result_response(
+                success=True, message="Successfully validated app json against schema"
+            )
         except jsonschema.exceptions.ValidationError as e:
             return create_test_result_response(success=False, message=e.message)
-    
+
     @TestSuite.test(remove_tags=[SPLUNK_SUPPORTED])
     def check_communitiy_publisher(self):
         """
@@ -50,11 +53,11 @@ class JSONTests(TestSuite):
         if self._app_json.get("publisher") == "Splunk":
             failure_message = "Publisher in app JSON should be 'Splunk Community' or third party."
             return create_test_result_response(success=False, message=failure_message)
-        
+
         return create_test_result_response(success=True)
-    
+
     @TestSuite.test
-    def check_sequential_order(self): 
+    def check_sequential_order(self):
         """
         Checks whether order of configuration parameters, action parameters, and action output columns
         are sequential and zero-indexed
@@ -113,7 +116,11 @@ class JSONTests(TestSuite):
             for item in nonsequential_items
         ]
 
-        return create_test_result_response(success=correct_order, message=TEST_PASS_MESSAGE if correct_order else failure_mesage, verbose=verbose)
+        return create_test_result_response(
+            success=correct_order,
+            message=TEST_PASS_MESSAGE if correct_order else failure_mesage,
+            verbose=verbose,
+        )
 
     @TestSuite.test(tags=["pre-release"])
     def check_main_module(self):
@@ -141,7 +148,7 @@ class JSONTests(TestSuite):
             else 'The "main_module" field of the app json is missing or incorrect',
             "verbose": verbose,
         }
-    
+
     @TestSuite.test
     def check_min_platform_version(self):
         """
@@ -150,14 +157,15 @@ class JSONTests(TestSuite):
         msg = TEST_PASS_MESSAGE
         min_version = LooseVersion(self._app_json["min_phantom_version"])
         if min_version < LooseVersion(CURRENT_MIN_PHANTOM_VERSION):
-            msg = f'Min Phantom version in app json is too low. Found: "{min_version}" but expected >= "{CURRENT_MIN_PHANTOM_VERSION}"'
+            msg = f'Min Phantom version in app json is too low. Found: "{min_version}" but expected >= "{CURRENT_MIN_PHANTOM_VERSION}". Modifying {self._parser.app_json_name}'
             self._app_json["min_phantom_version"] = CURRENT_MIN_PHANTOM_VERSION
             self._parser.update_app_json(self._app_json)
-        print(f"min phantom test executed")
-        return create_test_result_response(success=msg == TEST_PASS_MESSAGE, message=msg, fixed=True)
+        return create_test_result_response(
+            success=msg == TEST_PASS_MESSAGE, message=msg, fixed=True
+        )
 
     @TestSuite.test
-    def check_test_connectivity(self): #need to implement
+    def check_test_connectivity(self):
         """
         Checks whether test_connectivity has progress message if it exists
         """
@@ -175,12 +183,12 @@ class JSONTests(TestSuite):
                 if name in req_funcs:
                     break
             else:
-                message = "Test connectivity found in JSON, but not in connector"
+                message = f"Test connectivity found in JSON, but not enough logging present in connector. Please add one of {req_funcs}"
 
         else:
             message = "Test connectivity not found in JSON or connector"
-        
-        return create_test_result_response(success=message==TEST_PASS_MESSAGE, message=message)
+
+        return create_test_result_response(success=message == TEST_PASS_MESSAGE, message=message)
 
     def _has_test_connectivity(self):
         for action in self._parser.app_json["actions"]:
@@ -193,7 +201,7 @@ class JSONTests(TestSuite):
             if funcdef.name.find("test") != -1 and funcdef.name.find("connect") != -1:
                 return funcdef
         return False
-    
+
     @TestSuite.test
     def check_valid_app_name_and_guid(self):
         """
@@ -202,7 +210,8 @@ class JSONTests(TestSuite):
         app_name = self._app_json["name"]
         app_guid = self._app_json["appid"]
 
-        with self.manage_data_file(APPID_TO_NAME_FILEPATH) as app_guid_to_name:
+        with open(APPID_TO_NAME_FILEPATH) as file:
+            app_guid_to_name = json.loads(file.read())
             if app_guid_to_name.get(app_guid) == app_name:
                 return create_test_result_response(success=True, message=TEST_PASS_MESSAGE)
 
@@ -214,8 +223,12 @@ class JSONTests(TestSuite):
                     guid for guid, name in app_guid_to_name.items() if name == app_name
                 )
                 message = f"Invalid GUID in json for app `{app_name}`: Existing GUID `{existing_guid}` does not match GUID in json `{app_guid}`"
+            else:
+                message = f"GUID and app not listed in {APPID_TO_NAME_FILEPATH}"
 
-        return create_test_result_response(success=not message, message=TEST_PASS_MESSAGE if not message else message)
+        return create_test_result_response(
+            success=not message, message=TEST_PASS_MESSAGE if not message else message
+        )
 
     @TestSuite.test(tags=["pre-release"])
     def check_app_package_name(self):
@@ -225,7 +238,8 @@ class JSONTests(TestSuite):
         package_name = self._app_json["package_name"]
         app_guid = self._app_json["appid"]
 
-        with self.manage_data_file(APPID_TO_PACKAGE_NAME_FILEPATH) as package_name_map:
+        with open(APPID_TO_PACKAGE_NAME_FILEPATH) as file:
+            package_name_map = json.loads(file.read())
             if package_name_map.get(app_guid) == package_name:
                 return create_test_result_response(success=True, message=TEST_PASS_MESSAGE)
 
@@ -237,8 +251,14 @@ class JSONTests(TestSuite):
                     guid for guid, name in package_name_map.items() if name == package_name
                 )
                 message = f"Invalid GUID in json for package `{package_name}`: Existing GUID `{existing_guid}` does not match GUID in json `{app_guid}`"
+            else:
+                message = (
+                    f"GUID and app package name not listed in {APPID_TO_PACKAGE_NAME_FILEPATH}"
+                )
 
-        return create_test_result_response(success=not message, message=TEST_PASS_MESSAGE if not message else message)
+        return create_test_result_response(
+            success=not message, message=TEST_PASS_MESSAGE if not message else message
+        )
 
     @TestSuite.test
     def check_action_param_prefixes(self):
@@ -246,9 +266,7 @@ class JSONTests(TestSuite):
         Every parameter has an action_result.parameter associated with it
         """
         app_json_actions = self._app_json.get("actions")
-        min_phantom_version = self._app_json["min_phantom_version"]
-        print(f"from check action param prefixes min phantom version is {min_phantom_version}")
-        
+
         message = TEST_PASS_MESSAGE
         verbose = []
         for index, action in enumerate(app_json_actions):
@@ -257,19 +275,22 @@ class JSONTests(TestSuite):
             action_parameters = action.get("parameters", {})  # Gets the parameters, if any
             if not action_parameters:
                 continue
-            
+
             action_output = self._get_data_paths(action, parameters=True)
             action_output_path_values = set(action_output.keys())
 
             for param_name in action_parameters:
                 formatted_param = f"action_result.parameter.{param_name}"
                 if formatted_param not in action_output_path_values:
-                    #if this check fails that means the validate_json_schema test will also fail which is why it's fine to do this
+                    # if this check fails that means the validate_json_schema test will also fail which is why it's fine to do this
                     if "data_type" in action_parameters[param_name]:
-                        new_output_param = {"data_path": formatted_param, "data_type": action_parameters[param_name]["data_type"]}
+                        new_output_param = {
+                            "data_path": formatted_param,
+                            "data_type": action_parameters[param_name]["data_type"],
+                        }
                         self._app_json["actions"][index]["output"].append(new_output_param)
-                        verbose.append(f"Added missing action result output {formatted_param}")
-                
+                        verbose.append(f"Missing action result output for {formatted_param}")
+
             parameters_formatted = set(
                 f"action_result.parameter.{name}" for name in action_parameters
             )
@@ -277,26 +298,25 @@ class JSONTests(TestSuite):
             for data_path, idx_param in action_output.items():
                 if data_path not in parameters_formatted:
                     action_output_to_remove.append(idx_param)
-                    verbose.append(f"Removing extra action result output {data_path}")
-                
+                    verbose.append(f"Extra action result output for {data_path}")
+
             for idx_param in reversed(action_output_to_remove):
                 self._app_json["actions"][index]["output"].pop(idx_param)
-                    
+
         if verbose:
-            message = "Action results should only contain an action_result.parameter key for every action parameter"
+            message = f"Action results should only contain an action_result.parameter key for every action parameter. Modifying {self._parser.app_json_name}"
             self._parser.update_app_json(self._app_json)
-        
-        return create_test_result_response(success=not verbose, message=message, verbose=verbose, fixed=True)
+
+        return create_test_result_response(
+            success=not verbose, message=message, verbose=verbose, fixed=True
+        )
 
     @TestSuite.test(remove_tags=[DEVELOPER_SUPPORTED])
-    def check_action_param_matching_contains(self): #will need to implement or get rid of 
+    def check_action_param_matching_contains(self):  # will need to implement or get rid of
         """
         Every parameter for an action with contains has an action_result.parameter with the same contains
         """
-        action_list = [
-            act
-            for act in self._app_json["actions"]
-        ]
+        action_list = [act for act in self._app_json["actions"]]
         verbose = []
         for index, action in enumerate(action_list):
             if action["action"] in ("test connectivity", "on poll"):
@@ -307,26 +327,30 @@ class JSONTests(TestSuite):
                 for param, config in action["parameters"].items()
                 if config.get("contains")
             }
-            print(f"debugging help for contains {action_output}")      
 
             for param, contain in param_contains.items():
                 action_res_param = f"action_result.parameter.{param}"
                 if action_output.get(action_res_param):
-                    print(print(f"debugging help for contains {action_res_param} and action index {index}"))
-                    data_path_contains = self._get_output_param_value(index, action_output[action_res_param], "contains")
+                    data_path_contains = self._get_output_param_value(
+                        index, action_output[action_res_param], "contains"
+                    )
                     if contain != data_path_contains:
-                        self._update_action_output(index, action_output[action_res_param], "contains", contain)
+                        self._update_action_output(
+                            index, action_output[action_res_param], "contains", contain
+                        )
                         action_name = action["action"]
                         verbose.append(
-                            f"Changed action '{action_name}': parameter '{param}' contains value to match output of {contain}"
+                            f"Action '{action_name}': parameter '{param}' contains value must match output of {contain}"
                         )
 
         msg = TEST_PASS_MESSAGE
         if verbose:
             self._parser.update_app_json(self._app_json)
-            msg = "Action parameter contains should match those belonging to its related action_result.parameter contains. Attempting fix"
+            msg = f"Action parameter contains should match those belonging to its related action_result.parameter contains. Modifying {self._parser.app_json_name}"
 
-        return create_test_result_response(success=not verbose, message=msg, verbose=verbose, fixed=True)
+        return create_test_result_response(
+            success=not verbose, message=msg, verbose=verbose, fixed=True
+        )
 
     @TestSuite.test
     def check_minimal_data_paths(self):
@@ -342,19 +366,22 @@ class JSONTests(TestSuite):
         verbose = []
         for action in app_json_actions:
             data_paths = set(
-                [(path, data_path_dic["data_type"]) for path, data_path_dic in self._get_data_paths(action).items()]
+                [
+                    (path, data_path_dic["data_type"])
+                    for path, data_path_dic in self._get_data_paths(action).items()
+                ]
             )
             if not MINIMAL_DATA_PATHS.issubset(data_paths):
                 message = "One or more actions are missing a required data path"
                 action_name = action["action"]
-                verbose.append(
-                    f"{action_name} is missing one or more required data path"
-                )
+                verbose.append(f"{action_name} is missing one or more required data path")
 
         return create_test_result_response(
-            success=not verbose, message=TEST_PASS_MESSAGE if not message else message, verbose=verbose,
+            success=not verbose,
+            message=TEST_PASS_MESSAGE if not message else message,
+            verbose=verbose,
         )
-                
+
     def _get_data_paths(self, action, parameters=False):
         """
         Retrieves the action output from the action.
@@ -372,7 +399,7 @@ class JSONTests(TestSuite):
         action_outputs = {}
 
         action_output_raw = action.get("output", [])
-        
+
         for index, data_path in enumerate(action_output_raw):
             data_path_value = data_path.get("data_path")
             if data_path_value:
@@ -383,7 +410,7 @@ class JSONTests(TestSuite):
                     action_outputs[data_path_value] = data_path
 
         return action_outputs
-    
+
     def _get_output_param_value(self, action: int, idx: int, key: str) -> Any:
         """Gets the value of a certain key in the actions output
 
@@ -393,7 +420,7 @@ class JSONTests(TestSuite):
             key (string): Specific key being updated
         """
         return self._app_json["actions"][action]["output"][idx].get(key)
-    
+
     def _update_action_output(self, action: int, idx: int, key: str, value: Any) -> None:
         """Updates an actions output for the given key
 
@@ -404,7 +431,7 @@ class JSONTests(TestSuite):
             value (any): New value of the key
         """
         self._app_json["actions"][action]["output"][idx][key] = value
-    
+
     @TestSuite.test(critical=False)
     def fields_should_be_passwords(self):
         """
@@ -421,6 +448,10 @@ class JSONTests(TestSuite):
                 verbose.append(
                     f"JSON config param `{param_key}` should probably be of data_type `password`"
                 )
-        
-        msg = TEST_PASS_MESSAGE if not verbose else "Some configuration parameters may be secrets and should have password data types. Please review"
+
+        msg = (
+            TEST_PASS_MESSAGE
+            if not verbose
+            else "Some configuration parameters may be secrets and should have password data types. Please review"
+        )
         return create_test_result_response(success=not verbose, message=msg, verbose=verbose)

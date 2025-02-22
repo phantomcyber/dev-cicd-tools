@@ -2,13 +2,10 @@ import functools
 import re
 import inspect
 
-from contextlib import contextmanager
 from traceback import format_exc
 
 from app_tests.utils.app_parser import AppParser, ParserError
-from app_tests.utils.parser_utils import manage_data_file
 from app_tests.utils.phantom_constants import (
-    GITHUB_API_KEY,
     SPLUNK_SUPPORTED,
     DEVELOPER_SUPPORTED,
 )
@@ -26,9 +23,6 @@ class TestSuite:
     test_prefix = re.compile(r"^_?(check|phantom|test)_")
 
     def __init__(self, app_repo_name, repo_location, **kwargs):
-        self._fixer = kwargs.pop("fixer", None)
-        self._fix = kwargs.pop("fix", self._fixer is not None)
-
         # Save args used for Robot suite conversion
         self._kwargs = dict(kwargs)
 
@@ -38,8 +32,6 @@ class TestSuite:
         self._parser = AppParser(self._app_code_dir)
         self._app_name = self._parser.app_json["name"].lower()
 
-        self._update_data_db = kwargs.pop("update_data_db", True)
-        self._mark_failures_expected = kwargs.pop("expect_failures", False)
         self._playbook_branch_name = kwargs.pop("playbook_test_branch")
 
     @classmethod
@@ -66,14 +58,6 @@ class TestSuite:
             return method._is_test
         except AttributeError:
             return False
-
-    @contextmanager
-    def manage_data_file(self, data_file_name):
-        """
-        Any stateful changes to the data file are managed and saved
-        """
-        with manage_data_file(data_file_name, self._update_data_db) as data:
-            yield data
 
     @staticmethod
     def test(func=None, tags=None, critical=True, skip=False, remove_tags=None, fixable=False):
