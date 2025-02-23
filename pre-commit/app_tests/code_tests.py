@@ -11,7 +11,6 @@ from app_tests.utils.phantom_constants import (
 )
 from app_tests.utils import create_test_result_response
 import re
-from collections import deque
 from lxml import etree
 import itertools
 
@@ -100,7 +99,6 @@ class CodeTests(TestSuite):
         Checks if optional parameters are accessed with .get() instead of []
         """
 
-        unsafe_gets = False
         unsafe_get_list = []
         app_config = self._parser.app_json.get("configuration", {})
         config_opt_params = set(
@@ -138,27 +136,26 @@ class CodeTests(TestSuite):
                                 parse_const_var = re.search(r".+ \=", line).group()[:-2]
                                 action_opt_params[action_id].add(parse_const_var)
 
-        print(
-            f"help with debugging check_opt_params {action_opt_params}, connector file {self._app_connector_fp}"
-        )
-
         # check connector file for unsafe action param gets
         #   using ast module
         with open(self._app_connector_fp) as connector_file:
             try:
                 tree = ast.parse(connector_file.read())
-                function_defs = [n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)]
+                function_defs = {
+                    n.name: n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)
+                }
 
-                for function in function_defs:
+                unsafe_get_list = []
+
+                for f_name, function in function_defs.items():
                     dict_id = None
-                    if function.name.startswith("initialize"):
+                    if f_name.startswith("initialize"):
                         dict_id = "config"
                         opt_params = config_opt_params
                         label = "app configuration"
                     else:
                         for action_id in action_opt_params:
-                            if function.name.endswith(action_id):
-                                print(f"debugging help {function.name}")
+                            if f_name.endswith(action_id):
                                 dict_id = "param"
                                 opt_params = action_opt_params[action_id]
                                 label = f"`{action_id}` action parameter"
@@ -166,46 +163,63 @@ class CodeTests(TestSuite):
                         if not dict_id:
                             continue
 
-                    node = function.body
-                    explicitly_set_opt_params = set()
-                    todo = deque(node)
-                    while todo:
-                        node = todo.popleft()
-                        if (
-                            isinstance(node, ast.Subscript)
-                            and isinstance(node.value, ast.Name)
-                            and node.value.id == dict_id
-                        ):
-                            key = None
-                            if isinstance(node.slice.value, ast.Name) or isinstance(
-                                node.slice.value, ast.Str
-                            ):
-                                key = (
-                                    node.slice.value.s
-                                    if hasattr(node.slice.value, "s")
-                                    else node.slice.value.id
-                                )
-                            elif isinstance(node.slice.value, ast.Attribute):
-                                key = node.slice.value.attr
-                            print(f"debugging help {key}, checking for {opt_params}")
-                            # Allow optional parameters to be set eg, param['foo'] = 'bar'
-                            if key in opt_params and isinstance(node.ctx, ast.Store):
-                                explicitly_set_opt_params.add(key)
-                            # Unsafe get - this will also include deletion eg, del param['foo']
-                            elif (
-                                key in opt_params
-                                and not isinstance(node.ctx, ast.Store)
-                                and key not in explicitly_set_opt_params
-                                and not self._ast_node_under_dict_lookup(node, key, dict_id)
-                            ):
-                                unsafe_gets = True
-                                unsafe_get_list.append(f"{label} on line {node.value.lineno}")
-                                continue
-                        else:
-                            next_nodes = ast.iter_child_nodes(node)
-                            for n in next_nodes:
-                                n.parent = node
-                                todo.extend([n])
+                    def determine_unsafe_gets(function, opt_params, dict_id, label):
+                        for node in ast.walk(function):
+                            if isinstance(node, ast.Subscript):
+                                if isinstance(node.value, ast.Name) and node.value.id == dict_id:
+                                    if isinstance(node.slice, ast.Constant) and isinstance(
+                                        node.slice.value, str
+                                    ):
+                                        key = node.slice.value
+                                        if isinstance(node.ctx, ast.Store):
+                                            if key in opt_params:
+                                                # optional param has been set so it is no longer optional
+                                                opt_params.remove(key)
+                                        elif isinstance(node.ctx, ast.Load):
+                                            if key in opt_params:
+                                                unsafe_get_list.append(
+                                                    f"{label} on line {node.value.lineno}"
+                                                )
+                                        elif isinstance(node.ctx, ast.Del):
+                                            if key in opt_params:
+                                                unsafe_get_list.append(
+                                                    f"{label} on line {node.value.lineno}"
+                                                )
+                                                opt_params.remove(key)
+                            elif isinstance(node, ast.Call):
+                                # Method calls
+                                if isinstance(node.func, ast.Attribute) and node.func.attr == "pop":
+                                    if (
+                                        isinstance(node.func.value, ast.Name)
+                                        and node.func.value.id == dict_id
+                                        and len(node.args) < 2
+                                    ):
+                                        if (
+                                            node.args
+                                            and isinstance(node.args[0], ast.Constant)
+                                            and node.args[0].value in opt_params
+                                        ):
+                                            unsafe_get_list.append(f"{label} on line {node.lineno}")
+                                else:
+                                    # function calls that are either self.func() or func()
+                                    func_name = None
+                                    if isinstance(node.func, ast.Name):
+                                        func_name = node.func.id
+                                    elif isinstance(node.func, ast.Attribute):
+                                        func_name = node.func.attr
+
+                                    if func_name in function_defs:
+                                        for arg in node.args:
+                                            if isinstance(arg, ast.Name) and arg.id == dict_id:
+                                                determine_unsafe_gets(
+                                                    function_defs[func_name],
+                                                    opt_params,
+                                                    dict_id,
+                                                    label,
+                                                )
+
+                    determine_unsafe_gets(function, opt_params, dict_id, label)
+
             except Exception:
                 print("Error processing AST. Printing exception and ignoring...")
                 traceback.print_exc()
@@ -213,8 +227,8 @@ class CodeTests(TestSuite):
         failure_message = "Some optional parameters use unsafe getting. Please use `param.get()` or `config.get()` to retrieve optional parameters or change them to required."
 
         return create_test_result_response(
-            success=not unsafe_gets,
-            message=TEST_PASS_MESSAGE if not unsafe_gets else failure_message,
+            success=not unsafe_get_list,
+            message=TEST_PASS_MESSAGE if not unsafe_get_list else failure_message,
             verbose=[param for param in unsafe_get_list],
         )
 
