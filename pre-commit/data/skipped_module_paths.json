@@ -1,8 +1,0 @@
-{
-    "vSphere": [
-      "pysphere"
-    ],
-    "WMI": [
-      "wmi_client_wrapper"
-    ]
-  }

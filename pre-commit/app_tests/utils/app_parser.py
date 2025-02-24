@@ -8,9 +8,9 @@ from distutils.version import LooseVersion
 
 from app_tests.utils.phantom_constants import (
     APP_EXTS,
-    SKIPPED_MODULE_PATHS,
 )
 from functools import cached_property
+from pathlib import Path
 
 
 class ParserError(Exception):
@@ -33,16 +33,6 @@ class AppParser:
             raise ParserError(str(e)) from None
 
     @cached_property
-    def skipped_module_paths(self):
-        """
-        Modules in the app repo to skip checks for
-        """
-        with open(SKIPPED_MODULE_PATHS) as fp:
-            skipped_paths_json = json.load(fp)
-
-        return skipped_paths_json.get(self.app_json["name"], [])
-
-    @cached_property
     def min_phantom_version(self):
         return LooseVersion(self._get_from_json("min_phantom_version"))
 
@@ -54,10 +44,7 @@ class AppParser:
             f for f in self.excludes if not any(f.endswith(ext) for ext in APP_EXTS)
         )
 
-        for dirpath, dir_lst, file_lst in os.walk(self._app_code_dir):
-            if os.path.basename(dirpath) in self.skipped_module_paths:
-                dir_lst.clear()
-                continue
+        for dirpath, _, file_lst in os.walk(self._app_code_dir):
             if not re.search(r"/\.", dirpath):
                 for file in (f for f in file_lst if not (f in safe_excludes or f.startswith("."))):
                     files.append(os.path.realpath(os.path.join(dirpath, file)))
@@ -106,15 +93,21 @@ class AppParser:
         return filtered_json_filenames[0]
 
     @property
-    def _app_json_filepath(self):
-        return os.path.join(self._app_code_dir, self.app_json_name)
+    def _app_json_filepath(self) -> Path:
+        return Path(self._app_code_dir) / self.app_json_name
 
     @cached_property
     def app_json(self):
         # Gets the loaded json, preserving key order
-        with open(self._app_json_filepath) as f:
-            json_content = json.loads(f.read(), object_pairs_hook=OrderedDict)
-        return json_content
+        try:
+            json_content = json.loads(
+                self._app_json_filepath.read_text(), object_pairs_hook=OrderedDict
+            )
+            return json_content
+        except FileNotFoundError as e:
+            raise ParserError(f"File not found {self._app_json_filepath}") from e
+        except json.JSONDecodeError as e:
+            raise ParserError(f"JSON decoding failed for file: {self._app_json_filepath}") from e
 
     def update_app_json(self, app_json_content):
         app_json_str = json.dumps(app_json_content, indent=4)

@@ -4,7 +4,6 @@ import time
 from app_tests.utils.phantom_constants import (
     SPLUNK_SUPPORTED,
     DEVELOPER_SUPPORTED,
-    PLAYBOOK_REPO_DEFAULT_BRANCH,
 )
 from app_tests import get_test_suites, iterate_all_tests
 
@@ -15,11 +14,6 @@ class TestRunner:
     """
 
     def __init__(self, app_repo_name, **kwargs):
-        self._github = kwargs.pop(
-            "github", None
-        )  # we need this or self._github_tools to clone the assets and playbook_tests repo to check if we have the min stuff needed
-        self._github_tools = kwargs.pop("github_tools", None)
-
         # Splunk-supported Test Options
         self.test_run_time = int(time.time())
 
@@ -28,7 +22,6 @@ class TestRunner:
         self._app_directory = kwargs.pop("app_directory")
         self._app_name = app_repo_name
         self._app_repo_name = app_repo_name
-        self._playbook_branch = kwargs.pop("playbook_branch", PLAYBOOK_REPO_DEFAULT_BRANCH)
         self._tags = kwargs.pop("tags", [])
         self._test_options = kwargs.pop("tests", None)
         self.results = {}
@@ -38,7 +31,6 @@ class TestRunner:
             "github": self._github,
             "github_tools": self._github_tools,
             "mode": self.mode,
-            "playbook_test_branch": self._playbook_branch,
         }
 
     def log_result(self, test_name, result, console=True):
@@ -168,11 +160,6 @@ def _add_common_opts(cmd_parser, tag):
         help=f'Test tags to run. Default is "{tag}"',
     )
 
-    cmd_parser.add_argument(
-        "--playbook_branch",
-        default=PLAYBOOK_REPO_DEFAULT_BRANCH,
-        help="Repo branch to test (default: next)",
-    )
     cmd_parser.add_argument(
         "--allow-all-failures",
         action="store_true",

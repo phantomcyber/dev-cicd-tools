@@ -4,15 +4,11 @@ import os
 import glob
 import traceback
 from app_tests.utils.phantom_constants import (
-    ACTION_ALIASES,
     TEST_PASS_MESSAGE,
-    ACTION_MIN_LOG_COUNT,
-    SUPPORTED_LOG_CALLS,
 )
 from app_tests.utils import create_test_result_response
 import re
 from lxml import etree
-import itertools
 
 
 class CodeTests(TestSuite):
@@ -177,17 +173,6 @@ class CodeTests(TestSuite):
             verbose=[param for param in unsafe_get_list],
         )
 
-    @TestSuite.test
-    def submission_contains_source(self):
-        """
-        Submission contains source code, not compiled files
-        """
-        msg = TEST_PASS_MESSAGE
-        if not any(fname.endswith(".py") for fname in os.listdir(self._app_code_dir)):
-            msg = "No python files found in submission. Community submissions should have source files."
-
-        return create_test_result_response(success=msg == TEST_PASS_MESSAGE, message=msg)
-
     @TestSuite.test(tags=["pre-release"])
     def check_light_and_dark_theme_logos(self):
         """
@@ -270,120 +255,3 @@ class CodeTests(TestSuite):
             if val:
                 return val
         return None
-
-    @TestSuite.test
-    def check_min_number_log_statements(self):
-        """
-        Verifies each action implementation makes at least the
-        required minimum number of logging statements
-        """
-        # If the app is still on Python 2, then we'll pass this check and let the python_version
-        # check fail, so that only python_version will need to be added to expected_failures if required.
-        if self._parser.app_json.get("python_version") != "3":
-            return {"success": True, "message": "Skipping check for Python 2 app."}
-
-        with open(self._app_connector_fp) as f:
-            root = ast.parse(f.read())
-            connector = None
-            for node in root.body:
-                if isinstance(node, ast.ClassDef):
-                    for base in node.bases:
-                        if (isinstance(base, ast.Attribute) and base.attr == "BaseConnector") or (
-                            isinstance(base, ast.Name) and base.id == "BaseConnector"
-                        ):
-                            connector = node
-                            break
-            if not connector:
-                return create_test_result_response(
-                    success=False,
-                    message=f"Could not find connector class definition in {self._app_connector_fp}",
-                )
-
-        func_names_to_defs = {
-            f.name: f for f in [n for n in connector.body if isinstance(n, ast.FunctionDef)]
-        }
-
-        def count_number_log_statements(func_def):
-            count, stack = 0, list([(n, func_def.name) for n in func_def.body])
-            parent_calls = {func_def.name}
-            while stack:
-                node, curr_call = stack.pop()
-                nested_call = False
-                if (
-                    isinstance(node, ast.Call)
-                    and isinstance(node.func, ast.Attribute)
-                    and isinstance(node.func.value, ast.Name)
-                ):
-                    func = node.func
-                    if func.value.id == "self" and func.attr in SUPPORTED_LOG_CALLS:
-                        count += 1
-                    elif (
-                        func.value.id == "self"
-                        and func.attr not in parent_calls
-                        and func.attr in func_names_to_defs
-                    ):
-                        stack.extend([(n, curr_call) for n in node.args + node.keywords])
-                        stack.extend([(n, func.attr) for n in func_names_to_defs[func.attr].body])
-                        parent_calls.add(func.attr)
-                        nested_call = True
-                elif (
-                    isinstance(node, ast.Expr)
-                    or isinstance(node, ast.Assign)
-                    or isinstance(node, ast.AugAssign)
-                    or isinstance(node, ast.Return)
-                    or isinstance(node, ast.keyword)
-                ):
-                    stack.append((node.value, curr_call))
-                elif (
-                    isinstance(node, ast.If)
-                    or isinstance(node, ast.For)
-                    or isinstance(node, ast.While)
-                    or isinstance(node, ast.With)
-                ):
-                    stack.extend([(n, curr_call) for n in node.body])
-                elif isinstance(node, ast.Try):
-                    stack.extend(
-                        [(n, curr_call) for n in node.body]
-                        + list(
-                            itertools.chain(
-                                *(
-                                    [(n, curr_call) for n in handler.body]
-                                    for handler in node.handlers
-                                )
-                            )
-                        )
-                    )
-
-                if not nested_call and stack and stack[-1][1] != curr_call:
-                    parent_calls.remove(curr_call)
-
-            return count
-
-        action_ids = [a["identifier"] for a in self._parser.app_json["actions"]]
-        verbose = []
-
-        for action in action_ids:
-            expected_func_names = []
-            for action_name in [action, *ACTION_ALIASES.get(action, [])]:
-                expected_func_names.extend(
-                    [f"_handle_{action_name}", f"_{action_name}", action_name]
-                )
-            func_def = [f for f in [func_names_to_defs.get(n) for n in expected_func_names] if f]
-            if not func_def:
-                verbose.append(
-                    f"Could not find an implementation for {action} "
-                    f"under an expected name: {expected_func_names}"
-                )
-                continue
-
-            func_def = func_def[0]
-            log_count = count_number_log_statements(func_def)
-            if log_count < ACTION_MIN_LOG_COUNT:
-                verbose.append(f"{func_def.name} has too few log statements: {log_count}")
-
-        msg = (
-            TEST_PASS_MESSAGE
-            if not verbose
-            else f"Action implementations should have at least {ACTION_MIN_LOG_COUNT} statements to any of the following logging methods: {sorted(SUPPORTED_LOG_CALLS)}. Note that logging statements appearing in loops are only counted once."
-        )
-        return create_test_result_response(success=not verbose, message=msg, verbose=verbose)

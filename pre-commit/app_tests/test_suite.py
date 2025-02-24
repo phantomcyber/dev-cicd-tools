@@ -32,8 +32,6 @@ class TestSuite:
         self._parser = AppParser(self._app_code_dir)
         self._app_name = self._parser.app_json["name"].lower()
 
-        self._playbook_branch_name = kwargs.pop("playbook_test_branch")
-
     @classmethod
     def get_tests(cls, tags=None):
         """

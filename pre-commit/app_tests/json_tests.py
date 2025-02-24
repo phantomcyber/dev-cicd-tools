@@ -1,11 +1,12 @@
 from app_tests.test_suite import TestSuite
 import json
-import jsonschema
-from jsonschema import validate
+import textwrap
+from typing import Any
+from jsonschema import exceptions
+from jsonschema.validators import Draft202012Validator as JsonSchemaValidator
 from app_tests.utils import create_test_result_response
 from app_tests.utils.phantom_constants import (
     SPLUNK_SUPPORTED,
-    DEVELOPER_SUPPORTED,
     TEST_PASS_MESSAGE,
     CURRENT_MIN_PHANTOM_VERSION,
     APPID_TO_NAME_FILEPATH,
@@ -17,7 +18,6 @@ from operator import itemgetter
 import traceback
 from distutils.version import LooseVersion
 from pathlib import Path
-from typing import Any
 
 
 class JSONTests(TestSuite):
@@ -27,6 +27,29 @@ class JSONTests(TestSuite):
 
         self._app_is_certified = self._parser.app_json["publisher"] == "Splunk"
 
+    @classmethod
+    def format_as_index(indices: list[Any], container: str = "schema") -> str:
+        """
+        Largely copied from jsonschema source:
+        Construct a single string containing indexing operations for the indices.
+
+        For example for a container ``bar``, [1, 2, "foo"] -> bar[1][2]["foo"]
+
+        Arguments:
+
+            container (str):
+
+                A word to use for the thing being indexed
+
+            indices (sequence):
+
+                The indices to format.
+
+        """
+        if not indices:
+            return container
+        return f"{container}[{']['.join(repr(index) for index in indices)}]"
+
     @TestSuite.test
     def validate_json_schema(self):
         """
@@ -34,16 +57,28 @@ class JSONTests(TestSuite):
         """
         APP_TESTS_DIR = Path(__file__).parent.resolve()
         schema_path = APP_TESTS_DIR / "app_schema.json"
+        verbose = []
+        message = TEST_PASS_MESSAGE
+
         with open(schema_path) as app_schema_file:
             app_schema = json.load(app_schema_file)
 
-        try:
-            validate(instance=self._app_json, schema=app_schema)
-            return create_test_result_response(
-                success=True, message="Successfully validated app json against schema"
+        validator = JsonSchemaValidator(app_schema)
+        for err in sorted(validator.iter_errors(self._app_json), key=exceptions.relevance):
+            msg = textwrap.dedent(
+                f"""
+                * Failed validating {err.validator!r} at {JSONTests.format_as_index(err.schema_path, "schema")}
+                On {JSONTests.format_as_index(err.path, "instance") or "root"}
+                {err.message}
+                """
             )
-        except jsonschema.exceptions.ValidationError as e:
-            return create_test_result_response(success=False, message=e.message)
+            verbose.append(textwrap.indent(msg, "    "))
+
+        return create_test_result_response(
+            success=False,
+            message=message if not verbose else "Failed app json schema validation",
+            verbose=verbose,
+        )
 
     @TestSuite.test(remove_tags=[SPLUNK_SUPPORTED])
     def check_communitiy_publisher(self):
@@ -311,8 +346,8 @@ class JSONTests(TestSuite):
             success=not verbose, message=message, verbose=verbose, fixed=True
         )
 
-    @TestSuite.test(remove_tags=[DEVELOPER_SUPPORTED])
-    def check_action_param_matching_contains(self):  # will need to implement or get rid of
+    @TestSuite.test
+    def check_action_param_matching_contains(self):
         """
         Every parameter for an action with contains has an action_result.parameter with the same contains
         """
@@ -357,28 +392,34 @@ class JSONTests(TestSuite):
         """
         Checks to make sure each action includes the minimal required data paths
         """
-        app_json_actions = [
-            act
-            for act in self._app_json["actions"]
-            if act["action"] not in ("test connectivity", "on poll")
-        ]
-        message = None
+        app_json_actions = [act for act in self._app_json["actions"]]
         verbose = []
-        for action in app_json_actions:
+        message = TEST_PASS_MESSAGE
+        for idx, action in enumerate(app_json_actions):
+            if action["action"] in ("test connectivity", "on poll"):
+                continue
             data_paths = set(
                 [
                     (path, data_path_dic["data_type"])
                     for path, data_path_dic in self._get_data_paths(action).items()
                 ]
             )
-            if not MINIMAL_DATA_PATHS.issubset(data_paths):
-                message = "One or more actions are missing a required data path"
-                action_name = action["action"]
-                verbose.append(f"{action_name} is missing one or more required data path")
+            for minimal_path in MINIMAL_DATA_PATHS:
+                if minimal_path not in data_paths:
+                    data_path, data_type = minimal_path
+                    self._app_json["actions"][idx]["output"].append(
+                        {"data_path": data_path, "data_type": data_type}
+                    )
+                    action_name = action["action"]
+                    verbose.append(f"{action_name} missing {data_path}")
+
+        if verbose:
+            self._parser.update_app_json(self._app_json)
+            message = "One or more actions are missing a required data paths. Modifying {self._parser.app_json_name}. Please ensure these paths are set in their respective actions"
 
         return create_test_result_response(
             success=not verbose,
-            message=TEST_PASS_MESSAGE if not message else message,
+            message=message,
             verbose=verbose,
         )
 
