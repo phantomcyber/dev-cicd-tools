@@ -4,6 +4,13 @@ set -euo pipefail
 APP_DIR=$(pwd)
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 
+IN_DOCKER=false
+
+# Use to see if in container
+if /opt/python/cp39-cp39/bin/python --version &>/dev/null; then
+	IN_DOCKER=true
+fi
+
 if ! jq --help &>/dev/null; then
 	echo 'Please ensure jq is installed (eg, brew install jq)'
 	exit 1
@@ -29,27 +36,6 @@ fi
 
 pip39_dependencies_key='pip39_dependencies'
 
-IN_DOCKER=false
-IMAGE="quay.io/pypa/manylinux_2_28_x86_64"
-DOCKERFILE=""
-
-while getopts ':i:d:-:' flag; do
-	case "${flag}" in
-	i) IMAGE="${OPTARG}" ;;
-	d) DOCKERFILE="${OPTARG}" ;;
-	-)
-		case "${OPTARG}" in
-		in-docker) IN_DOCKER=true ;;
-		*) ;;
-		esac
-		;;
-	*) ;;
-	esac
-done
-
-# Reset OPTIND to allow getopts to be used again correctly
-OPTIND=1
-
 if [ "$IN_DOCKER" = true ]; then
 	/opt/python/cp39-cp39/bin/pip install pip-tools
 	/opt/python/cp39-cp39/bin/python "$SCRIPT_DIR"/package_app_dependencies.py \
@@ -59,11 +45,17 @@ if [ "$IN_DOCKER" = true ]; then
 	exit $?
 fi
 
-# Not in needed env, proceed with Docker setup
-if ! docker info &>/dev/null; then
-	echo 'Please ensure Docker is installed and running on your machine'
-	exit 1
-fi
+# Not in container, proceed with Docker setup
+IMAGE="quay.io/pypa/manylinux_2_28_x86_64"
+DOCKERFILE=""
+
+while getopts 'i:d:' flag; do
+	case "${flag}" in
+	i) IMAGE="${OPTARG}" ;;
+	d) DOCKERFILE="${OPTARG}" ;;
+	*) echo "Invalid flag ${OPTARG}" && exit 1 ;;
+	esac
+done
 
 function prepare_docker_image() {
 	if [[ $DOCKERFILE != "" ]]; then
@@ -78,7 +70,6 @@ function prepare_docker_image() {
 		docker build -t "$IMAGE" -f "$DOCKERFILE" "$APP_DIR"
 	fi
 	echo "Using image: $IMAGE"
-
 }
 
 function package_py3_app_dependencies() {

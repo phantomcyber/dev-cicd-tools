@@ -6,17 +6,10 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 
 IN_DOCKER=false
 
-while getopts ':d:-:' flag; do
-	case "${flag}" in
-	-)
-		case "${OPTARG}" in
-		in-docker) IN_DOCKER=true ;;
-		*) ;;
-		esac
-		;;
-	*) ;;
-	esac
-done
+# Use to see if in container
+if /opt/python/cp39-cp39/bin/python --version &>/dev/null; then
+	IN_DOCKER=true
+fi
 
 if [ "$IN_DOCKER" = true ]; then
 	/opt/python/cp39-cp39/bin/pip install mdformat jinja2
@@ -24,7 +17,7 @@ if [ "$IN_DOCKER" = true ]; then
 	exit $?
 fi
 
-# Not in needed env, proceed with Docker setup
+# Not in container, proceed with Docker setup
 IMAGE="quay.io/pypa/manylinux_2_28_x86_64"
 DOCKERFILE=""
 
