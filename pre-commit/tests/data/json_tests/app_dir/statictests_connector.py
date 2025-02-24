@@ -109,7 +109,7 @@ class FP_Connector(BaseConnector):
         )
 
     def _process_html_response(self, response, action_result) -> RetVal:
-        # An html response, treat it like an error
+        # A html response, treat it like an error
         status_code = response.status_code
 
         try:
@@ -160,7 +160,7 @@ class FP_Connector(BaseConnector):
         if "json" in r.headers.get("Content-Type", ""):
             return self._process_json_response(r, action_result)
 
-        # Process an HTML response, Do this no matter what the api talks.
+        # Process an HTML response, Do this no matter what the api says.
         # There is a high chance of a PROXY in between phantom and the rest of
         # world, in case of errors, PROXY's return HTML, this function parses
         # the error and adds it to the action_result.
@@ -316,7 +316,9 @@ class FP_Connector(BaseConnector):
         action_result = self.add_action_result(ActionResult(dict(param)))
 
         domain_uuid = self.get_domain_id(param.get("domain_name"))
-        obj_type = param.get("type")
+        obj_type = param["type"]
+        param.pop("type")
+        param.pop("type", None)
         name = param.get("name")
 
         if obj_type:

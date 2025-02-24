@@ -92,10 +92,6 @@
                     ]
                 },
                 {
-                    "data_path": "action_result.message",
-                    "data_type": "string"
-                },
-                {
                     "data_path": "summary.total_objects",
                     "data_type": "numeric"
                 },
@@ -148,6 +144,10 @@
                 },
                 {
                     "data_path": "action_result.parameter.name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.message",
                     "data_type": "string"
                 }
             ],

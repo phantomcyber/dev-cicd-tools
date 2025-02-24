@@ -36,7 +36,7 @@ def test_copyright_updates(app_dir: Path):
     expected_files = ("LICENSE", "example_connector.py", "example_view.html")
 
     result = subprocess.run(
-        [os.path.join(PRE_COMMIT_DIR, "copyright")],
+        [os.path.join(PRE_COMMIT_DIR, "copyright.sh")],
         cwd=app_dir,
         capture_output=True,
     )

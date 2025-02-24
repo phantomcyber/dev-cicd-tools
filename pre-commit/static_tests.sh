@@ -56,5 +56,5 @@ docker run --rm \
 	-v "$SCRIPT_DIR":/pre-commit/ \
 	-w /src \
 	"$IMAGE" /bin/bash -c \
-	"/opt/python/cp39-cp39/bin/pip install jsonschema lxml \
+	"/opt/python/cp39-cp39/bin/pip install jsonschema lxml
      /opt/python/cp39-cp39/bin/python /pre-commit/static_tests.py $test_mode . --app-repo-name $(basename "$APP_DIR")"

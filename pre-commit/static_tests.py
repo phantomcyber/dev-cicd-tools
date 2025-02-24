@@ -28,8 +28,6 @@ class TestRunner:
 
         # Adding 'mode' parameter in the suite arguments to identify the mode and manage the test on the basis of mode
         self._suite_args = {
-            "github": self._github,
-            "github_tools": self._github_tools,
             "mode": self.mode,
         }
 
