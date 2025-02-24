@@ -53,6 +53,18 @@ class AppParser:
     def filenames(self):
         return [os.path.basename(f) for f in self.filepaths]
 
+    @cached_property
+    def files(self):
+        # Gets all files' contents in a dict
+        files = {}
+        for filepath in self.filepaths:
+            try:
+                with open(filepath, encoding="utf-8") as f:
+                    files[filepath] = f.read()
+            except UnicodeDecodeError:
+                continue
+        return files
+
     @property
     def app_json_name(self):
         # Get all json files in top level of app directory to send to finder function
@@ -113,6 +125,14 @@ class AppParser:
         with open(self._app_json_filepath, "w") as f:
             f.write(app_json_str)
         self.refresh_app_json()
+
+    @cached_property
+    def all_calldefs(self):
+        # Get all the calldefs of all funcdefs
+        all_calldefs = []
+        for funcdef in self.all_funcdefs:
+            all_calldefs += self._get_calldefs(funcdef)
+        return all_calldefs
 
     @cached_property
     def connector_filepath(self):

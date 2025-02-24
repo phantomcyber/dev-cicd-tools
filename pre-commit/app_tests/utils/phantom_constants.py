@@ -18,3 +18,12 @@ MINIMAL_DATA_PATHS = set(
 )
 PASSWORD_KEYS = ("key", "password", "token", "secret")
 APP_EXTS = (".py", ".html", ".json", ".svg", ".png")
+XSS_INJECTIONS = [
+    ("<script>alert('hi')</script>", "<script>alert('hi')"),
+    (
+        '<a href="&#106;avascript:alert(document.cookie)" target="_self">test</a>',
+        "<a href=javascript:alert(document.cookie)",
+    ),
+    ("<img src=x onerror=alert('1')>", "onerror=alert('1')"),
+    ('script src="http://attacker/some.js"></script>', "http://attacker/some.js"),
+]

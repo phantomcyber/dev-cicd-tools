@@ -255,3 +255,31 @@ class CodeTests(TestSuite):
             if val:
                 return val
         return None
+
+    @TestSuite.test
+    def check_python_package(self):
+        """
+        Checks for an __init__.py existing in app directory toplevel
+        """
+        msg = TEST_PASS_MESSAGE
+        if "__init__.py" not in os.listdir(self._app_code_dir):
+            msg = "App repo does not have an `__init__.py` at toplevel. Not a python module"
+
+        return create_test_result_response(success=msg == TEST_PASS_MESSAGE, message=msg)
+
+    @TestSuite.test
+    def third_party_check_pyc_files(self):
+        """
+        No pyc files in submission
+        """
+        pyc_files = [
+            f"{file} is a .pyc type file. Please remove."
+            for file in self._parser.filenames
+            if os.path.splitext(file) == "pyc"
+        ]
+        msg = (
+            TEST_PASS_MESSAGE
+            if not pyc_files
+            else "Found pyc files in app directory. Please remove"
+        )
+        return create_test_result_response(success=not pyc_files, message=msg, verbose=pyc_files)
