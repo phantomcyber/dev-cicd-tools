@@ -27,7 +27,7 @@ class JSONTests(TestSuite):
 
         self._app_is_certified = self._parser.app_json["publisher"] == "Splunk"
 
-    @classmethod
+    @staticmethod
     def format_as_index(indices: list[Any], container: str = "schema") -> str:
         """
         Largely copied from jsonschema source:
@@ -404,18 +404,17 @@ class JSONTests(TestSuite):
                     for path, data_path_dic in self._get_data_paths(action).items()
                 ]
             )
-            for minimal_path in MINIMAL_DATA_PATHS:
-                if minimal_path not in data_paths:
-                    data_path, data_type = minimal_path
-                    self._app_json["actions"][idx]["output"].append(
-                        {"data_path": data_path, "data_type": data_type}
-                    )
-                    action_name = action["action"]
-                    verbose.append(f"{action_name} missing {data_path}")
+            for minimal_path in MINIMAL_DATA_PATHS - data_paths:
+                data_path, data_type = minimal_path
+                self._app_json["actions"][idx]["output"].append(
+                    {"data_path": data_path, "data_type": data_type}
+                )
+                action_name = action["action"]
+                verbose.append(f"{action_name} missing {data_path}")
 
         if verbose:
             self._parser.update_app_json(self._app_json)
-            message = "One or more actions are missing a required data paths. Modifying {self._parser.app_json_name}. Please ensure these paths are set in their respective actions"
+            message = f"One or more actions are missing a required data paths. Modifying {self._parser.app_json_name}. Please ensure these paths are set in their respective actions"
 
         return create_test_result_response(
             success=not verbose,

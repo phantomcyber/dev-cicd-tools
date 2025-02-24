@@ -3,7 +3,6 @@ import json
 import os
 import re
 
-from collections import OrderedDict
 from distutils.version import LooseVersion
 
 from app_tests.utils.phantom_constants import (
@@ -100,9 +99,7 @@ class AppParser:
     def app_json(self):
         # Gets the loaded json, preserving key order
         try:
-            json_content = json.loads(
-                self._app_json_filepath.read_text(), object_pairs_hook=OrderedDict
-            )
+            json_content = json.loads(self._app_json_filepath.read_text())
             return json_content
         except FileNotFoundError as e:
             raise ParserError(f"File not found {self._app_json_filepath}") from e
