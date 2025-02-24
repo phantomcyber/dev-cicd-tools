@@ -201,10 +201,18 @@ class AppParser:
 
     def get_id_attr(self, node):
         # Name = node.id in 'name'; Name = node.attr in 'class.name'
+        arguments = set()
         if isinstance(node, ast.Name):
-            return node.id
-        if isinstance(node, ast.Attribute):
-            return node.attr
+            arguments.add(node.id)
+        elif isinstance(node, ast.Attribute):
+            arguments.add(node.attr)
+        elif isinstance(node, ast.JoinedStr):
+            # this checks for f-strings
+            for value in node.values:
+                if isinstance(value, ast.FormattedValue) and isinstance(value.value, ast.Name):
+                    arguments.add(value.value.id)
+
+        return arguments
 
     def refresh_app_json(self):
         self.__dict__.pop("app_json", None)

@@ -205,7 +205,7 @@ class JSONTests(TestSuite):
         Checks whether test_connectivity has progress message if it exists
         """
         message = TEST_PASS_MESSAGE
-        req_funcs = ["send_progress", "save_progress", "set_status_save_progress"]
+        req_funcs = set(["send_progress", "save_progress", "set_status_save_progress"])
 
         has_test_connectivity = self._has_test_connectivity()
         test_connectivity = self._get_test_connectivity() if has_test_connectivity else False
@@ -214,8 +214,8 @@ class JSONTests(TestSuite):
             calldefs = self._parser._get_calldefs(test_connectivity)
             for calldef in calldefs:
                 func = calldef.func
-                name = self._parser.get_id_attr(func)
-                if name in req_funcs:
+                names = self._parser.get_id_attr(func)
+                if names.issubset(req_funcs):
                     break
             else:
                 message = f"Test connectivity found in JSON, but not enough logging present in connector. Please add one of {req_funcs}"

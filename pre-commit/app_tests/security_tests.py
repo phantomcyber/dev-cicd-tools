@@ -20,9 +20,10 @@ class SecurityTests(TestSuite):
         for file, contents in self._parser.files.items():
             if file.endswith(".html"):
                 # need to get template vars in a better manner
-                for singleton_variable in re.finditer(r"{{\s+([\w\d_]+)\s+}}", contents):
+                for match in re.finditer(r"{{\s+([\w\d_]+)\s+}}", contents):
                     for xss_attack, xss_success in XSS_INJECTIONS:
                         try:
+                            singleton_variable = match.group(1)
                             rendered_result = render_template(
                                 contents, {singleton_variable: xss_attack}
                             )
@@ -83,12 +84,10 @@ class SecurityTests(TestSuite):
 
         for calldef in self._parser.all_calldefs:
             func_name = self._parser.get_id_attr(calldef.func)
-            if func_name in funcs:
-                print("args for debug print are")
+            if func_name.issubset(funcs):
                 for arg in calldef.args:
                     arg_name = self._parser.get_id_attr(arg)
-                    print(f"{arg_name}")
-                    if arg_name in bad_args:
+                    if arg_name and arg_name.issubset(bad_args):
                         verbose.append(
                             f"Found insecure argument {arg_name} passed to function {func_name}"
                         )
