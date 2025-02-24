@@ -3,7 +3,6 @@
   description: Builds and checks application documentation
   entry: pre-commit/build_docs.sh
   language: script
-  types: [markdown, json]
   pass_filenames: false
 - id: copyright
   name: update copyright headers

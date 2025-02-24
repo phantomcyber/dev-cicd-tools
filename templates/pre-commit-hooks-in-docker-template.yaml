@@ -43,11 +43,11 @@ repos:
         exclude_types: [json]
         # Central hooks
   - repo: https://github.com/phantomcyber/dev-cicd-tools
-    rev: feature/frictionless_connector_contributions # TODO: Update when time
+    rev: grokas/PAPP-35413-precommit_update_to_run_without_docker_when_applicable # TODO: Update when time
     hooks:
       - id: build-docs
-        args: ['--no-docker']
+        args: ['--in-docker']
       - id: copyright
-        args: ['--no-docker']
+        args: ['--in-docker']
       - id: package-app-dependencies
-        args: ['--no-docker']
+        args: ['--in-docker']

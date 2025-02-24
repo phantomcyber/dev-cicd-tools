@@ -4,13 +4,13 @@ set -euo pipefail
 APP_DIR=$(pwd)
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 
-NO_DOCKER=false
+IN_DOCKER=false
 
 while getopts ':d:-:' flag; do
 	case "${flag}" in
 	-)
 		case "${OPTARG}" in
-		no-docker) NO_DOCKER=true ;;
+		in-docker) IN_DOCKER=true ;;
 		*) ;;
 		esac
 		;;
@@ -18,7 +18,7 @@ while getopts ':d:-:' flag; do
 	esac
 done
 
-if [ "$NO_DOCKER" = true ]; then
+if [ "$IN_DOCKER" = true ]; then
 	/opt/python/cp39-cp39/bin/pip install mdformat jinja2
 	/opt/python/cp39-cp39/bin/python "$SCRIPT_DIR"/build_docs.py .
 	exit $?

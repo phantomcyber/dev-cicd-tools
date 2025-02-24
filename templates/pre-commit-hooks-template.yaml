@@ -30,6 +30,7 @@ repos:
     rev: 0.7.22
     hooks:
       - id: mdformat
+        exclude: "release_notes/.*"
   - repo: https://github.com/returntocorp/semgrep
     rev: v1.107.0
     hooks:

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 APP_DIR=$(pwd)
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
@@ -28,7 +29,7 @@ fi
 
 pip39_dependencies_key='pip39_dependencies'
 
-NO_DOCKER=false
+IN_DOCKER=false
 IMAGE="quay.io/pypa/manylinux_2_28_x86_64"
 DOCKERFILE=""
 
@@ -38,7 +39,7 @@ while getopts ':i:d:-:' flag; do
 	d) DOCKERFILE="${OPTARG}" ;;
 	-)
 		case "${OPTARG}" in
-		no-docker) NO_DOCKER=true ;;
+		in-docker) IN_DOCKER=true ;;
 		*) ;;
 		esac
 		;;
@@ -49,7 +50,7 @@ done
 # Reset OPTIND to allow getopts to be used again correctly
 OPTIND=1
 
-if [ "$NO_DOCKER" = true ]; then
+if [ "$IN_DOCKER" = true ]; then
 	/opt/python/cp39-cp39/bin/pip install pip-tools
 	/opt/python/cp39-cp39/bin/python "$SCRIPT_DIR"/package_app_dependencies.py \
 		. "/opt/python/cp39-cp39/bin/pip" "$pip3_dependencies_key" --repair_wheels
