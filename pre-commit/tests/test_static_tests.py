@@ -33,7 +33,7 @@ def app_dir(request: pytest.FixtureRequest) -> Path:
 )
 def test_static_tests(app_dir: Path):
     expected_dir = Path("tests/data/static_tests/expected")
-    expected_files = ["statictests.json"]
+    expected_files = ["statictests.json", "__init__.py"]
 
     result = subprocess.run(
         [os.path.join(PRE_COMMIT_DIR, "static_tests.sh")],

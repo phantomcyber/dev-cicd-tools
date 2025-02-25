@@ -205,7 +205,7 @@ class JSONTests(TestSuite):
         Checks whether test_connectivity has progress message if it exists
         """
         message = TEST_PASS_MESSAGE
-        req_funcs = set(["send_progress", "save_progress", "set_status_save_progress"])
+        req_funcs = {"send_progress", "save_progress", "set_status_save_progress"}
 
         has_test_connectivity = self._has_test_connectivity()
         test_connectivity = self._get_test_connectivity() if has_test_connectivity else False
