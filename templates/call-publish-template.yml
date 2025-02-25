@@ -1,0 +1,10 @@
+name: Call Publish Workflow
+
+on:
+  push:
+    branches:
+      - main  # Runs only on push (merge) to main
+
+jobs:
+  call-publish:
+    uses: splunk-soar-connectors/.github/.github/workflows/publish.yml@main

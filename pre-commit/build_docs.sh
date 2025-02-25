@@ -4,6 +4,20 @@ set -euo pipefail
 APP_DIR=$(pwd)
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 
+IN_DOCKER=false
+
+# Use to see if in container
+if /opt/python/cp39-cp39/bin/python --version &>/dev/null; then
+	IN_DOCKER=true
+fi
+
+if [ "$IN_DOCKER" = true ]; then
+	/opt/python/cp39-cp39/bin/pip install mdformat jinja2
+	/opt/python/cp39-cp39/bin/python "$SCRIPT_DIR"/build_docs.py .
+	exit $?
+fi
+
+# Not in container, proceed with Docker setup
 IMAGE="quay.io/pypa/manylinux_2_28_x86_64"
 DOCKERFILE=""
 
