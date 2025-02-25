@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 APP_DIR=$(pwd)
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
@@ -27,7 +28,21 @@ function prepare_docker_image() {
 		docker build -t "$IMAGE" -f "$DOCKERFILE" "$APP_DIR"
 	fi
 	echo "Using image: $IMAGE"
+
 }
+
+if ! jq --help &>/dev/null; then
+	echo 'Please ensure jq is installed (eg, brew install jq)'
+	exit 1
+fi
+
+app_json="$(find ./*.json ! -name '*.postman_collection.json' | head -n 1)"
+publisher=$(jq -r '.publisher' "$app_json")
+if [[ $publisher == 'Splunk' ]]; then
+	test_mode='splunk_supported'
+else
+	test_mode='developer_supported'
+fi
 
 if ! docker info &>/dev/null; then
 	echo 'Please ensure Docker is installed and running on your machine'
@@ -35,7 +50,11 @@ if ! docker info &>/dev/null; then
 fi
 
 prepare_docker_image
-docker run --rm -v "$APP_DIR":/src -v "$SCRIPT_DIR":/pre-commit/ -w /src \
+docker run --rm \
+	--mount type=bind,source=/etc/localtime,target=/etc/localtime,readonly \
+	-v "$APP_DIR":/src \
+	-v "$SCRIPT_DIR":/pre-commit/ \
+	-w /src \
 	"$IMAGE" /bin/bash -c \
-	"/opt/python/cp39-cp39/bin/pip install mdformat jinja2 && \
-     /opt/python/cp39-cp39/bin/python /pre-commit/build_docs.py ."
+	"/opt/python/cp39-cp39/bin/pip install jsonschema lxml
+     /opt/python/cp39-cp39/bin/python /pre-commit/static_tests.py $test_mode . --app-repo-name $(basename "$APP_DIR")"

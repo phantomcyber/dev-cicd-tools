@@ -53,7 +53,7 @@ def test_app_with_pip_dependencies(flags, app_dir):
     app_json = os.path.join(app_dir, "app.json")
     expected_app_json = os.path.join(app_dir, "expected_app_json.out")
     result = subprocess.run(
-        [os.path.join(PRE_COMMIT_DIR, "package_app_dependencies"), *flags],
+        [os.path.join(PRE_COMMIT_DIR, "package_app_dependencies.sh"), *flags],
         cwd=app_dir,
         capture_output=True,
     )

@@ -28,30 +28,24 @@ def app_dir(request: pytest.FixtureRequest) -> Path:
 
 @pytest.mark.parametrize(
     "app_dir",
-    ["tests/data/copyrights/app_dir"],
+    ["tests/data/json_tests/app_dir"],
     indirect=["app_dir"],
 )
-def test_copyright_updates(app_dir: Path):
-    expected_dir = Path("tests/data/copyrights/expected")
-    expected_files = ("LICENSE", "example_connector.py", "example_view.html")
+def test_json_tests(app_dir: Path):
+    expected_dir = Path("tests/data/json_tests/expected")
+    expected_files = ["statictests.json"]
 
     result = subprocess.run(
-        [os.path.join(PRE_COMMIT_DIR, "copyright.sh")],
+        [os.path.join(PRE_COMMIT_DIR, "static_tests.sh")],
         cwd=app_dir,
         capture_output=True,
     )
     print(result.stderr.decode())
-    assert result.returncode == 0
+    assert result.returncode != 0
 
     for filename in expected_files:
         actual_path = app_dir / filename
         expected_path = expected_dir / filename
 
         assert actual_path.exists(), f"Missing expected file {filename}"
-        assert actual_path.read_text() == expected_path.read_text(), (
-            f"License update for file {filename} did not match expectations!"
-        )
-
-    # Check that only the expected files were modified
-    modified_files = [f for f in os.listdir(app_dir) if f in expected_files]
-    assert len(modified_files) == len(expected_files)
+        assert actual_path.read_text() == expected_path.read_text()

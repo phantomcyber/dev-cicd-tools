@@ -1,0 +1,161 @@
+{
+    "appid": "501b54a8-4bad-4b65-ad7b-d6ac4e5e49c8",
+    "name": "Static test",
+    "description": "To test changes to CI/CD. using cisco secure firewalls actions",
+    "type": "information",
+    "product_vendor": "Splunk",
+    "logo": "logo_cisco.svg",
+    "logo_dark": "logo_cisco_dark.svg",
+    "product_name": "Static tests",
+    "python_version": "3",
+    "latest_tested_versions": [
+        "Cloud, October 30, 2024"
+    ],
+    "product_version_regex": ".*",
+    "publisher": "Splunk",
+    "license": "Copyright (c) 2025 Splunk Inc.",
+    "app_version": "1.0.6",
+    "utctime_updated": "2025-01-17T22:32:42.000000Z",
+    "package_name": "phantom_static_tests",
+    "main_module": "statictests_connector.py",
+    "min_phantom_version": "6.3.0",
+    "app_wizard_version": "1.0.1",
+    "configuration": {
+        "api_key": {
+            "description": "Api key for cloud delivered FMC",
+            "data_type": "password",
+            "order": 0
+        },
+        "region": {
+            "description": "Region your Cisco Security Cloud Control is deployed in",
+            "data_type": "string",
+            "value_list": [
+                "US",
+                "EU",
+                "APJ",
+                "AUS",
+                "IN"
+            ],
+            "order": 1
+        }
+    },
+    "actions": [
+        {
+            "action": "test connectivity",
+            "identifier": "test_connectivity",
+            "description": "Validate the asset configuration for connectivity using supplied configuration",
+            "type": "test",
+            "read_only": true,
+            "parameters": {},
+            "output": [],
+            "versions": "EQ(*)"
+        },
+        {
+            "action": "list network objects",
+            "description": "List network object in FMC",
+            "type": "investigate",
+            "read_only": true,
+            "identifier": "list_network_objects",
+            "parameters": {
+                "name": {
+                    "description": "Network object name to filter results by",
+                    "data_type": "string",
+                    "order": 0
+                },
+                "type": {
+                    "description": "Network object type to filter results by",
+                    "data_type": "string",
+                    "value_list": [
+                        "Host",
+                        "Network",
+                        "Range",
+                        "FQDN"
+                    ],
+                    "order": 1
+                },
+                "domain_name": {
+                    "description": "Firepower Domain. If none is specified the default domain will be queried",
+                    "data_type": "string",
+                    "contains": [
+                        "domain"
+                    ],
+                    "order": 2
+                }
+            },
+            "output": [
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string",
+                    "example_values": [
+                        "success",
+                        "failed"
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.parameter.type",
+                    "data_type": "string",
+                    "example_values": [
+                        "Network"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.domain_name",
+                    "data_type": "string",
+                    "contains": [
+                        "domain"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.id",
+                    "data_type": "string",
+                    "column_order": 0,
+                    "column_name": "Object Id"
+                },
+                {
+                    "data_path": "action_result.data.*.name",
+                    "data_type": "string",
+                    "column_name": "Object Name",
+                    "column_order": 1
+                },
+                {
+                    "data_path": "action_result.data.*.type",
+                    "data_type": "string",
+                    "example_values": [
+                        "Network"
+                    ],
+                    "column_name": "Object Type",
+                    "column_order": 2
+                },
+                {
+                    "data_path": "action_result.data.*.links.self",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.links.parent",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.name",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.message",
+                    "data_type": "string"
+                }
+            ],
+            "render": {
+                "title": "Network Objects",
+                "type": "table"
+            },
+            "versions": "EQ(*)"
+        }
+    ]
+}
