@@ -75,7 +75,7 @@ class JSONTests(TestSuite):
             verbose.append(textwrap.indent(msg, "    "))
 
         return create_test_result_response(
-            success=False,
+            success=not verbose,
             message=message if not verbose else "Failed app json schema validation",
             verbose=verbose,
         )
