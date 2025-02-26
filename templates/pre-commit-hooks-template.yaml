@@ -24,14 +24,13 @@ repos:
     rev: v0.9.6
     hooks:
       - id: ruff
-        args: [ "--fix", "--exit-zero"] # Ignore errors for now, need to fix for all apps (and remove exit-zero)
+        args: [ "--fix", "--unsafe-fixes"] # Allow unsafe fixes (ruff pretty strict about what it can fix)
       - id: ruff-format
   - repo: https://github.com/djlint/djLint
     rev: v1.36.4
     hooks:
       - id: djlint-reformat-django
       - id: djlint-django
-        args: ["--warn"]  # Ignore errors for now, need to fix for all apps (and remove warn)
   - repo: https://github.com/hukkin/mdformat
     rev: 0.7.22
     hooks:
@@ -47,7 +46,8 @@ repos:
       - id: detect-secrets
         args: ['--no-verify']
         exclude_types: [json]
-        # Central hooks
+        exclude: "README.md"
+  # Central hooks
   - repo: https://github.com/phantomcyber/dev-cicd-tools
     rev: feature/frictionless_connector_contributions # TODO: Update when time
     hooks:

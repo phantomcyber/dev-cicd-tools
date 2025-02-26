@@ -6,7 +6,6 @@
 # - HTML files
 # - JSON files
 # - Text files
-# - NOTICE files
 # - LICENSE files/generation
 
 import os
@@ -28,7 +27,7 @@ def generate_apache_license_content(copyright_str: str) -> str:
     return f"{LICENSE_TEMPLATE.render(copyright=copyright_str)}\n"
 
 
-SUPPORTED_SOURCE_FILE_EXTENSIONS = (".py", ".html", ".json", "NOTICE", "LICENSE")
+SUPPORTED_SOURCE_FILE_EXTENSIONS = (".py", ".html", ".json", "LICENSE")
 
 COPYRIGHT_REGEX = re.compile(
     r"^#*\s*(?P<copyright>Copyright\s*(\(c\))?\s*(([0-9]{4},?)+(-[0-9]{4})?)?,?\s*[a-z0-9.,\s]+"

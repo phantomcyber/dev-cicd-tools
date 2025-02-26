@@ -4,6 +4,33 @@ set -euo pipefail
 APP_DIR=$(pwd)
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 
+IN_DOCKER=false
+
+# Use to see if in container
+if /opt/python/cp39-cp39/bin/python --version &>/dev/null; then
+	IN_DOCKER=true
+fi
+
+if ! jq --help &>/dev/null; then
+	echo 'Please ensure jq is installed (eg, brew install jq)'
+	exit 1
+fi
+
+app_json="$(find ./*.json ! -name '*.postman_collection.json' | head -n 1)"
+publisher=$(jq -r '.publisher' "$app_json")
+if [[ $publisher == 'Splunk' ]]; then
+	test_mode='splunk_supported'
+else
+	test_mode='developer_supported'
+fi
+
+if [ "$IN_DOCKER" = true ]; then
+	/opt/python/cp39-cp39/bin/pip install jsonschema lxml
+	/opt/python/cp39-cp39/bin/python "$SCRIPT_DIR"/static_tests.py "$test_mode" . --app-repo-name "$(basename "$APP_DIR")"
+	exit $?
+fi
+
+# Not in container, proceed with Docker setup
 IMAGE="quay.io/pypa/manylinux_2_28_x86_64"
 DOCKERFILE=""
 
@@ -30,19 +57,6 @@ function prepare_docker_image() {
 	echo "Using image: $IMAGE"
 
 }
-
-if ! jq --help &>/dev/null; then
-	echo 'Please ensure jq is installed (eg, brew install jq)'
-	exit 1
-fi
-
-app_json="$(find ./*.json ! -name '*.postman_collection.json' | head -n 1)"
-publisher=$(jq -r '.publisher' "$app_json")
-if [[ $publisher == 'Splunk' ]]; then
-	test_mode='splunk_supported'
-else
-	test_mode='developer_supported'
-fi
 
 if ! docker info &>/dev/null; then
 	echo 'Please ensure Docker is installed and running on your machine'

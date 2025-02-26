@@ -4,38 +4,14 @@ line-length = 145
 target-version = "py39"
 
 [tool.ruff.lint]
-select = [
-    "E",
-    "W",
-    "F",
-    "I",
-    "C90",
-    "A",
-    "UP",
-    "B",
-    "C4",
-    "RET",
-    "SIM",
-    "RUF",
-    "PLC",
-    "PLE",
-    "PLW",
-    "PT",
-    "T201",
+select = [ # Auto-fixable rules only
+    "I",    # isort
+    "UP",   # pyupgrade
+    "F401", # unused imports
+    "RUF"   # ruff rules
 ]
 
-# Ignore same relevant rules as we did to with tox.ini
-ignore = [
-    "F403",
-    "F405",
-    "E731",
-    "E201",
-    "E202",
-    "E203",
-    "E701",
-    "E722",
-    "D",
-]
+ignore = []  # Don't need right now since we're only using auto-fixable rules
 
 # Keep complexity below 28
 [tool.ruff.lint.mccabe]
@@ -56,6 +32,12 @@ line-ending = "auto"
 profile = "django"
 extension = "html"
 indent = 2
+
+# Auto-fixable rules only
+include = "H008,H009,H010,H011,H012,H014,H020,H023,H024,H026,H033,T001,T028,T032,T034"
+
+# Ignore others (We have to explicitly ignore these because most get included by default)
+ignore = "D004,D018,H005,H006,H007,H013,H015,H016,H017,H019,H021,H022,H025,H029,H030,H031,H035,H036,H037,J004,J018,T002,T003,T027"
 
 # Markdown linting
 [tool.mdformat]
