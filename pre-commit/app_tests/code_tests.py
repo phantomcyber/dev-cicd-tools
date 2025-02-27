@@ -90,6 +90,81 @@ class CodeTests(TestSuite):
             unsafe_get_list = []
 
             def determine_unsafe_gets(function, opt_params, dict_id, label):
+                
+                class ContextVisitor(ast.NodeVisitor):
+                    def __init__(self):
+                        self.safe_keys_stack = []
+                    
+                    def visit_If(self, node):
+                        # Check if the if condition is a key check
+                        if isinstance(node.test, ast.Compare) and isinstance(node.test.left, ast.Str):
+                            if isinstance(node.test.ops[0], ast.In):
+                                self.safe_keys_stack.append(node.test.left.s)
+                        self.generic_visit(node)
+                        # Pop the safe key context after visiting the if body
+                        if isinstance(node.test, ast.Compare) and isinstance(node.test.left, ast.Str):
+                            if isinstance(node.test.ops[0], ast.In):
+                                self.safe_keys_stack.pop()
+
+                    def visit_Subscript(self, node):
+                        #print(f"Visiting subscript: {ast.dump(node)}")  # Debug print statement
+                        #print(f"safe stack: {self.safe_keys_stack} and opt_params are {opt_params}")  # Debug print statement
+                        if isinstance(node.value, ast.Name) and node.value.id == dict_id:
+                            if isinstance(node.slice, ast.Constant) and isinstance(node.slice.value, str):
+                                key = node.slice.value
+                                if isinstance(node.ctx, ast.Store):
+                                    if key in opt_params:
+                                        # the optional param has been set so it is no longer optional
+                                        opt_params.remove(key)
+                                elif isinstance(node.ctx, ast.Load) or isinstance(node.ctx, ast.Del):
+                                    if key in opt_params and key not in self.safe_keys_stack:
+                                        unsafe_get_list.append(f"{label} on line {node.value.lineno}")
+                                    
+                        self.generic_visit(node)
+
+                    def visit_Call(self, node):
+                        #print(f"Visiting call: {ast.dump(node)}")  # Debug print statement
+                        #print(f"safe stack: {self.safe_keys_stack} and opt_params are {opt_params}")  # Debug print statement
+
+                        if isinstance(node.func, ast.Attribute) and node.func.attr == "pop":
+                            # ignroing pop calls where a default is set
+                            if isinstance(node.func.value, ast.Name) and node.func.value.id == dict_id and len(node.args) < 2:
+                                if (
+                                    node.args
+                                    and isinstance(node.args[0], ast.Constant)
+                                    and node.args[0].value in opt_params
+                                ):
+                                    unsafe_get_list.append(f"{label} on line {node.lineno}")
+                        else:
+                            print(f"Visiting call: {ast.dump(node)}")  # Debug print statement
+                            print(f"safe stack: {self.safe_keys_stack} and opt_params are {opt_params}")  # Debug print statement
+                            # function calls that are either self.func() or func()
+                            func_name = None
+                            if isinstance(node.func, ast.Name):
+                                func_name = node.func.id
+                            elif isinstance(node.func, ast.Attribute):
+                                func_name = node.func.attr
+                                
+                            print(f"func_name: {func_name} and function_defs: {function_defs}")
+                                    
+                            if func_name in function_defs:
+                                for arg in node.args:
+                                    if isinstance(arg, ast.Name) and arg.id == dict_id:
+                                        print(f"calling new func{func_name}")
+                                        function_body_visitor = ContextVisitor()
+                                        function_body_visitor.safe_keys_stack = self.safe_keys_stack.copy()
+                                        print(f"undafe get list before {unsafe_get_list}")
+                                        function_body_visitor.visit(function_defs[func_name])
+                                        print(f"undafe get list after {unsafe_get_list}")
+                                
+                                
+                            
+                        self.generic_visit(node)
+
+                context_visitor = ContextVisitor()
+                context_visitor.visit(function)
+                
+                '''
                 for node in ast.walk(function):
                     if isinstance(node, ast.Subscript):
                         if isinstance(node.value, ast.Name) and node.value.id == dict_id:
@@ -102,12 +177,12 @@ class CodeTests(TestSuite):
                                         # optional param has been set so it is no longer optional
                                         opt_params.remove(key)
                                 elif isinstance(node.ctx, ast.Load):
-                                    if key in opt_params:
+                                    if key in opt_params and key not in safe_keys_visitor.safe_keys_stack:
                                         unsafe_get_list.append(
                                             f"{label} on line {node.value.lineno}"
                                         )
                                 elif isinstance(node.ctx, ast.Del):
-                                    if key in opt_params:
+                                    if key in opt_params and key not in safe_keys_visitor.safe_keys_stack:
                                         unsafe_get_list.append(
                                             f"{label} on line {node.value.lineno}"
                                         )
@@ -123,7 +198,7 @@ class CodeTests(TestSuite):
                                 if (
                                     node.args
                                     and isinstance(node.args[0], ast.Constant)
-                                    and node.args[0].value in opt_params
+                                    and node.args[0].value in opt_params and node.args[0].value not in safe_keys_visitor.safe_keys_stack
                                 ):
                                     unsafe_get_list.append(f"{label} on line {node.lineno}")
                         else:
@@ -143,7 +218,7 @@ class CodeTests(TestSuite):
                                             dict_id,
                                             label,
                                         )
-
+                '''
             for f_name, function in function_defs.items():
                 dict_id = None
                 if f_name.startswith("initialize"):
