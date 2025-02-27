@@ -10,57 +10,91 @@ from app_tests.utils import create_test_result_response
 import re
 from lxml import etree
 from pathlib import Path
+from typing import Optional
 
 
 class ContextVisitor(ast.NodeVisitor):
-    def __init__(self, action_opt_params: set, config_opt_param: set, function_defs: dict[str, ast.AST], dict_id: dict[str, set]={}, parent: ast.AST=None):
+    def __init__(
+        self,
+        action_opt_params: set,
+        config_opt_param: set,
+        function_defs: dict[str, ast.AST],
+        dict_id: dict[str, set] = {},
+        parent: Optional[ast.AST] = None,
+    ):
         self.safe_keys_stack = []
         self.dict_id = dict_id
         self.action_opt_params = action_opt_params
         self.config_opt_params = config_opt_param
         self.function_defs = function_defs
         self.unsafe_get_list = []
-        self.functions_visited = set() # helper functions can be called multiple times. This keeps track of the functions that have been visited
+        self.functions_visited = set()  # helper functions can be called multiple times. This keeps track of the functions that have been visited
         self.parent = parent
-        
+
     def is_handle_action(self, f_name: str) -> bool:
         for action_id in self.action_opt_params:
             if f_name.endswith(action_id):
-                self.dict_id["param"] = self.action_opt_params[action_id] 
+                self.dict_id["param"] = self.action_opt_params[action_id]
                 return True
         return False
-    
+
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         f_name = node.name
         if f_name in self.functions_visited:
             return
-        
-        print(f"Visiting function: {f_name} parent is {self.parent} and dict is {self.dict_id}")  # Debug print statement
+
         if self.is_handle_action(f_name) or f_name.startswith("initialize") or self.parent:
             self.functions_visited.add(f_name)
-            self.generic_visit(node)                
-    
+            self.generic_visit(node)
+
     def visit_If(self, node: ast.If) -> None:
         def is_key_check(condition):
-            print(f"Checking condition: {ast.dump(condition)}")  # Debug print statement
-            
             if isinstance(condition, ast.Compare):
-                if isinstance(condition.left, ast.Constant) and isinstance(condition.ops[0], ast.In) and condition.comparators:
+                if (
+                    isinstance(condition.left, ast.Constant)
+                    and isinstance(condition.ops[0], ast.In)
+                    and condition.comparators
+                ):
                     # check for key in dict
-                    if isinstance(condition.comparators[0], ast.Name) and condition.comparators[0].id in self.dict_id:
+                    if (
+                        isinstance(condition.comparators[0], ast.Name)
+                        and condition.comparators[0].id in self.dict_id
+                    ):
                         return True
-                    elif isinstance(condition.comparators[0], ast.Call) and isinstance(condition.comparators[0].func, ast.Attribute):
+                    elif isinstance(condition.comparators[0], ast.Call) and isinstance(
+                        condition.comparators[0].func, ast.Attribute
+                    ):
                         # check for key in dict.keys()
-                        return condition.comparators[0].func.attr == 'keys' and condition.comparators[0].func.value.id in self.dict_id
-                elif isinstance(condition.left, ast.Call) and isinstance(condition.left.func, ast.Attribute):
-                    if condition.left.func.attr == 'get' and condition.left.args and isinstance(condition.left.args[0], ast.Constant):
+                        return (
+                            condition.comparators[0].func.attr == "keys"
+                            and condition.comparators[0].func.value.id in self.dict_id
+                        )
+                elif isinstance(condition.left, ast.Call) and isinstance(
+                    condition.left.func, ast.Attribute
+                ):
+                    if (
+                        condition.left.func.attr == "get"
+                        and condition.left.args
+                        and isinstance(condition.left.args[0], ast.Constant)
+                    ):
                         if condition.ops and isinstance(condition.ops[0], ast.IsNot):
                             # check for dict.get(key) is not None
-                            return isinstance(condition.left.func.value, ast.Name) and condition.left.func.value.id in self.dict_id
+                            return (
+                                isinstance(condition.left.func.value, ast.Name)
+                                and condition.left.func.value.id in self.dict_id
+                            )
             elif isinstance(condition, ast.Call):
-                if isinstance(condition.func, ast.Attribute) and condition.func.attr == 'get' and condition.args and isinstance(condition.args[0], ast.Constant):
+                if (
+                    isinstance(condition.func, ast.Attribute)
+                    and condition.func.attr == "get"
+                    and condition.args
+                    and isinstance(condition.args[0], ast.Constant)
+                ):
                     # check for dict.get(key)
-                    return isinstance(condition.func.value, ast.Name) and condition.func.value.id in self.dict_id           
+                    return (
+                        isinstance(condition.func.value, ast.Name)
+                        and condition.func.value.id in self.dict_id
+                    )
 
         def get_key_from_call(call):
             if isinstance(call, ast.Call):
@@ -70,7 +104,7 @@ class ContextVisitor(ast.NodeVisitor):
                     return call.left.args[0].value
                 else:
                     return call.left.value
-        
+
         # Check if the if condition is a key check
         if isinstance(node.test, ast.BoolOp) and isinstance(node.test.op, ast.And):
             if all(is_key_check(value) for value in node.test.values):
@@ -100,23 +134,30 @@ class ContextVisitor(ast.NodeVisitor):
                 elif isinstance(node.ctx, ast.Load) or isinstance(node.ctx, ast.Del):
                     if key in self.dict_id[node.value.id] and key not in self.safe_keys_stack:
                         self.unsafe_get_list.append(f"Unsafe access on line {node.value.lineno}")
-                    
+
         self.generic_visit(node)
 
     def visit_Assign(self, node: ast.Assign) -> None:
         if isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Attribute):
-            if isinstance(node.value.func.value, ast.Name) and node.value.func.value.id == 'self' and node.value.func.attr == 'get_config':
+            if (
+                isinstance(node.value.func.value, ast.Name)
+                and node.value.func.value.id == "self"
+                and node.value.func.attr == "get_config"
+            ):
                 for target in node.targets:
                     if isinstance(target, ast.Name):
                         self.dict_id[target.id] = self.config_opt_params
-        
-        self.generic_visit(node)        
-    
-    def visit_Call(self, node: ast.Call) -> None:
 
+        self.generic_visit(node)
+
+    def visit_Call(self, node: ast.Call) -> None:
         if isinstance(node.func, ast.Attribute) and node.func.attr == "pop":
             # ignroing pop calls where a default is set
-            if isinstance(node.func.value, ast.Name) and node.func.value.id in self.dict_id and len(node.args) < 2:
+            if (
+                isinstance(node.func.value, ast.Name)
+                and node.func.value.id in self.dict_id
+                and len(node.args) < 2
+            ):
                 dic_key = node.func.value.id
                 if (
                     node.args
@@ -125,9 +166,6 @@ class ContextVisitor(ast.NodeVisitor):
                 ):
                     self.unsafe_get_list.append(f"Unsafe access on line {node.lineno}")
         else:
-            # problem is dict in authenticate_cloud_fmc is empty meaning at assign dict isn't properly being set for initalize function 
-            #print(f"Visiting call: {ast.dump(node)}")  # Debug print statement
-            #print(f"safe stack: {self.safe_keys_stack} and dict are {self.dict_id}")
             # function calls that are either self.func() or func()
             func_name = None
             if isinstance(node.func, ast.Name):
@@ -138,13 +176,19 @@ class ContextVisitor(ast.NodeVisitor):
             if func_name in self.function_defs:
                 for arg in node.args:
                     if isinstance(arg, ast.Name) and arg.id in self.dict_id:
-                        function_body_visitor = ContextVisitor(self.action_opt_params, self.config_opt_params, self.function_defs, self.dict_id, node)
+                        function_body_visitor = ContextVisitor(
+                            self.action_opt_params,
+                            self.config_opt_params,
+                            self.function_defs,
+                            self.dict_id,
+                            node,
+                        )
                         function_body_visitor.functions_visited = self.functions_visited.copy()
                         function_body_visitor.safe_keys_stack = self.safe_keys_stack.copy()
                         function_body_visitor.visit(self.function_defs[func_name])
                         self.functions_visited.update(function_body_visitor.functions_visited)
                         self.unsafe_get_list.extend(function_body_visitor.unsafe_get_list)
-            
+
         self.generic_visit(node)
 
 
@@ -171,15 +215,12 @@ class CodeTests(TestSuite):
         success = msg == TEST_PASS_MESSAGE
         return create_test_result_response(success=success, message=msg, fixed=not success)
 
-    
-    
     @TestSuite.test
     def check_get_opt_params(self):
         """
         Checks if optional parameters are accessed with .get() instead of []
         """
 
-        unsafe_get_list = []
         app_config = self._parser.app_json.get("configuration", {})
         config_opt_params = set(
             config_param
@@ -225,28 +266,8 @@ class CodeTests(TestSuite):
             tree = ast.parse(connector_body)
             function_defs = {n.name: n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)}
 
-            unsafe_get_list = []
-
-            '''
-            for f_name, function in function_defs.items():
-                dict_id = None
-                if f_name.startswith("initialize"):
-                    dict_id = "config"
-                    opt_params = config_opt_params
-                    label = "app configuration"
-                else:
-                    for action_id in action_opt_params:
-                        if f_name.endswith(action_id):
-                            dict_id = "param"
-                            opt_params = action_opt_params[action_id]
-                            label = f"`{action_id}` action parameter"
-                            break
-                    if not dict_id:
-                        continue
-            '''
-            context_visitor = ContextVisitor(action_opt_params, config_opt_params, function_defs) 
+            context_visitor = ContextVisitor(action_opt_params, config_opt_params, function_defs)
             context_visitor.visit(tree)
-            unsafe_get_list.extend(context_visitor.unsafe_get_list)
 
         except Exception:
             print("Error processing AST. Printing exception and ignoring...")
@@ -255,9 +276,9 @@ class CodeTests(TestSuite):
         failure_message = "Some optional parameters use unsafe getting. Please use `param.get()` or `config.get()` to retrieve optional parameters or change them to required."
 
         return create_test_result_response(
-            success=not unsafe_get_list,
-            message=TEST_PASS_MESSAGE if not unsafe_get_list else failure_message,
-            verbose=[param for param in unsafe_get_list],
+            success=not context_visitor.unsafe_get_list,
+            message=TEST_PASS_MESSAGE if not context_visitor.unsafe_get_list else failure_message,
+            verbose=[param for param in context_visitor.unsafe_get_list],
         )
 
     @TestSuite.test(tags=["pre-release"])
