@@ -53,6 +53,18 @@ class AppParser:
     def filenames(self):
         return [os.path.basename(f) for f in self.filepaths]
 
+    @cached_property
+    def files(self):
+        # Gets all files' contents in a dict
+        files = {}
+        for filepath in self.filepaths:
+            try:
+                with open(filepath, encoding="utf-8") as f:
+                    files[filepath] = f.read()
+            except UnicodeDecodeError:
+                continue
+        return files
+
     @property
     def app_json_name(self):
         # Get all json files in top level of app directory to send to finder function
@@ -113,6 +125,14 @@ class AppParser:
         with open(self._app_json_filepath, "w") as f:
             f.write(app_json_str)
         self.refresh_app_json()
+
+    @cached_property
+    def all_calldefs(self):
+        # Get all the calldefs of all funcdefs
+        all_calldefs = []
+        for funcdef in self.all_funcdefs:
+            all_calldefs += self._get_calldefs(funcdef)
+        return all_calldefs
 
     @cached_property
     def connector_filepath(self):
@@ -181,10 +201,18 @@ class AppParser:
 
     def get_id_attr(self, node):
         # Name = node.id in 'name'; Name = node.attr in 'class.name'
+        arguments = set()
         if isinstance(node, ast.Name):
-            return node.id
-        if isinstance(node, ast.Attribute):
-            return node.attr
+            arguments.add(node.id)
+        elif isinstance(node, ast.Attribute):
+            arguments.add(node.attr)
+        elif isinstance(node, ast.JoinedStr):
+            # this checks for f-strings
+            for value in node.values:
+                if isinstance(value, ast.FormattedValue) and isinstance(value.value, ast.Name):
+                    arguments.add(value.value.id)
+
+        return arguments
 
     def refresh_app_json(self):
         self.__dict__.pop("app_json", None)

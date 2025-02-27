@@ -9,6 +9,7 @@ from app_tests.utils.phantom_constants import (
 from app_tests.utils import create_test_result_response
 import re
 from lxml import etree
+from pathlib import Path
 
 
 class CodeTests(TestSuite):
@@ -255,3 +256,18 @@ class CodeTests(TestSuite):
             if val:
                 return val
         return None
+
+    @TestSuite.test
+    def check_python_package(self):
+        """
+        Checks for an __init__.py existing in app directory toplevel
+        """
+        msg = TEST_PASS_MESSAGE
+        app_dir = Path(self._app_code_dir)
+        if not (init_py := app_dir / "__init__.py").is_file():
+            msg = "App repo does not have an `__init__.py` at toplevel. Not a python module. Adding to app directory."
+            init_py.touch()
+
+        return create_test_result_response(
+            success=msg == TEST_PASS_MESSAGE, message=msg, fixed=True
+        )

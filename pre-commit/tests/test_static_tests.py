@@ -28,12 +28,12 @@ def app_dir(request: pytest.FixtureRequest) -> Path:
 
 @pytest.mark.parametrize(
     "app_dir",
-    ["tests/data/json_tests/app_dir"],
+    ["tests/data/static_tests/app_dir"],
     indirect=["app_dir"],
 )
-def test_json_tests(app_dir: Path):
-    expected_dir = Path("tests/data/json_tests/expected")
-    expected_files = ["statictests.json"]
+def test_static_tests(app_dir: Path):
+    expected_dir = Path("tests/data/static_tests/expected")
+    expected_files = ["statictests.json", "__init__.py"]
 
     result = subprocess.run(
         [os.path.join(PRE_COMMIT_DIR, "static_tests.sh")],
@@ -41,7 +41,7 @@ def test_json_tests(app_dir: Path):
         capture_output=True,
     )
     print(result.stderr.decode())
-    assert result.returncode != 0
+    assert result.returncode == 12
 
     for filename in expected_files:
         actual_path = app_dir / filename

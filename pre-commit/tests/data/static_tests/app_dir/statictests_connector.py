@@ -320,6 +320,9 @@ class FP_Connector(BaseConnector):
         param.pop("type")
         param.pop("type", None)
         name = param.get("name")
+        auth = "secret"
+        self.debug_print(f"{auth}")
+        self.debug_print("something", auth)
 
         if obj_type:
             ret_val = self.get_network_objects_of_type(obj_type, domain_uuid, action_result, name)
