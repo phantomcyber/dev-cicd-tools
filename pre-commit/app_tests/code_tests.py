@@ -41,15 +41,53 @@ class ContextVisitor(ast.NodeVisitor):
             self.generic_visit(node)                
     
     def visit_If(self, node: ast.If) -> None:
+        def is_key_check(condition):
+            print(f"Checking condition: {ast.dump(condition)}")  # Debug print statement
+            
+            if isinstance(condition, ast.Compare):
+                if isinstance(condition.left, ast.Constant) and isinstance(condition.ops[0], ast.In) and condition.comparators:
+                    # check for key in dict
+                    if isinstance(condition.comparators[0], ast.Name) and condition.comparators[0].id in self.dict_id:
+                        return True
+                    elif isinstance(condition.comparators[0], ast.Call) and isinstance(condition.comparators[0].func, ast.Attribute):
+                        # check for key in dict.keys()
+                        return condition.comparators[0].func.attr == 'keys' and condition.comparators[0].func.value.id in self.dict_id
+                elif isinstance(condition.left, ast.Call) and isinstance(condition.left.func, ast.Attribute):
+                    if condition.left.func.attr == 'get' and condition.left.args and isinstance(condition.left.args[0], ast.Constant):
+                        if condition.ops and isinstance(condition.ops[0], ast.IsNot):
+                            # check for dict.get(key) is not None
+                            return isinstance(condition.left.func.value, ast.Name) and condition.left.func.value.id in self.dict_id
+            elif isinstance(condition, ast.Call):
+                if isinstance(condition.func, ast.Attribute) and condition.func.attr == 'get' and condition.args and isinstance(condition.args[0], ast.Constant):
+                    # check for dict.get(key)
+                    return isinstance(condition.func.value, ast.Name) and condition.func.value.id in self.dict_id           
+
+        def get_key_from_call(call):
+            if isinstance(call, ast.Call):
+                return call.args[0].value
+            elif isinstance(call, ast.Compare):
+                if isinstance(call.left, ast.Call):
+                    return call.left.args[0].value
+                else:
+                    return call.left.value
+        
         # Check if the if condition is a key check
-        if isinstance(node.test, ast.Compare) and isinstance(node.test.left, ast.Str):
-            if isinstance(node.test.ops[0], ast.In):
-                self.safe_keys_stack.append(node.test.left.s)
+        if isinstance(node.test, ast.BoolOp) and isinstance(node.test.op, ast.And):
+            if all(is_key_check(value) for value in node.test.values):
+                for value in node.test.values:
+                    self.safe_keys_stack.append(get_key_from_call(value))
+        elif is_key_check(node.test):
+            self.safe_keys_stack.append(get_key_from_call(node.test))
+
         self.generic_visit(node)
+
         # Pop the safe key context after visiting the if body
-        if isinstance(node.test, ast.Compare) and isinstance(node.test.left, ast.Str):
-            if isinstance(node.test.ops[0], ast.In):
-                self.safe_keys_stack.pop()
+        if isinstance(node.test, ast.BoolOp) and isinstance(node.test.op, ast.And):
+            if all(is_key_check(value) for value in node.test.values):
+                for value in node.test.values:
+                    self.safe_keys_stack.pop()
+        elif is_key_check(node.test):
+            self.safe_keys_stack.pop()
 
     def visit_Subscript(self, node: ast.Subscript) -> None:
         if isinstance(node.value, ast.Name) and node.value.id in self.dict_id:
@@ -66,8 +104,6 @@ class ContextVisitor(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_Assign(self, node: ast.Assign) -> None:
-        #print(f"Assign call: {ast.dump(node)}")  # Debug print statement
-
         if isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Attribute):
             if isinstance(node.value.func.value, ast.Name) and node.value.func.value.id == 'self' and node.value.func.attr == 'get_config':
                 for target in node.targets:
@@ -90,8 +126,8 @@ class ContextVisitor(ast.NodeVisitor):
                     self.unsafe_get_list.append(f"Unsafe access on line {node.lineno}")
         else:
             # problem is dict in authenticate_cloud_fmc is empty meaning at assign dict isn't properly being set for initalize function 
-            print(f"Visiting call: {ast.dump(node)}")  # Debug print statement
-            print(f"safe stack: {self.safe_keys_stack} and dict are {self.dict_id}")
+            #print(f"Visiting call: {ast.dump(node)}")  # Debug print statement
+            #print(f"safe stack: {self.safe_keys_stack} and dict are {self.dict_id}")
             # function calls that are either self.func() or func()
             func_name = None
             if isinstance(node.func, ast.Name):
