@@ -13,45 +13,34 @@ from pathlib import Path
 
 
 class ContextVisitor(ast.NodeVisitor):
-    def __init__(self, action_opt_params, config_opt_param, function_defs, dict_id=None, label=None, opt_params=None, parent=None):
+    def __init__(self, action_opt_params: set, config_opt_param: set, function_defs: dict[str, ast.AST], dict_id: dict[str, set]={}, parent: ast.AST=None):
         self.safe_keys_stack = []
         self.dict_id = dict_id
-        self.opt_params = opt_params
         self.action_opt_params = action_opt_params
         self.config_opt_params = config_opt_param
-        self.label = label
         self.function_defs = function_defs
         self.unsafe_get_list = []
-        self.functions_visited = set()
+        self.functions_visited = set() # helper functions can be called multiple times. This keeps track of the functions that have been visited
         self.parent = parent
         
-    def visit_FunctionDef(self, node):
+    def is_handle_action(self, f_name: str) -> bool:
+        for action_id in self.action_opt_params:
+            if f_name.endswith(action_id):
+                self.dict_id["param"] = self.action_opt_params[action_id] 
+                return True
+        return False
+    
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         f_name = node.name
         if f_name in self.functions_visited:
             return
         
-        to_parse = False
-        if f_name.startswith("initialize"):
-            self.dict_id = "config"
-            self.opt_params = self.config_opt_params
-            self.label = "app configuration"
-            to_parse = True
-        elif self.parent:
-            to_parse = True
-        else:
-            for action_id in self.action_opt_params:
-                if f_name.endswith(action_id):
-                    self.dict_id = "param"
-                    self.opt_params = self.action_opt_params[action_id]
-                    self.label = f"`{action_id}` action parameter"
-                    to_parse = True
-                    break
-        print(f"function name {f_name} to_parse: {to_parse}")
-        if to_parse:
+        print(f"Visiting function: {f_name} parent is {self.parent} and dict is {self.dict_id}")  # Debug print statement
+        if self.is_handle_action(f_name) or f_name.startswith("initialize") or self.parent:
             self.functions_visited.add(f_name)
-            self.generic_visit(node)                   
+            self.generic_visit(node)                
     
-    def visit_If(self, node):
+    def visit_If(self, node: ast.If) -> None:
         # Check if the if condition is a key check
         if isinstance(node.test, ast.Compare) and isinstance(node.test.left, ast.Str):
             if isinstance(node.test.ops[0], ast.In):
@@ -62,32 +51,47 @@ class ContextVisitor(ast.NodeVisitor):
             if isinstance(node.test.ops[0], ast.In):
                 self.safe_keys_stack.pop()
 
-    def visit_Subscript(self, node):
-        if isinstance(node.value, ast.Name) and node.value.id == self.dict_id:
+    def visit_Subscript(self, node: ast.Subscript) -> None:
+        if isinstance(node.value, ast.Name) and node.value.id in self.dict_id:
             if isinstance(node.slice, ast.Constant) and isinstance(node.slice.value, str):
                 key = node.slice.value
                 if isinstance(node.ctx, ast.Store):
-                    if key in self.opt_params:
+                    if key in self.dict_id[node.value.id]:
                         # the optional param has been set so it is no longer optional
-                        self.opt_params.remove(key)
+                        self.dict_id[node.value.id].remove(key)
                 elif isinstance(node.ctx, ast.Load) or isinstance(node.ctx, ast.Del):
-                    if key in self.opt_params and key not in self.safe_keys_stack:
-                        self.unsafe_get_list.append(f"{self.label} on line {node.value.lineno}")
+                    if key in self.dict_id[node.value.id] and key not in self.safe_keys_stack:
+                        self.unsafe_get_list.append(f"Unsafe access on line {node.value.lineno}")
                     
         self.generic_visit(node)
 
-    def visit_Call(self, node):
+    def visit_Assign(self, node: ast.Assign) -> None:
+        #print(f"Assign call: {ast.dump(node)}")  # Debug print statement
+
+        if isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Attribute):
+            if isinstance(node.value.func.value, ast.Name) and node.value.func.value.id == 'self' and node.value.func.attr == 'get_config':
+                for target in node.targets:
+                    if isinstance(target, ast.Name):
+                        self.dict_id[target.id] = self.config_opt_params
+        
+        self.generic_visit(node)        
+    
+    def visit_Call(self, node: ast.Call) -> None:
 
         if isinstance(node.func, ast.Attribute) and node.func.attr == "pop":
             # ignroing pop calls where a default is set
-            if isinstance(node.func.value, ast.Name) and node.func.value.id == self.dict_id and len(node.args) < 2:
+            if isinstance(node.func.value, ast.Name) and node.func.value.id in self.dict_id and len(node.args) < 2:
+                dic_key = node.func.value.id
                 if (
                     node.args
                     and isinstance(node.args[0], ast.Constant)
-                    and node.args[0].value in self.opt_params
+                    and node.args[0].value in self.dict_id[dic_key]
                 ):
-                    self.unsafe_get_list.append(f"{self.label} on line {node.lineno}")
+                    self.unsafe_get_list.append(f"Unsafe access on line {node.lineno}")
         else:
+            # problem is dict in authenticate_cloud_fmc is empty meaning at assign dict isn't properly being set for initalize function 
+            print(f"Visiting call: {ast.dump(node)}")  # Debug print statement
+            print(f"safe stack: {self.safe_keys_stack} and dict are {self.dict_id}")
             # function calls that are either self.func() or func()
             func_name = None
             if isinstance(node.func, ast.Name):
@@ -97,8 +101,8 @@ class ContextVisitor(ast.NodeVisitor):
 
             if func_name in self.function_defs:
                 for arg in node.args:
-                    if isinstance(arg, ast.Name) and arg.id == self.dict_id:
-                        function_body_visitor = ContextVisitor(self.action_opt_params, self.config_opt_params, self.function_defs, self.dict_id, self.label, self.opt_params, node)
+                    if isinstance(arg, ast.Name) and arg.id in self.dict_id:
+                        function_body_visitor = ContextVisitor(self.action_opt_params, self.config_opt_params, self.function_defs, self.dict_id, node)
                         function_body_visitor.functions_visited = self.functions_visited.copy()
                         function_body_visitor.safe_keys_stack = self.safe_keys_stack.copy()
                         function_body_visitor.visit(self.function_defs[func_name])
