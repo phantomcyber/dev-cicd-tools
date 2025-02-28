@@ -25,7 +25,7 @@ else
 fi
 
 if [ "$IN_DOCKER" = true ]; then
-	/opt/python/cp39-cp39/bin/pip install jsonschema lxml
+	/opt/python/cp39-cp39/bin/pip install jsonschema lxml 'django<5'
 	/opt/python/cp39-cp39/bin/python "$SCRIPT_DIR"/static_tests.py "$test_mode" . --app-repo-name "$(basename "$APP_DIR")"
 	exit $?
 fi
