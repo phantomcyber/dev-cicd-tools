@@ -37,6 +37,11 @@
                 "IN"
             ],
             "order": 1
+        },
+        "domain": {
+            "description": "Domain for the FMC",
+            "data_type": "string",
+            "order": 2
         }
     },
     "actions": [

@@ -79,7 +79,8 @@ class FP_Connector(BaseConnector):
             self.debug_print(STATE_FILE_CORRUPT_ERR)
             self._reset_state_file()
 
-        ret_val = self.authenicate_cloud_fmc(config)
+        if "region" in config and "api_key" in config.keys() and config.get("domain"):
+            ret_val = self.authenicate_cloud_fmc(config)
 
         if phantom.is_fail(ret_val):
             return self.get_status()
@@ -93,9 +94,16 @@ class FP_Connector(BaseConnector):
         """
         region = config["region"]
         api_key = config["api_key"]
-        self.firepower_host = CLOUD_HOST.format(region=region.lower())
+        domain = config["domain"]
+        self.another(config)
+
+        self.firepower_host = CLOUD_HOST.format(region=region.lower(), domain=domain)
         self.headers.update({"Authorization": f"Bearer {api_key}"})
         return phantom.APP_SUCCESS
+
+    def another(self, config):
+        region = config["region"]
+        self.debug_print(region)
 
     def _process_empty_response(self, response, action_result) -> RetVal:
         if response.status_code == 200:

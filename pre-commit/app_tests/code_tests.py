@@ -10,6 +10,186 @@ from app_tests.utils import create_test_result_response
 import re
 from lxml import etree
 from pathlib import Path
+from typing import Optional
+
+
+class ContextVisitor(ast.NodeVisitor):
+    def __init__(
+        self,
+        action_opt_params: set,
+        config_opt_param: set,
+        function_defs: dict[str, ast.AST],
+        dict_id: dict[str, set] = {},
+        parent: Optional[ast.AST] = None,
+    ):
+        self.safe_keys_stack = []
+        self.dict_id = dict_id
+        self.action_opt_params = action_opt_params
+        self.config_opt_params = config_opt_param
+        self.function_defs = function_defs
+        self.unsafe_get_list = []
+        self.functions_visited = set()  # helper functions can be called multiple times. This keeps track of the functions that have been visited
+        self.parent = parent
+
+    def is_handle_action(self, f_name: str) -> bool:
+        for action_id in self.action_opt_params:
+            if f_name.endswith(action_id):
+                self.dict_id["param"] = self.action_opt_params[action_id]
+                return True
+        return False
+
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
+        f_name = node.name
+        if f_name in self.functions_visited:
+            return
+
+        if self.is_handle_action(f_name) or f_name.startswith("initialize") or self.parent:
+            self.functions_visited.add(f_name)
+            self.generic_visit(node)
+
+    def visit_If(self, node: ast.If) -> None:
+        def is_key_check(condition):
+            if isinstance(condition, ast.Compare):
+                if (
+                    isinstance(condition.left, ast.Constant)
+                    and isinstance(condition.ops[0], ast.In)
+                    and condition.comparators
+                ):
+                    # check for key in dict
+                    if (
+                        isinstance(condition.comparators[0], ast.Name)
+                        and condition.comparators[0].id in self.dict_id
+                    ):
+                        return True
+                    elif isinstance(condition.comparators[0], ast.Call) and isinstance(
+                        condition.comparators[0].func, ast.Attribute
+                    ):
+                        # check for key in dict.keys()
+                        return (
+                            condition.comparators[0].func.attr == "keys"
+                            and condition.comparators[0].func.value.id in self.dict_id
+                        )
+                elif isinstance(condition.left, ast.Call) and isinstance(
+                    condition.left.func, ast.Attribute
+                ):
+                    if (
+                        condition.left.func.attr == "get"
+                        and condition.left.args
+                        and isinstance(condition.left.args[0], ast.Constant)
+                    ):
+                        if condition.ops and isinstance(condition.ops[0], ast.IsNot):
+                            # check for dict.get(key) is not None
+                            return (
+                                isinstance(condition.left.func.value, ast.Name)
+                                and condition.left.func.value.id in self.dict_id
+                            )
+            elif isinstance(condition, ast.Call):
+                if (
+                    isinstance(condition.func, ast.Attribute)
+                    and condition.func.attr == "get"
+                    and condition.args
+                    and isinstance(condition.args[0], ast.Constant)
+                ):
+                    # check for dict.get(key)
+                    return (
+                        isinstance(condition.func.value, ast.Name)
+                        and condition.func.value.id in self.dict_id
+                    )
+
+        def get_key_from_call(call):
+            if isinstance(call, ast.Call):
+                return call.args[0].value
+            elif isinstance(call, ast.Compare):
+                if isinstance(call.left, ast.Call):
+                    return call.left.args[0].value
+                else:
+                    return call.left.value
+
+        # Check if the if condition is a key check
+        if isinstance(node.test, ast.BoolOp) and isinstance(node.test.op, ast.And):
+            if all(is_key_check(value) for value in node.test.values):
+                for value in node.test.values:
+                    self.safe_keys_stack.append(get_key_from_call(value))
+        elif is_key_check(node.test):
+            self.safe_keys_stack.append(get_key_from_call(node.test))
+
+        self.generic_visit(node)
+
+        # Pop the safe key context after visiting the if body
+        if isinstance(node.test, ast.BoolOp) and isinstance(node.test.op, ast.And):
+            if all(is_key_check(value) for value in node.test.values):
+                for value in node.test.values:
+                    self.safe_keys_stack.pop()
+        elif is_key_check(node.test):
+            self.safe_keys_stack.pop()
+
+    def visit_Subscript(self, node: ast.Subscript) -> None:
+        if isinstance(node.value, ast.Name) and node.value.id in self.dict_id:
+            if isinstance(node.slice, ast.Constant) and isinstance(node.slice.value, str):
+                key = node.slice.value
+                if isinstance(node.ctx, ast.Store):
+                    if key in self.dict_id[node.value.id]:
+                        # the optional param has been set so it is no longer optional
+                        self.dict_id[node.value.id].remove(key)
+                elif isinstance(node.ctx, ast.Load) or isinstance(node.ctx, ast.Del):
+                    if key in self.dict_id[node.value.id] and key not in self.safe_keys_stack:
+                        self.unsafe_get_list.append(f"Unsafe access on line {node.value.lineno}")
+
+        self.generic_visit(node)
+
+    def visit_Assign(self, node: ast.Assign) -> None:
+        if isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Attribute):
+            if (
+                isinstance(node.value.func.value, ast.Name)
+                and node.value.func.value.id == "self"
+                and node.value.func.attr == "get_config"
+            ):
+                for target in node.targets:
+                    if isinstance(target, ast.Name):
+                        self.dict_id[target.id] = self.config_opt_params
+
+        self.generic_visit(node)
+
+    def visit_Call(self, node: ast.Call) -> None:
+        if isinstance(node.func, ast.Attribute) and node.func.attr == "pop":
+            # ignroing pop calls where a default is set
+            if (
+                isinstance(node.func.value, ast.Name)
+                and node.func.value.id in self.dict_id
+                and len(node.args) < 2
+            ):
+                dic_key = node.func.value.id
+                if (
+                    node.args
+                    and isinstance(node.args[0], ast.Constant)
+                    and node.args[0].value in self.dict_id[dic_key]
+                ):
+                    self.unsafe_get_list.append(f"Unsafe access on line {node.lineno}")
+        else:
+            # function calls that are either self.func() or func()
+            func_name = None
+            if isinstance(node.func, ast.Name):
+                func_name = node.func.id
+            elif isinstance(node.func, ast.Attribute):
+                func_name = node.func.attr
+
+            if func_name in self.function_defs:
+                for arg in node.args:
+                    if isinstance(arg, ast.Name) and arg.id in self.dict_id:
+                        function_body_visitor = ContextVisitor(
+                            self.action_opt_params,
+                            self.config_opt_params,
+                            self.function_defs,
+                            self.dict_id,
+                            node,
+                        )
+                        function_body_visitor.functions_visited = self.functions_visited.copy()
+                        function_body_visitor.safe_keys_stack = self.safe_keys_stack.copy()
+                        function_body_visitor.visit(self.function_defs[func_name])
+                        self.functions_visited.update(function_body_visitor.functions_visited)
+                        self.unsafe_get_list.extend(function_body_visitor.unsafe_get_list)
+
+        self.generic_visit(node)
 
 
 class CodeTests(TestSuite):
@@ -41,7 +221,6 @@ class CodeTests(TestSuite):
         Checks if optional parameters are accessed with .get() instead of []
         """
 
-        unsafe_get_list = []
         app_config = self._parser.app_json.get("configuration", {})
         config_opt_params = set(
             config_param
@@ -87,80 +266,8 @@ class CodeTests(TestSuite):
             tree = ast.parse(connector_body)
             function_defs = {n.name: n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)}
 
-            unsafe_get_list = []
-
-            def determine_unsafe_gets(function, opt_params, dict_id, label):
-                for node in ast.walk(function):
-                    if isinstance(node, ast.Subscript):
-                        if isinstance(node.value, ast.Name) and node.value.id == dict_id:
-                            if isinstance(node.slice, ast.Constant) and isinstance(
-                                node.slice.value, str
-                            ):
-                                key = node.slice.value
-                                if isinstance(node.ctx, ast.Store):
-                                    if key in opt_params:
-                                        # optional param has been set so it is no longer optional
-                                        opt_params.remove(key)
-                                elif isinstance(node.ctx, ast.Load):
-                                    if key in opt_params:
-                                        unsafe_get_list.append(
-                                            f"{label} on line {node.value.lineno}"
-                                        )
-                                elif isinstance(node.ctx, ast.Del):
-                                    if key in opt_params:
-                                        unsafe_get_list.append(
-                                            f"{label} on line {node.value.lineno}"
-                                        )
-                                        opt_params.remove(key)
-                    elif isinstance(node, ast.Call):
-                        # Method calls
-                        if isinstance(node.func, ast.Attribute) and node.func.attr == "pop":
-                            if (
-                                isinstance(node.func.value, ast.Name)
-                                and node.func.value.id == dict_id
-                                and len(node.args) < 2
-                            ):
-                                if (
-                                    node.args
-                                    and isinstance(node.args[0], ast.Constant)
-                                    and node.args[0].value in opt_params
-                                ):
-                                    unsafe_get_list.append(f"{label} on line {node.lineno}")
-                        else:
-                            # function calls that are either self.func() or func()
-                            func_name = None
-                            if isinstance(node.func, ast.Name):
-                                func_name = node.func.id
-                            elif isinstance(node.func, ast.Attribute):
-                                func_name = node.func.attr
-
-                            if func_name in function_defs:
-                                for arg in node.args:
-                                    if isinstance(arg, ast.Name) and arg.id == dict_id:
-                                        determine_unsafe_gets(
-                                            function_defs[func_name],
-                                            opt_params,
-                                            dict_id,
-                                            label,
-                                        )
-
-            for f_name, function in function_defs.items():
-                dict_id = None
-                if f_name.startswith("initialize"):
-                    dict_id = "config"
-                    opt_params = config_opt_params
-                    label = "app configuration"
-                else:
-                    for action_id in action_opt_params:
-                        if f_name.endswith(action_id):
-                            dict_id = "param"
-                            opt_params = action_opt_params[action_id]
-                            label = f"`{action_id}` action parameter"
-                            break
-                    if not dict_id:
-                        continue
-
-                determine_unsafe_gets(function, opt_params, dict_id, label)
+            context_visitor = ContextVisitor(action_opt_params, config_opt_params, function_defs)
+            context_visitor.visit(tree)
 
         except Exception:
             print("Error processing AST. Printing exception and ignoring...")
@@ -169,9 +276,9 @@ class CodeTests(TestSuite):
         failure_message = "Some optional parameters use unsafe getting. Please use `param.get()` or `config.get()` to retrieve optional parameters or change them to required."
 
         return create_test_result_response(
-            success=not unsafe_get_list,
-            message=TEST_PASS_MESSAGE if not unsafe_get_list else failure_message,
-            verbose=[param for param in unsafe_get_list],
+            success=not context_visitor.unsafe_get_list,
+            message=TEST_PASS_MESSAGE if not context_visitor.unsafe_get_list else failure_message,
+            verbose=[param for param in context_visitor.unsafe_get_list],
         )
 
     @TestSuite.test(tags=["pre-release"])
