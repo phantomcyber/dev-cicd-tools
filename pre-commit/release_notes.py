@@ -14,7 +14,6 @@ MD_NESTED_LIST_MAX_INDENT = 5
 
 def check_release_notes(app_directory: str):
     release_notes_path = Path(app_directory) / "release_notes/unreleased.md"
-    print(f"path to release notes {release_notes_path}")
     if not release_notes_path.exists():
         print(
             "Release notes file does not exist. Creating it now. This hook will still fail because it needs to be populated."
@@ -23,8 +22,6 @@ def check_release_notes(app_directory: str):
         raise ValueError("Release notes file is empty. Please populate it with release notes.")
 
     release_notes = release_notes_path.read_text().rstrip().splitlines()
-    length = len(release_notes)
-    print(f"release notes are {release_notes} with lentgh {length}")
     if not release_notes:
         release_notes_path.write_text(UNRELEASED_MD_HEADER + "\n")
         raise ValueError("Release notes file is empty. Please populate it with release notes.")
@@ -96,5 +93,4 @@ if __name__ == "__main__":
     parser.add_argument("directory")
 
     args = parser.parse_args()
-    print("calling release notes")
     exit(check_release_notes(args.directory))
