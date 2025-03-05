@@ -54,4 +54,5 @@ repos:
       - id: build-docs
       - id: copyright
       - id: package-app-dependencies
+      - id: release-notes
       - id: static-tests
