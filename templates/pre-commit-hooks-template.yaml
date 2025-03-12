@@ -49,7 +49,7 @@ repos:
         exclude: "README.md"
   # Central hooks
   - repo: https://github.com/phantomcyber/dev-cicd-tools
-    rev: feature/frictionless_connector_contributions # TODO: Update when time
+    rev: main
     hooks:
       - id: build-docs
       - id: copyright
