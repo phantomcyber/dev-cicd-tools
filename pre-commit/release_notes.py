@@ -32,6 +32,9 @@ def check_release_notes(app_directory: str):
         # assuming that the first line is a note
         release_notes.insert(0, UNRELEASED_MD_HEADER)
 
+    if len(release_notes) == 1:
+        raise ValueError("Release notes file is empty. Please populate it with release notes.")
+
     parent_depths = []
     for i in range(1, len(release_notes)):
         note = release_notes[i]
