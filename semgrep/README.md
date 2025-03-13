@@ -26,25 +26,16 @@ To test all the rules, run:
 semgrep --test semgrep/rules
 ```
 
-or
-```
-make semgrep-test
-```
-
 ## Test Annotations
-Semgrep provides annotations we can use in our test code to indicate where we are or aren't expecting
-findings. See https://semgrep.dev/docs/writing-rules/testing-rules/ for more details.
+Semgrep provides annotations we can use in our test code to indicate where we are or aren't expecting findings. See https://semgrep.dev/docs/writing-rules/testing-rules/ for more details.
 
 # Running Rules
-To run the rules defined here against a connector repo:
+Semgrep rules are automatically run as part of the pre-commit hooks. The rules will be checked against any modified files in your commits.
+
+To manually run the rules against a connector repo:
 ```
 cd <path_to_connector_repo>
 semgrep --config <path_to_dev_cicd_tools>/semgrep/rules
-```
-or
-```
-export APP_FOLDER=<path_to_connector_repo>
-make semgrep
 ```
 
 # Uploading Private Rules
@@ -53,11 +44,9 @@ to the Semgrep registry. Note that the rules will only be visible to members of 
 
 ```
 ./semgrep/upload_private_rules.sh
-# or ...
-make semgrep-upload
 ```
 
-To upload a specific a ruleset under the path `rules/python/category/ruleset.yaml`:
+To upload a specific ruleset under the path `rules/python/category/ruleset.yaml`:
 ```
 docker pull returntocorp/semgrep-upload:latest
 docker run -v "$(pwd)":/temp \

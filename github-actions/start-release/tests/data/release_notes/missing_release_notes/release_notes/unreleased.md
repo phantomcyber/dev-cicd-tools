@@ -1,4 +1,0 @@
-**Unreleased**
-* foo
-* bar
-* baz

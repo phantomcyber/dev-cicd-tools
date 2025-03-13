@@ -20,7 +20,7 @@ jobs:
           python-version: '3.9'
           cache: pip
       - name: Install Dependencies
-        run: pip install -r dev-requirements.txt
+        run: pip install -r semgrep/dev-requirements.txt
       - name: Run Tests
         run: |
           semgrep --test semgrep/rules
@@ -31,4 +31,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Upload Rules
-        run: make semgrep-upload
+        run: ./semgrep/upload_private_rules.sh
+        env:
+          SEMGREP_DEPLOYMENT_ID: ${{ secrets.SEMGREP_DEPLOYMENT_ID }}
+          SEMGREP_TOKEN: ${{ secrets.SEMGREP_TOKEN }}

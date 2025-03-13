@@ -1,0 +1,14 @@
+name: Call Publish Workflow
+
+on:
+  push:
+    branches:
+      - main  # Runs only on push (merge) to main
+
+jobs:
+  call-publish:
+    uses: splunk-soar-connectors/.github/.github/workflows/publish.yml@main
+    secrets:
+      release_queue_url: ${{ secrets.RELEASE_QUEUE_URL }}
+      splunkbase_user: ${{ secrets.SPLUNKBASE_USER }}
+      splunkbase_password: ${{ secrets.SPLUNKBASE_PASSWORD }}

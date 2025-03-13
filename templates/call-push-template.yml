@@ -1,0 +1,11 @@
+name: Call Push Workflow
+
+on:
+  pull_request:
+    types:
+      - opened       # When a new PR is opened
+      - synchronize  # When a new commit is pushed to the PR branch
+
+jobs:
+  call-push:
+    uses: splunk-soar-connectors/.github/.github/workflows/push.yml@main

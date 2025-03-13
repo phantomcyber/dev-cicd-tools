@@ -1,5 +1,0 @@
-Jinja2<4
-requests-toolbelt<2
-requests<3
-mdformat==0.7.21
-mdformat-gfm==0.4.1
