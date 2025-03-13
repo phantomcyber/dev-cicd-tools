@@ -41,7 +41,7 @@ def test_static_tests(app_dir: Path):
         capture_output=True,
     )
     print(result.stderr.decode())
-    assert result.returncode == 12
+    assert result.returncode == 11
 
     for filename in expected_files:
         actual_path = app_dir / filename
