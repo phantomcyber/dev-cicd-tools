@@ -273,10 +273,7 @@
                 "type": "object",
                 "properties": {
                   "data_path": {
-                    "type": "string",
-                    "not": {
-                      "pattern": "^action_result\\.data\\.[^.]+\\.data\\.[^.]+$"
-                    }
+                    "type": "string"
                   },
                   "data_type": {
                     "type": "string"

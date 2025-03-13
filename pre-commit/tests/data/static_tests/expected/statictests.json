@@ -18,7 +18,7 @@
     "utctime_updated": "2025-01-17T22:32:42.000000Z",
     "package_name": "phantom_static_tests",
     "main_module": "statictests_connector.py",
-    "min_phantom_version": "6.3.0",
+    "min_phantom_version": "6.2.0",
     "app_wizard_version": "1.0.1",
     "configuration": {
         "api_key": {

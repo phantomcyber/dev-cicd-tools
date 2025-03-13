@@ -184,7 +184,7 @@ class JSONTests(TestSuite):
             "verbose": verbose,
         }
 
-    @TestSuite.test
+    @TestSuite.test(critical=False)
     def check_min_platform_version(self):
         """
         Checks that if pip packages are installed, phantom version > CURRENT_MIN_PHANTOM_VERSION
@@ -193,8 +193,9 @@ class JSONTests(TestSuite):
         min_version = LooseVersion(self._app_json["min_phantom_version"])
         if min_version < LooseVersion(CURRENT_MIN_PHANTOM_VERSION):
             msg = f'Min Phantom version in app json is too low. Found: "{min_version}" but expected >= "{CURRENT_MIN_PHANTOM_VERSION}". Modifying {self._parser.app_json_name}'
-            self._app_json["min_phantom_version"] = CURRENT_MIN_PHANTOM_VERSION
-            self._parser.update_app_json(self._app_json)
+            # As apart of the CI migration we are not updating the min_phantom_version because it is considered a chore task so the following code is commented out
+            # self._app_json["min_phantom_version"] = CURRENT_MIN_PHANTOM_VERSION
+            # self._parser.update_app_json(self._app_json)
         return create_test_result_response(
             success=msg == TEST_PASS_MESSAGE, message=msg, fixed=True
         )
