@@ -462,5 +462,13 @@
     "feca6617-c895-4465-926a-fc5d9c4e3bdc": "phantom_arborsightline",
     "fecc12e1-1a5c-43ed-b081-774522f20650": "phantom_symantecmessaginggateway",
     "ff116964-86f7-4e29-8763-4462ce0d39a7": "phantom_git",
-    "ff79d26f-590e-4158-ad33-1dd073ec10a5": "phantom_koodous"
+    "ff79d26f-590e-4158-ad33-1dd073ec10a5": "phantom_koodous",
+    "5e5815d7-bedc-410e-bea2-c7df1b44297e": "phantom_nessus",
+    "d4e6221a-ed51-4c5d-9e5d-eccfed3bcdd4": "phantom_myip",
+    "653a4735-1eed-4cb9-98c4-b40408e60b22": "phantom_ibmxforceexchange",
+    "e9c94fb2-31da-43eb-8109-8d5743569e5f": "phantom_cybertriage",
+    "e51a8b12-6699-40e3-a418-827be4fc852d": "phantom_checkphish",
+    "00eb093b-1864-460e-b1a9-c4156b735889": "phantom_bigquery",
+    "f657a38f-6649-4022-8d93-21fb69a51055": "phantom_specteropsbloodhound",
+    "717277e0-8382-4562-9dc3-1917f38489d2": "phantom_ip2locationio"
 }

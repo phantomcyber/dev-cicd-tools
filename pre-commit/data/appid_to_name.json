@@ -329,7 +329,7 @@
     "a8ca5e0d-8209-4476-a9b6-5213ed314319": "Browserless chrome",
     "a9561e88-1764-42bd-a4d5-8bb2e728e54c": "Qintel QSentry",
     "a9977c7a-b26a-4ef8-84fa-feb4fe5502c4": "PolySwarm",
-    "aace5ad3-282e-4779-87a1-75762f83f5c9": "Cisco SMA",
+    "aace5ad3-282e-4779-87a1-75762f83f5c9": "Cisco Secure Email and Web Manager",
     "abf9abcc-2e5c-401a-915e-a15e028b3473": "Hashicorp Vault",
     "ac01bc1a-8250-4e27-978f-33c75bd6a3e8": "AWS EC2",
     "ac26b0e5-b2af-4f98-b36f-d43f846df88e": "Fire Eye",
@@ -471,5 +471,11 @@
     "feca6617-c895-4465-926a-fc5d9c4e3bdc": "Arbor Sightline",
     "fecc12e1-1a5c-43ed-b081-774522f20650": "Symantec Messaging Gateway",
     "ff116964-86f7-4e29-8763-4462ce0d39a7": "Git",
-    "ff79d26f-590e-4158-ad33-1dd073ec10a5": "Koodous"
+    "ff79d26f-590e-4158-ad33-1dd073ec10a5": "Koodous",
+    "5e5815d7-bedc-410e-bea2-c7df1b44297e": "Nessus",
+    "d4e6221a-ed51-4c5d-9e5d-eccfed3bcdd4": "Myip",
+    "653a4735-1eed-4cb9-98c4-b40408e60b22": "IBM X-Force Exchange",
+    "e9c94fb2-31da-43eb-8109-8d5743569e5f": "Cyber Triage for SOAR",
+    "e51a8b12-6699-40e3-a418-827be4fc852d": "CheckPhish",
+    "f657a38f-6649-4022-8d93-21fb69a51055": "SpecterOps BloodHound"
 }

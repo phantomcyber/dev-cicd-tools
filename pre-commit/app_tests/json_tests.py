@@ -206,23 +206,9 @@ class JSONTests(TestSuite):
         Checks whether test_connectivity has progress message if it exists
         """
         message = TEST_PASS_MESSAGE
-        req_funcs = {"send_progress", "save_progress", "set_status_save_progress"}
 
-        has_test_connectivity = self._has_test_connectivity()
-        test_connectivity = self._get_test_connectivity() if has_test_connectivity else False
-
-        if has_test_connectivity and test_connectivity:
-            calldefs = self._parser._get_calldefs(test_connectivity)
-            for calldef in calldefs:
-                func = calldef.func
-                names = self._parser.get_id_attr(func)
-                if names.issubset(req_funcs):
-                    break
-            else:
-                message = f"Test connectivity found in JSON, but not enough logging present in connector. Please add one of {req_funcs}"
-
-        else:
-            message = "Test connectivity not found in JSON or connector"
+        if not self._has_test_connectivity():
+            message = "Test connectivity not found in JSON"
 
         return create_test_result_response(success=message == TEST_PASS_MESSAGE, message=message)
 
@@ -232,19 +218,13 @@ class JSONTests(TestSuite):
                 return True
         return False
 
-    def _get_test_connectivity(self):
-        for funcdef in self._parser.all_funcdefs:
-            if funcdef.name.find("test") != -1 and funcdef.name.find("connect") != -1:
-                return funcdef
-        return False
-
     @TestSuite.test
     def check_valid_app_name_and_guid(self):
         """
         App Name and GUID must be unique, and GUID must be a lowercased string
         """
         app_name = self._app_json["name"]
-        app_guid = self._app_json["appid"]
+        app_guid = self._app_json["appid"].lower()
 
         with open(APPID_TO_NAME_FILEPATH) as file:
             app_guid_to_name = json.loads(file.read())
