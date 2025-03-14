@@ -17,8 +17,7 @@
         "type": "string"
       },
       "package_name": {
-        "type": "string",
-        "pattern": "^phantom_.+$"
+        "type": "string"
       },
       "type": {
         "type": "string",

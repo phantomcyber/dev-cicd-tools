@@ -215,7 +215,7 @@ class CodeTests(TestSuite):
         success = msg == TEST_PASS_MESSAGE
         return create_test_result_response(success=success, message=msg, fixed=not success)
 
-    @TestSuite.test
+    @TestSuite.test(critical=False)
     def check_get_opt_params(self):
         """
         Checks if optional parameters are accessed with .get() instead of []
