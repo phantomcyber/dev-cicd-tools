@@ -21,12 +21,10 @@ if [[ $app_py_version == '"2.7"' ]]; then
 fi
 
 if [ "$IN_DOCKER" = true ]; then
-	echo "Current directory: $(pwd)"
-	/opt/python/cp39-cp39/bin/python -m venv notice_venv
-	ls -lath
-	source notice_venv/bin/activate
+	/opt/python/cp39-cp39/bin/python -m venv "{$APP_DIR}"/notice_venv
+	source "{$APP_DIR}"/notice_venv/bin/activate
 	/opt/python/cp39-cp39/bin/pip install pip-licenses
-	pip-licenses --from=mixed --format=markdown --with-license-file --no-license-path --with-maintainers --order=license -n >> "${APP_DIR}"/NOTICE
+	pip-licenses --from=mixed --format=markdown --with-license-file --no-license-path --with-maintainers --order=license -n >> "{$APP_DIR}"/NOTICE
 	deactivate
 	rm -rf notice_venv
 	exit $?
