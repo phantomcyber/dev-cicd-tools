@@ -65,6 +65,7 @@ function generate_notice() {
 		/opt/python/cp39-cp39/bin/pip install pip-licenses && /opt/python/cp39-cp39/bin/pip install -r requirements.txt &&
 		pip-licenses --from=mixed --format=markdown --with-license-file --no-license-path --with-maintainers --order=license -n >> NOTICE &&
 		deactivate && rm -rf notice_venv"
+}
 
 
 if ! docker info &>/dev/null; then
