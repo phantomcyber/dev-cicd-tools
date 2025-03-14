@@ -24,7 +24,7 @@ if [ "$IN_DOCKER" = true ]; then
 	/opt/python/cp39-cp39/bin/python -m venv notice_venv
 	source notice_venv/bin/activate
 	/opt/python/cp39-cp39/bin/pip install pip-licenses
-	pip-licenses --from=mixed --format=markdown --with-license-file --no-license-path --with-maintainers --order=license -n >> ${APP_DIR}/NOTICE
+	pip-licenses --from=mixed --format=markdown --with-license-file --no-license-path --with-maintainers --order=license -n >> "${APP_DIR}"/NOTICE
 	deactivate
 	rm -rf notice_venv
 	exit $?
@@ -58,13 +58,11 @@ function prepare_docker_image() {
 }
 
 function generate_notice() {
-	PYTHON_VERSION_STRING=$1
-	PIP_DEPENDENCIES_KEY=$2
 	docker run --rm -v "$APP_DIR":/src "$IMAGE" /bin/bash -c \
-		"cd /src && /opt/python/cp39-cp39/bin/python -m venv notice_venv && source notice_venv/bin/activate && 
+		"/opt/python/cp39-cp39/bin/python -m venv /src/notice_venv && source /src/notice_venv/bin/activate && 
 		/opt/python/cp39-cp39/bin/pip install pip-licenses && /opt/python/cp39-cp39/bin/pip install -r requirements.txt &&
-		pip-licenses --from=mixed --format=markdown --with-license-file --no-license-path --with-maintainers --order=license -n >> NOTICE &&
-		deactivate && rm -rf notice_venv"
+		pip-licenses --from=mixed --format=markdown --with-license-file --no-license-path --with-maintainers --order=license -n >> /src/NOTICE &&
+		deactivate && rm -rf /src/notice_venv"
 }
 
 
