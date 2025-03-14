@@ -59,7 +59,7 @@ function prepare_docker_image() {
 
 function generate_notice() {
 	docker run --rm -v "$APP_DIR":/src "$IMAGE" /bin/bash -c \
-		"/opt/python/cp39-cp39/bin/python -m venv /src/notice_venv && source /src/notice_venv/bin/activate && 
+		"/opt/python/cp39-cp39/bin/python -m venv notice_venv && ls -lath && source /src/notice_venv/bin/activate && 
 		/opt/python/cp39-cp39/bin/pip install pip-licenses && /opt/python/cp39-cp39/bin/pip install -r requirements.txt &&
 		pip-licenses --from=mixed --format=markdown --with-license-file --no-license-path --with-maintainers --order=license -n >> /src/NOTICE &&
 		deactivate && rm -rf /src/notice_venv"
