@@ -20,6 +20,7 @@ if [[ $app_py_version == '"2.7"' ]]; then
 	exit 1
 fi
 
+# shellcheck disable=SC1091
 if [ "$IN_DOCKER" = true ]; then
 	/opt/python/cp39-cp39/bin/python -m venv "$APP_DIR"/notice_venv
 	source "$APP_DIR"/notice_venv/bin/activate
@@ -29,6 +30,7 @@ if [ "$IN_DOCKER" = true ]; then
 	rm -rf "$APP_DIR"/notice_venv
 	exit $?
 fi
+# shellcheck enable=SC1091
 
 # Not in container, proceed with Docker setup
 IMAGE="quay.io/pypa/manylinux_2_28_x86_64"
