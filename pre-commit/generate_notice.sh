@@ -25,8 +25,8 @@ if [ "$IN_DOCKER" = true ]; then
 	rm -f "$APP_DIR"/NOTICE
 	/opt/python/cp39-cp39/bin/python -m venv "$APP_DIR"/notice_venv
 	source "$APP_DIR"/notice_venv/bin/activate
-	"$APP_DIR"/notice_venv/bin/pip install pip-licenses
-	"$APP_DIR"/notice_venv/bin/pip install -r requirements.txt
+	"$APP_DIR"/notice_venv/bin/pip install --no-binary :all: pip-licenses
+	"$APP_DIR"/notice_venv/bin/pip install --no-binary :all: -r requirements.txt
 	"$APP_DIR"/notice_venv/bin/pip-licenses --from=mixed --format=markdown --no-license-path --with-maintainers --order=license -n >>"$APP_DIR"/NOTICE
 	deactivate
 	rm -rf "$APP_DIR"/notice_venv
@@ -63,7 +63,7 @@ function prepare_docker_image() {
 function generate_notice() {
 	docker run --rm -v "$APP_DIR":/src "$IMAGE" /bin/bash -c -w /src \
 		"rm -f /src/NOTICE && /opt/python/cp39-cp39/bin/python -m venv /src/notice_venv && source /src/notice_venv/bin/activate &&
-		/src/notice_venv/bin/pip install pip-licenses && /src/notice_venv/bin/pip install -r requirements.txt &&
+		/src/notice_venv/bin/pip install --no-binary :all: pip-licenses && /src/notice_venv/bin/pip install --no-binary :all: -r requirements.txt &&
 		pip-licenses --from=mixed --format=markdown --no-license-path --with-maintainers --order=license -n >> /src/NOTICE &&
 		deactivate && rm -rf /src/notice_venv"
 }
