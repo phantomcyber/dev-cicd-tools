@@ -21,12 +21,11 @@ if [[ $app_py_version == '"2.7"' ]]; then
 	exit 1
 fi
 
-
 if [ "$IN_DOCKER" = true ]; then
 	/opt/python/cp39-cp39/bin/python -m venv "$APP_DIR"/notice_venv
 	source "$APP_DIR"/notice_venv/bin/activate
 	/opt/python/cp39-cp39/bin/pip install pip-licenses
-	pip-licenses --from=mixed --format=markdown --with-license-file --no-license-path --with-maintainers --order=license -n >> "$APP_DIR"/NOTICE
+	pip-licenses --from=mixed --format=markdown --with-license-file --no-license-path --with-maintainers --order=license -n >>"$APP_DIR"/NOTICE
 	deactivate
 	rm -rf "$APP_DIR"/notice_venv
 	exit $?
@@ -66,7 +65,6 @@ function generate_notice() {
 		pip-licenses --from=mixed --format=markdown --with-license-file --no-license-path --with-maintainers --order=license -n >> /src/NOTICE &&
 		deactivate && rm -rf /src/notice_venv"
 }
-
 
 if ! docker info &>/dev/null; then
 	echo 'Please ensure Docker is installed and running on your machine'

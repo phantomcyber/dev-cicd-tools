@@ -12,7 +12,7 @@ repos:
 
   # Python linting and formatting
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: 'v0.9.3'
+    rev: 'v0.11.0'
     hooks:
       # Run the linter.
       - id: ruff
@@ -32,4 +32,3 @@ repos:
     rev: v3.10.0-2
     hooks:
       - id: shfmt-docker  # Docker image (requires Docker to run)
-
