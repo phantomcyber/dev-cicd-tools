@@ -5,18 +5,23 @@ repos:
     rev: v5.0.0
     hooks:
       - id: trailing-whitespace
+        args: ["--show-diff-on-failure"]
       - id: end-of-file-fixer
+        args: ["--show-diff-on-failure"]
       - id: check-merge-conflict
+        args: ["--show-diff-on-failure"]
       - id: check-yaml
+        args: ["--show-diff-on-failure"]
       - id: check-json
+        args: ["--show-diff-on-failure"]
 
   # Python linting and formatting
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: 'v0.11.0'
+    rev: 'v0.9.3'
     hooks:
       # Run the linter.
       - id: ruff
-        args: [ --fix ]
+        args: ["--fix", "--show-diff-on-failure"]
       # Run the formatter.
       - id: ruff-format
 
@@ -25,4 +30,13 @@ repos:
     rev: v0.10.0
     hooks:
       - id: shellcheck
-        args: ["-x"]
+        args: ["-x", "--show-diff-on-failure"]
+
+  # Shell formatting
+  - repo: https://github.com/scop/pre-commit-shfmt
+    rev: v3.10.0-2
+    hooks:
+      - id: shfmt-docker  # Docker image (requires Docker to run)
+        args: ["--show-diff-on-failure"]
+
+
