@@ -22,6 +22,7 @@ if [[ $app_py_version == '"2.7"' ]]; then
 fi
 
 if [ "$IN_DOCKER" = true ]; then
+	rm -f "$APP_DIR"/NOTICE
 	/opt/python/cp39-cp39/bin/python -m venv "$APP_DIR"/notice_venv
 	source "$APP_DIR"/notice_venv/bin/activate
 	"$APP_DIR"/notice_venv/bin/pip install pip-licenses
