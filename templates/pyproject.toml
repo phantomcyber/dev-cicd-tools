@@ -11,7 +11,13 @@ select = [ # Auto-fixable rules only
     "RUF"   # ruff rules
 ]
 
-ignore = []  # Don't need right now since we're only using auto-fixable rules
+ignore = [
+    "RUF012", # Not auto-fixable (remove eventually)
+    "RUF001" # Not auto-fixable (remove eventually)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401", "UP035"]  # __init__.py file exceptions
 
 # Keep complexity below 28
 [tool.ruff.lint.mccabe]
@@ -34,10 +40,10 @@ extension = "html"
 indent = 2
 
 # Auto-fixable rules only
-include = "H008,H009,H010,H011,H012,H014,H020,H023,H024,H026,H033,T001,T028,T032,T034"
+include = "H008,H009,H010,H014,H024,H026,H033,T028,T034"
 
-# Ignore others (We have to explicitly ignore these because most get included by default)
-ignore = "D004,D018,H005,H006,H007,H013,H015,H016,H017,H019,H021,H022,H025,H029,H030,H031,H035,H036,H037,J004,J018,T002,T003,T027"
+# Ignore troublesome rules that aren't auto-fixable or causing issues
+ignore = "D004,D018,H005,H006,H007,H011,H012,H013,H015,H016,H017,H019,H020,H021,H022,H023,H025,H029,H030,H031,H035,H036,H037,J004,J018,T001,T002,T003,T027,T032"
 
 # Markdown linting
 [tool.mdformat]
