@@ -26,7 +26,7 @@ if [ "$IN_DOCKER" = true ]; then
 	/opt/python/cp39-cp39/bin/python -m venv "$APP_DIR"/venv
 	source "$APP_DIR"/venv/bin/activate
 	"$APP_DIR"/venv/bin/pip install --force-reinstall pip-licenses
-	"$APP_DIR"/venv/bin/pip install --force-reinstall :all: -r requirements.txt
+	"$APP_DIR"/venv/bin/pip install --force-reinstall -r requirements.txt
 	"$APP_DIR"/venv/bin/pip-licenses --from=mixed --format=markdown --no-license-path --with-maintainers --order=license -n >>"$APP_DIR"/NOTICE
 	deactivate
 	rm -rf "$APP_DIR"/venv
