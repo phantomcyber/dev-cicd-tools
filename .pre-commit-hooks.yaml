@@ -16,11 +16,11 @@
   entry: pre-commit/package_app_dependencies.sh
   language: script
   files: '^requirements.txt$'
-- id: notice-file
-  name: generate notice file
-  description: Generates notice file based on app dependencies
-  entry: pre-commit/generate_notice.sh
-  language: script
+# - id: notice-file
+#   name: generate notice file
+#   description: Generates notice file based on app dependencies
+#   entry: pre-commit/generate_notice.sh
+#   language: script
 - id: release-notes
   name: update release notes
   description: Updates release notes for connector
