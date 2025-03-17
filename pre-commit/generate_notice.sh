@@ -24,9 +24,9 @@ fi
 if [ "$IN_DOCKER" = true ]; then
 	/opt/python/cp39-cp39/bin/python -m venv "$APP_DIR"/notice_venv
 	source "$APP_DIR"/notice_venv/bin/activate
-	pip install pip-licenses
-	pip install -r requirements.txt
-	pip-licenses --from=mixed --format=markdown --with-license-file --no-license-path --with-maintainers --order=license -n >>"$APP_DIR"/NOTICE
+	"$APP_DIR"/notice_venv/bin/pip install pip-licenses
+	"$APP_DIR"/notice_venv/bin/pip install -r requirements.txt
+	"$APP_DIR"/notice_venv/bin/pip-licenses --from=mixed --format=markdown --with-license-file --no-license-path --with-maintainers --order=license -n >>"$APP_DIR"/NOTICE
 	deactivate
 	rm -rf "$APP_DIR"/notice_venv
 	exit $?
