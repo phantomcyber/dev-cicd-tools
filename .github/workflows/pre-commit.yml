@@ -17,4 +17,4 @@ jobs:
           pip install --upgrade pip pre-commit
           pre-commit install
       - run: pre-commit run --all-files --show-diff-on-failure
-        continue-on-error: true
+
