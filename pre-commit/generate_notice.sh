@@ -27,7 +27,7 @@ if [ "$IN_DOCKER" = true ]; then
 	source "$APP_DIR"/venv/bin/activate
 	"$APP_DIR"/venv/bin/pip install --force-reinstall pip-licenses
 	"$APP_DIR"/venv/bin/pip install --force-reinstall -r requirements.txt
-	"$APP_DIR"/venv/bin/pip-licenses --from=mixed --format=markdown --no-license-path --with-maintainers --order=license -n >>"$APP_DIR"/NOTICE
+	"$APP_DIR"/venv/bin/pip-licenses --from=mixed --format=markdown --with-maintainers -n >>"$APP_DIR"/NOTICE
 	deactivate
 	rm -rf "$APP_DIR"/venv
 	exit $?
@@ -64,7 +64,7 @@ function generate_notice() {
 	docker run --rm -v "$APP_DIR":/src "$IMAGE" /bin/bash -c -w /src \
 		"rm -f /src/NOTICE && /opt/python/cp39-cp39/bin/python -m venv /src/venv && source /src/venv/bin/activate &&
 		/src/venv/bin/pip install --force-reinstall pip-licenses && /src/venv/bin/pip install --force-reinstall -r requirements.txt &&
-		pip-licenses --from=mixed --format=markdown --no-license-path --with-maintainers --order=license -n >> /src/NOTICE &&
+		pip-licenses --from=mixed --format=markdown --with-maintainers -n >> /src/NOTICE &&
 		deactivate && rm -rf /src/venv"
 }
 
