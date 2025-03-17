@@ -5,6 +5,7 @@ repos:
     rev: v5.0.0
     hooks:
       - id: trailing-whitespace
+        args: ["--fix"]
       - id: end-of-file-fixer
       - id: check-merge-conflict
       - id: check-yaml
@@ -27,8 +28,4 @@ repos:
       - id: shellcheck
         args: ["-x"]
 
-  # # shfmt for shell formatting
-  # - repo: https://github.com/scop/pre-commit-shfmt
-  #   rev: v3.10.0-2
-  #   hooks:
-  #     - id: shfmt-docker  # Docker image (requires Docker to run)
+
