@@ -1,4 +1,5 @@
 # Pre-commit hooks.   Configuration examples at https://pre-commit.com/
+minimum_pre_commit_version: '4.0.0'
 repos:
   # General pre-commit hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -29,6 +30,6 @@ repos:
 
   # Shell formatting
   - repo: https://github.com/scop/pre-commit-shfmt
-    rev: v3.10.0-2
+    rev: v3.11.0-1
     hooks:
       - id: shfmt-docker  # Docker image (requires Docker to run)
