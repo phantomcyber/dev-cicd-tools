@@ -10,12 +10,13 @@
   entry: pre-commit/copyright.sh
   language: script
   pass_filenames: false
-- id: package-app-dependencies
-  name: package app dependencies
-  description: Packages application dependencies
-  entry: pre-commit/package_app_dependencies.sh
-  language: script
-  files: '^requirements.txt$'
+  # Disabling temporarily for Sourcegraph batch PRs
+# - id: package-app-dependencies
+#   name: package app dependencies
+#   description: Packages application dependencies
+#   entry: pre-commit/package_app_dependencies.sh
+#   language: script
+#   files: '^requirements.txt$'
   # Disabling temporarily for Sourcegraph batch PRs
   # Uncomment the following lines to enable the notice file generation
 # - id: notice-file
