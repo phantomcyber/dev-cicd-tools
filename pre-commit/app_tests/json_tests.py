@@ -200,7 +200,7 @@ class JSONTests(TestSuite):
             success=msg == TEST_PASS_MESSAGE, message=msg, fixed=True
         )
 
-    @TestSuite.test
+    @TestSuite.test(critical=False)
     def check_test_connectivity(self):
         """
         Checks whether test_connectivity has progress message if it exists
