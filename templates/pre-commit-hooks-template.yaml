@@ -53,7 +53,7 @@ repos:
     hooks:
       - id: build-docs
       - id: copyright
-      # - id: package-app-dependencies
-      # - id: notice-file
+      - id: package-app-dependencies
+      - id: notice-file
       - id: release-notes
       - id: static-tests
