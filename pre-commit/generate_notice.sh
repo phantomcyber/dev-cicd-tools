@@ -16,7 +16,6 @@ app_license="$(jq .license "$app_json")"
 
 if [ "$IN_DOCKER" = true ]; then
 	rm -f "$APP_DIR"/NOTICE
-	"Splunk SOAR"
 	/opt/python/cp39-cp39/bin/python -m venv "$APP_DIR"/venv
 	source "$APP_DIR"/venv/bin/activate
 	"$APP_DIR"/venv/bin/pip install --force-reinstall pip-licenses
