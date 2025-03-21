@@ -15,7 +15,7 @@ app_name="$(jq .name "$app_json")"
 app_license="$(jq .license "$app_json")"
 
 if [ "$IN_DOCKER" = true ]; then
-	if [ -s "$APP_DIR"/requirements.txt ]; then
+	if [ ! -s "$APP_DIR"/requirements.txt ]; then
 		echo "Nothing in requirements.txt, skipping NOTICE generation"
 		exit 0
 	fi
