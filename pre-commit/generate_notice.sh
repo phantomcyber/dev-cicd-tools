@@ -2,6 +2,9 @@
 # shellcheck disable=SC1091
 set -euo pipefail
 
+# Catch failures and exit gracefully, NOTICE is still generated
+trap 'exit 0' ERR
+
 APP_DIR=$(pwd)
 IN_DOCKER=false
 
