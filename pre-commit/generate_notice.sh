@@ -11,7 +11,8 @@ if /opt/python/cp39-cp39/bin/python --version &>/dev/null; then
 fi
 
 app_json="$(find ./*.json ! -name '*.postman_collection.json' | head -n 1)"
-app_py_version="$(jq .python_version "$app_json")"
+app_name="$(jq .name "$app_json")"
+app_license="$(jq .license "$app_json")"
 if [[ $app_py_version == 'null' ]]; then
 	app_py_version='"2.7"'
 fi
@@ -23,11 +24,19 @@ fi
 
 if [ "$IN_DOCKER" = true ]; then
 	rm -f "$APP_DIR"/NOTICE
+	"Splunk SOAR"
 	/opt/python/cp39-cp39/bin/python -m venv "$APP_DIR"/venv
 	source "$APP_DIR"/venv/bin/activate
 	"$APP_DIR"/venv/bin/pip install --force-reinstall pip-licenses
 	"$APP_DIR"/venv/bin/pip install --force-reinstall -r requirements.txt
-	"$APP_DIR"/venv/bin/pip-licenses --from=mixed --format=markdown --with-maintainers -n >>"$APP_DIR"/NOTICE
+	{
+		echo "Splunk SOAR $app_name"
+		echo "$app_license"
+		echo ""
+		echo "Third Party Software Attributions"
+		echo ""
+		"$APP_DIR"/venv/bin/pip-licenses --from=mixed --format=plain-vertical --with-authors --with-maintainers -n
+	} >"$APP_DIR"/NOTICE
 	deactivate
 	rm -rf "$APP_DIR"/venv
 	exit $?
@@ -62,10 +71,22 @@ function prepare_docker_image() {
 
 function generate_notice() {
 	docker run --rm -v "$APP_DIR":/src "$IMAGE" /bin/bash -c -w /src \
-		"rm -f /src/NOTICE && /opt/python/cp39-cp39/bin/python -m venv /src/venv && source /src/venv/bin/activate &&
-		/src/venv/bin/pip install --force-reinstall pip-licenses && /src/venv/bin/pip install --force-reinstall -r requirements.txt &&
-		pip-licenses --from=mixed --format=markdown --with-maintainers -n >> /src/NOTICE &&
-		deactivate && rm -rf /src/venv"
+		"app_json=\$(find /src/*.json ! -name '*.postman_collection.json' | head -n 1) &&
+        app_name=\$(jq -r .name \$app_json) &&
+        app_license=\$(jq -r .license \$app_json) &&
+        rm -f /src/NOTICE &&
+        /opt/python/cp39-cp39/bin/python -m venv /src/venv &&
+        source /src/venv/bin/activate &&
+        /src/venv/bin/pip install --force-reinstall pip-licenses &&
+        /src/venv/bin/pip install --force-reinstall -r requirements.txt &&
+        echo \"Splunk SOAR \$app_name\" > /src/NOTICE &&
+        echo \"\$app_license\" >> /src/NOTICE &&
+        echo \"\" >> /src/NOTICE &&
+        echo \"Third Party Software Attributions\" >> /src/NOTICE &&
+        echo \"\" >> /src/NOTICE &&
+        /src/venv/bin/pip-licenses --from=mixed --format=plain-vertical --with-authors --with-maintainers -n >> /src/NOTICE &&
+        deactivate &&
+        rm -rf /src/venv"
 }
 
 if ! docker info &>/dev/null; then
