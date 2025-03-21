@@ -13,14 +13,6 @@ fi
 app_json="$(find ./*.json ! -name '*.postman_collection.json' | head -n 1)"
 app_name="$(jq .name "$app_json")"
 app_license="$(jq .license "$app_json")"
-if [[ $app_py_version == 'null' ]]; then
-	app_py_version='"2.7"'
-fi
-
-if [[ $app_py_version == '"2.7"' ]]; then
-	echo "Python 2 is no longer supported"
-	exit 1
-fi
 
 if [ "$IN_DOCKER" = true ]; then
 	rm -f "$APP_DIR"/NOTICE
