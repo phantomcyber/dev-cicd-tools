@@ -19,6 +19,10 @@ if [ "$IN_DOCKER" = true ]; then
 		echo "Nothing in requirements.txt, skipping NOTICE generation"
 		exit 0
 	fi
+	if grep -q "Third Party Software Attributions:" "$APP_DIR"/NOTICE; then
+		echo "NOTICE has already been updated, skipping NOTICE generation"
+		exit 0
+	fi
 	{
 		echo "Splunk SOAR $app_name"
 		echo "$app_license"
@@ -72,6 +76,10 @@ function generate_notice() {
         app_license=\$(jq -r .license \$app_json) &&
 		if [ ! -s /src/requirements.txt ]; then
 			echo 'Nothing in requirements.txt, skipping NOTICE generation'
+			exit 0
+		fi &&
+		if grep -q 'Third Party Software Attributions:' src/NOTICE; then
+			echo 'NOTICE has already been updated, skipping NOTICE generation'
 			exit 0
 		fi &&
 		{
