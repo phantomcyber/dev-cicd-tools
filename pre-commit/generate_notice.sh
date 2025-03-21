@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC1091
-set -euo pipefail
+set -uo pipefail
 
 APP_DIR=$(pwd)
 IN_DOCKER=false
@@ -35,7 +35,7 @@ if [ "$IN_DOCKER" = true ]; then
 	sed -i '/License:/a\'$'\n' "$APP_DIR"/NOTICE
 	deactivate
 	rm -rf "$APP_DIR"/venv
-	exit 0
+	exit $?
 fi
 
 # Not in container, proceed with Docker setup
