@@ -28,14 +28,14 @@ if [ "$IN_DOCKER" = true ]; then
 	} >"$APP_DIR"/NOTICE
 	/opt/python/cp39-cp39/bin/python -m venv "$APP_DIR"/venv
 	source "$APP_DIR"/venv/bin/activate
-	"$APP_DIR"/venv/bin/pip install -r requirements.txt || true
+	"$APP_DIR"/venv/bin/pip install -r requirements.txt
 	# shellcheck disable=SC2046
-	"$APP_DIR"/venv/bin/pip show $(pip freeze | cut -d= -f1) | grep -E 'Name:|Author:|Version:|License:|Maintainer:' >>"$APP_DIR"/NOTICE || true
+	"$APP_DIR"/venv/bin/pip show $(pip freeze | cut -d= -f1) | grep -E 'Name:|Author:|Version:|License:|Maintainer:' >>"$APP_DIR"/NOTICE
 	# shellcheck disable=SC1003
 	sed -i '/License:/a\'$'\n' "$APP_DIR"/NOTICE
 	deactivate
 	rm -rf "$APP_DIR"/venv
-	exit $?
+	exit 0
 fi
 
 # Not in container, proceed with Docker setup
@@ -70,18 +70,22 @@ function generate_notice() {
 		"app_json=\$(find /src/*.json ! -name '*.postman_collection.json' | head -n 1) &&
         app_name=\$(jq -r .name \$app_json) &&
         app_license=\$(jq -r .license \$app_json) &&
-        rm -f /src/NOTICE &&
+		if [ ! -s /src/requirements.txt ]; then
+			echo 'Nothing in requirements.txt, skipping NOTICE generation'
+			exit 0
+		fi &&
+		{
+			echo 'Splunk SOAR $app_name'
+			echo '$app_license'
+			echo ''
+			echo 'Third Party Software Attributions:'
+			echo ''
+		} >'$APP_DIR'/NOTICE &&
         /opt/python/cp39-cp39/bin/python -m venv /src/venv &&
         source /src/venv/bin/activate &&
-        /src/venv/bin/pip install --force-reinstall pip-licenses &&
         /src/venv/bin/pip install --force-reinstall -r requirements.txt &&
-        echo \"Splunk SOAR \$app_name\" > /src/NOTICE &&
-        echo \"\$app_license\" >> /src/NOTICE &&
-        echo \"\" >> /src/NOTICE &&
-        echo \"Third Party Software Attributions\" >> /src/NOTICE &&
-        echo \"\" >> /src/NOTICE &&
-        /src/venv/bin/pip-licenses --from=mixed --format=plain-vertical --with-authors --with-maintainers -n >> /src/NOTICE &&
-        deactivate &&
+        '$APP_DIR'/venv/bin/pip show $(pip freeze | cut -d= -f1) | grep -E 'Name:|Author:|Version:|License:|Maintainer:' >>'$APP_DIR'/NOTICE &&
+		deactivate &&
         rm -rf /src/venv"
 }
 
