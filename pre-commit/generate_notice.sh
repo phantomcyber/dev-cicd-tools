@@ -11,8 +11,8 @@ if /opt/python/cp39-cp39/bin/python --version &>/dev/null; then
 fi
 
 app_json="$(find ./*.json ! -name '*.postman_collection.json' | head -n 1)"
-app_name=$(jq .name "$app_json")
-app_license=$(jq .license "$app_json")
+app_name=$(jq -r .name "$app_json")
+app_license=$(jq -r .license "$app_json")
 
 if [ "$IN_DOCKER" = true ]; then
 	if [ ! -s "$APP_DIR"/requirements.txt ]; then
@@ -35,7 +35,7 @@ if [ "$IN_DOCKER" = true ]; then
 	sed -i '/License:/a\'$'\n' "$APP_DIR"/NOTICE
 	deactivate
 	rm -rf "$APP_DIR"/venv
-	exit $?
+	exit 0
 fi
 
 # Not in container, proceed with Docker setup
