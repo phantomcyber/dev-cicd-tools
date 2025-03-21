@@ -15,19 +15,22 @@ app_name="$(jq .name "$app_json")"
 app_license="$(jq .license "$app_json")"
 
 if [ "$IN_DOCKER" = true ]; then
-	rm -f "$APP_DIR"/NOTICE
-	/opt/python/cp39-cp39/bin/python -m venv "$APP_DIR"/venv
-	source "$APP_DIR"/venv/bin/activate
-	"$APP_DIR"/venv/bin/pip install --force-reinstall pip-licenses
-	"$APP_DIR"/venv/bin/pip install --force-reinstall -r requirements.txt
+	if [ -s "$APP_DIR"/requirements.txt ]; then
+		echo "Nothing in requirements.txt, skipping NOTICE generation"
+		exit 0
+	fi
 	{
 		echo "Splunk SOAR $app_name"
 		echo "$app_license"
 		echo ""
-		echo "Third Party Software Attributions"
+		echo "Third Party Software Attributions:"
 		echo ""
-		"$APP_DIR"/venv/bin/pip-licenses --from=mixed --format=plain-vertical --with-authors --with-maintainers -n
 	} >"$APP_DIR"/NOTICE
+	/opt/python/cp39-cp39/bin/python -m venv "$APP_DIR"/venv
+	source "$APP_DIR"/venv/bin/activate
+	"$APP_DIR"/venv/bin/pip install -r requirements.txt
+	# shellcheck disable=SC2046
+	"$APP_DIR"/venv/bin/pip show $(pip freeze | cut -d= -f1) | grep -E 'Name:|Author:|Version:|License:|Maintainer:' >>"$APP_DIR"/NOTICE
 	deactivate
 	rm -rf "$APP_DIR"/venv
 	exit $?
