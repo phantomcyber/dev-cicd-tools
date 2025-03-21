@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC1091
-set -uo pipefail
+set -euo pipefail
 
 APP_DIR=$(pwd)
 IN_DOCKER=false
@@ -28,9 +28,9 @@ if [ "$IN_DOCKER" = true ]; then
 	} >"$APP_DIR"/NOTICE
 	/opt/python/cp39-cp39/bin/python -m venv "$APP_DIR"/venv
 	source "$APP_DIR"/venv/bin/activate
-	"$APP_DIR"/venv/bin/pip install -r requirements.txt
+	"$APP_DIR"/venv/bin/pip install -r requirements.txt || true
 	# shellcheck disable=SC2046
-	"$APP_DIR"/venv/bin/pip show $(pip freeze | cut -d= -f1) | grep -E 'Name:|Author:|Version:|License:|Maintainer:' >>"$APP_DIR"/NOTICE
+	"$APP_DIR"/venv/bin/pip show $(pip freeze | cut -d= -f1) | grep -E 'Name:|Author:|Version:|License:|Maintainer:' >>"$APP_DIR"/NOTICE || true
 	# shellcheck disable=SC1003
 	sed -i '/License:/a\'$'\n' "$APP_DIR"/NOTICE
 	deactivate
