@@ -11,8 +11,8 @@ if /opt/python/cp39-cp39/bin/python --version &>/dev/null; then
 fi
 
 app_json="$(find ./*.json ! -name '*.postman_collection.json' | head -n 1)"
-app_name="$(jq .name "$app_json")"
-app_license="$(jq .license "$app_json")"
+app_name=$(jq .name "$app_json")
+app_license=$(jq .license "$app_json")
 
 if [ "$IN_DOCKER" = true ]; then
 	if [ ! -s "$APP_DIR"/requirements.txt ]; then
@@ -31,6 +31,8 @@ if [ "$IN_DOCKER" = true ]; then
 	"$APP_DIR"/venv/bin/pip install -r requirements.txt
 	# shellcheck disable=SC2046
 	"$APP_DIR"/venv/bin/pip show $(pip freeze | cut -d= -f1) | grep -E 'Name:|Author:|Version:|License:|Maintainer:' >>"$APP_DIR"/NOTICE
+	# shellcheck disable=SC1003
+	sed -i '/License:/a\'$'\n' "$APP_DIR"/NOTICE
 	deactivate
 	rm -rf "$APP_DIR"/venv
 	exit $?
