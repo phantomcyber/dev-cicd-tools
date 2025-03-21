@@ -55,6 +55,5 @@ repos:
       - id: copyright
       - id: package-app-dependencies
       - id: notice-file
-        return-code: 0
       - id: release-notes
       - id: static-tests
