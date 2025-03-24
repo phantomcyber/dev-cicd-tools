@@ -71,17 +71,18 @@ function prepare_docker_image() {
 
 function generate_notice() {
 	docker run --rm -v "$APP_DIR":/src -w /src "$IMAGE" /bin/bash -c \
-		"app_json=\$(find /src/*.json ! -name '*.postman_collection.json' | head -n 1) &&
-        app_name=\$(jq -r .name \$app_json) &&
-        app_license=\$(jq -r .license \$app_json) &&
-		if [ ! -s /src/requirements.txt ]; then
+		"if [ ! -s /src/requirements.txt ]; then
 			echo 'Nothing in requirements.txt, skipping NOTICE generation'
 			exit 0
 		fi &&
-		if grep -q 'Third Party Software Attributions:' src/NOTICE; then
+		if grep -q 'Third Party Software Attributions:' /src/NOTICE; then
 			echo 'NOTICE has already been updated, skipping NOTICE generation'
 			exit 0
 		fi &&
+		brew install jq &&
+		app_json=\$(find /src/*.json ! -name '*.postman_collection.json' | head -n 1) &&
+        app_name=\$(jq -r .name \$app_json) &&
+        app_license=\$(jq -r .license \$app_json) &&
 		{
 			echo 'Splunk SOAR $app_name'
 			echo '$app_license'
@@ -95,7 +96,8 @@ function generate_notice() {
         '$APP_DIR'/venv/bin/pip show $(pip freeze | cut -d= -f1) | grep -E 'Name:|Author:|Version:|License:|Maintainer:' >>'$APP_DIR'/NOTICE &&
 		sed -i '/License:/a\'$'\n' '$APP_DIR'/NOTICE &&
 		deactivate &&
-        rm -rf /src/venv"
+        rm -rf /src/venv &&
+		exit 0"
 }
 
 if ! docker info &>/dev/null; then
