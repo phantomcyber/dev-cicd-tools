@@ -70,7 +70,7 @@ function prepare_docker_image() {
 }
 
 function generate_notice() {
-	docker run --rm -v "$APP_DIR":/src "$IMAGE" /bin/bash -c -w /src \
+	docker run --rm -v "$APP_DIR":/src -w /src "$IMAGE" /bin/bash -c \
 		"app_json=\$(find /src/*.json ! -name '*.postman_collection.json' | head -n 1) &&
         app_name=\$(jq -r .name \$app_json) &&
         app_license=\$(jq -r .license \$app_json) &&
@@ -93,6 +93,7 @@ function generate_notice() {
         source /src/venv/bin/activate &&
         /src/venv/bin/pip install --force-reinstall -r requirements.txt &&
         '$APP_DIR'/venv/bin/pip show $(pip freeze | cut -d= -f1) | grep -E 'Name:|Author:|Version:|License:|Maintainer:' >>'$APP_DIR'/NOTICE &&
+		sed -i '/License:/a\'$'\n' '$APP_DIR'/NOTICE &&
 		deactivate &&
         rm -rf /src/venv"
 }
