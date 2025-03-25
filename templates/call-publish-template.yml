@@ -12,3 +12,4 @@ jobs:
       release_queue_url: ${{ secrets.RELEASE_QUEUE_URL }}
       splunkbase_user: ${{ secrets.SPLUNKBASE_USER }}
       splunkbase_password: ${{ secrets.SPLUNKBASE_PASSWORD }}
+      semantic_release_pk: ${{ secrets.SEMANTIC_RELEASE_PK }}
