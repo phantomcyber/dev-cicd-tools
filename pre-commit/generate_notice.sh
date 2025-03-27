@@ -79,7 +79,7 @@ function generate_notice() {
 			echo 'NOTICE has already been updated, skipping NOTICE generation'
 			exit 0
 		fi &&
-		brew install jq &&
+		apt install jq &&
 		app_json=\$(find /src/*.json ! -name '*.postman_collection.json' | head -n 1) &&
         app_name=\$(jq -r .name \$app_json) &&
         app_license=\$(jq -r .license \$app_json) &&
