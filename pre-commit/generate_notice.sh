@@ -10,100 +10,65 @@ if /opt/python/cp39-cp39/bin/python --version &>/dev/null; then
 	IN_DOCKER=true
 fi
 
-app_json="$(find ./*.json ! -name '*.postman_collection.json' | head -n 1)"
-app_name=$(jq -r .name "$app_json")
-app_license=$(jq -r .license "$app_json")
+if [ "$IN_DOCKER" = "false" ]; then
 
-if [ "$IN_DOCKER" = true ]; then
-	if [ ! -s "$APP_DIR"/requirements.txt ]; then
-		echo "Nothing in requirements.txt, skipping NOTICE generation"
-		exit 0
+	if ! docker info &>/dev/null; then
+		echo 'Please ensure Docker is installed and running on your machine'
+		exit 1
 	fi
-	if grep -q "Third Party Software Attributions:" "$APP_DIR"/NOTICE; then
-		echo "NOTICE has already been updated, skipping NOTICE generation"
-		exit 0
-	fi
+
+	IMAGE="quay.io/pypa/manylinux_2_28_x86_64"
+	script_name=$(basename "$0")
+
+	# Run this script inside a manylinux Docker container
+	exec docker run \
+		--rm \
+		-v "$APP_DIR":/src \
+		-v "$(dirname "$0")":/srv/ \
+		-w /src \
+		"$IMAGE" \
+		/bin/bash -c "/srv/$script_name"
+fi
+
+app_json="$(find ./*.json ! -name '*.postman_collection.json' | head -n 1)"
+
+# Get the "name" and "license" keys from the JSON file, without having to install jq to do it
+app_name=$(grep -oP '"name"\s*:\s*"\K[^"]+' "$app_json")
+app_license=$(grep -oP '"license"\s*:\s*"\K[^"]+' "$app_json")
+
+{
+	echo "Splunk SOAR App: $app_name"
+	echo "$app_license"
+} >"$APP_DIR"/NOTICE
+
+if [ -s "$APP_DIR"/requirements.txt ]; then
 	{
-		echo "Splunk SOAR $app_name"
-		echo "$app_license"
 		echo ""
 		echo "Third Party Software Attributions:"
+		echo "----------------------------------"
 		echo ""
-	} >"$APP_DIR"/NOTICE
-	/opt/python/cp39-cp39/bin/python -m venv "$APP_DIR"/venv
-	source "$APP_DIR"/venv/bin/activate
-	"$APP_DIR"/venv/bin/pip install -r requirements.txt
-	# shellcheck disable=SC2046
-	"$APP_DIR"/venv/bin/pip show $(pip freeze | cut -d= -f1) | grep -E 'Name:|Author:|Version:|License:|Maintainer:' >>"$APP_DIR"/NOTICE
-	# shellcheck disable=SC1003
-	sed -i '/License:/a\'$'\n' "$APP_DIR"/NOTICE
-	deactivate
-	rm -rf "$APP_DIR"/venv
+	} >>"$APP_DIR"/NOTICE
+else
+	echo "Nothing in requirements.txt, all done."
 	exit 0
 fi
 
-# Not in container, proceed with Docker setup
-IMAGE="quay.io/pypa/manylinux_2_28_x86_64"
-DOCKERFILE=""
+# Since we're running this in an ephemeral container, we don't care about caches or venvs
+export PATH="/opt/python/cp39-cp39/bin:$PATH"
+pip install \
+	--no-cache-dir \
+	--root-user-action ignore \
+	pip-licenses \
+	-r requirements.txt \
+	>/dev/null
+pip-licenses \
+	--format=plain-vertical \
+	--with-authors \
+	--with-urls \
+	--with-license-file \
+	--with-notice-file \
+	--no-license-path \
+	2>/dev/null >>"$APP_DIR"/NOTICE
 
-while getopts 'i:d:' flag; do
-	case "${flag}" in
-	i) IMAGE="${OPTARG}" ;;
-	d) DOCKERFILE="${OPTARG}" ;;
-	*) echo "Invalid flag ${OPTARG}" && exit 1 ;;
-	esac
-done
-
-function prepare_docker_image() {
-	if [[ $DOCKERFILE != "" ]]; then
-		local appdir_base
-		local appdir_dir
-
-		appdir_base=$(basename "$APP_DIR")
-		appdir_dir=$(dirname "$APP_DIR")
-		IMAGE=$(basename "$appdir_dir")/"$appdir_base"
-
-		echo "Creating image from context $DOCKERFILE, tag: $IMAGE"
-		docker build -t "$IMAGE" -f "$DOCKERFILE" "$APP_DIR"
-	fi
-	echo "Using image: $IMAGE"
-}
-
-function generate_notice() {
-	docker run --rm -v "$APP_DIR":/src -w /src "$IMAGE" /bin/bash -c \
-		"if [ ! -s /src/requirements.txt ]; then
-			echo 'Nothing in requirements.txt, skipping NOTICE generation'
-			exit 0
-		fi &&
-		if grep -q 'Third Party Software Attributions:' /src/NOTICE; then
-			echo 'NOTICE has already been updated, skipping NOTICE generation'
-			exit 0
-		fi &&
-		brew install jq &&
-		app_json=\$(find /src/*.json ! -name '*.postman_collection.json' | head -n 1) &&
-        app_name=\$(jq -r .name \$app_json) &&
-        app_license=\$(jq -r .license \$app_json) &&
-		{
-			echo 'Splunk SOAR $app_name'
-			echo '$app_license'
-			echo ''
-			echo 'Third Party Software Attributions:'
-			echo ''
-		} >'$APP_DIR'/NOTICE &&
-        /opt/python/cp39-cp39/bin/python -m venv /src/venv &&
-        source /src/venv/bin/activate &&
-        /src/venv/bin/pip install --force-reinstall -r requirements.txt &&
-        '$APP_DIR'/venv/bin/pip show $(pip freeze | cut -d= -f1) | grep -E 'Name:|Author:|Version:|License:|Maintainer:' >>'$APP_DIR'/NOTICE &&
-		sed -i '/License:/a\'$'\n' '$APP_DIR'/NOTICE &&
-		deactivate &&
-        rm -rf /src/venv &&
-		exit 0"
-}
-
-if ! docker info &>/dev/null; then
-	echo 'Please ensure Docker is installed and running on your machine'
-	exit 1
-fi
-
-prepare_docker_image
-generate_notice
+# Remove lines containing only the string "UNKNOWN"
+sed -i '/^UNKNOWN$/d' "$APP_DIR"/NOTICE
