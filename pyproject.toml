@@ -1,0 +1,27 @@
+[project]
+name = "dev-cicd-tools"
+version = "0.1.0"
+description = "Package hosting pre-commit scripts for SOAR connector pipelines"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = []
+
+[dependency-groups]
+build-docs = [
+    "jinja2>=3.1.6",
+    "mdformat>=0.7.22",
+]
+copyright = [
+    "jinja2>=3.1.6",
+]
+generate-notice = [
+    "pip-licenses>=5.0.0",
+]
+package-app-dependencies = [
+    "pip-tools>=7.4.1",
+]
+static-tests = [
+    "django<5",
+    "jsonschema>=4.23.0",
+    "lxml>=5.3.1",
+]
