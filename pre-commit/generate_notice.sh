@@ -55,8 +55,6 @@ fi
 
 # Since we're running this in an ephemeral container, we don't care about caches or venvs
 export PATH="/opt/python/cp39-cp39/bin:$PATH"
-packages=$(awk -F'[=<>]' '{print $1}' requirements.txt | tr '\n' ' ')
-echo "$packages"
 pip install \
 	--no-cache-dir \
 	--root-user-action ignore \
@@ -70,7 +68,6 @@ pip-licenses \
 	--with-license-file \
 	--with-notice-file \
 	--no-license-path \
-	--packages "$packages" \
 	2>/dev/null >>"$APP_DIR"/NOTICE
 
 # Remove lines containing only the string "UNKNOWN"
