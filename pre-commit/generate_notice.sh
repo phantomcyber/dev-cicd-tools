@@ -33,8 +33,8 @@ fi
 app_json="$(find ./*.json ! -name '*.postman_collection.json' | head -n 1)"
 
 # Get the "name" and "license" keys from the JSON file, without having to install jq to do it
-app_name=$(grep -oP '"name"\s*:\s*"\K[^"]+' "$app_json")
-app_license=$(grep -oP '^\s*"license"\s*:\s*"\K[^"]+' "$app_json")
+app_name=$(grep -oP '"name"\s*:\s*"\K[^"]+' "$app_json" | head -1)
+app_license=$(grep -oP '"license"\s*:\s*"\K[^"]+' "$app_json")
 
 {
 	echo "Splunk SOAR App: $app_name"
@@ -56,6 +56,7 @@ fi
 # Since we're running this in an ephemeral container, we don't care about caches or venvs
 export PATH="/opt/python/cp39-cp39/bin:$PATH"
 packages=$(awk -F'[=<>]' '{print $1}' requirements.txt | tr '\n' ' ')
+echo "$packages"
 pip install \
 	--no-cache-dir \
 	--root-user-action ignore \
