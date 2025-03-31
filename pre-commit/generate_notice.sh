@@ -59,13 +59,15 @@ pip install \
 	--no-cache-dir \
 	--root-user-action ignore \
 	pip-licenses \
-	virtualenv \
 	-r requirements.txt \
 	>/dev/null
 
-# Set up virtual environment to isolate the dependencies
-virtualenv venv
-source venv/bin/activate
+# Just in case there was something left behind
+rm -rf notice_venv
+
+# Create a venv to isolate dependencies
+python3.9 -m venv notice_venv
+source notice_venv/bin/activate
 
 # Install the dependencies in the virtual environment
 pip-licenses \
@@ -82,4 +84,4 @@ sed -i '/^UNKNOWN$/d' "$APP_DIR"/NOTICE
 
 # Remove the virtual environment
 deactivate 2>/dev/null
-rm -rf venv
+rm -rf notice_venv
