@@ -55,12 +55,6 @@ fi
 
 # Since we're running this in an ephemeral container, we don't care about caches or venvs
 export PATH="/opt/python/cp39-cp39/bin:$PATH"
-pip install \
-	--no-cache-dir \
-	--root-user-action ignore \
-	pip-licenses \
-	-r requirements.txt \
-	>/dev/null
 
 # Just in case there was something left behind
 rm -rf notice_venv
@@ -68,6 +62,14 @@ rm -rf notice_venv
 # Create a venv to isolate dependencies
 python3.9 -m venv notice_venv
 source notice_venv/bin/activate
+
+# Install pip-licenses and the requirements from the requirements.txt file
+pip install \
+	--no-cache-dir \
+	--root-user-action ignore \
+	pip-licenses \
+	-r requirements.txt \
+	>/dev/null
 
 # Install the dependencies in the virtual environment
 pip-licenses \
