@@ -59,8 +59,15 @@ pip install \
 	--no-cache-dir \
 	--root-user-action ignore \
 	pip-licenses \
+	virtualenv \
 	-r requirements.txt \
 	>/dev/null
+
+# Set up virtual environment to isolate the dependencies
+virtualenv venv
+source venv/bin/activate
+
+# Install the dependencies in the virtual environment
 pip-licenses \
 	--format=plain-vertical \
 	--with-authors \
@@ -72,3 +79,7 @@ pip-licenses \
 
 # Remove lines containing only the string "UNKNOWN"
 sed -i '/^UNKNOWN$/d' "$APP_DIR"/NOTICE
+
+# Remove the virtual environment
+deactivate 2>/dev/null
+rm -rf venv
