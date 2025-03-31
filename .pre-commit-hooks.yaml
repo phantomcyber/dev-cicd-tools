@@ -21,6 +21,7 @@
   description: Generates notice file based on app dependencies
   entry: pre-commit/generate_notice.sh
   language: script
+  pass_filenames: false
 - id: release-notes
   name: update release notes
   description: Updates release notes for connector
