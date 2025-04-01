@@ -1,8 +1,19 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "local-hooks"
 version = "0.1.0"
 dependencies = ["jinja2", "mdformat", "jsonschema", "lxml", "django<5"]
+
+[project.scripts]
+build-docs = "local_hooks.build_docs:main"
+copyright-updates = "local_hooks.copyright_updates:main"
+generate-notice = "local_hooks.generate_notice:main"
+release-notes = "local_hooks.release_notes:main"
+static-tests = "local_hooks.static_tests:main"
+package_app_dependencies = "local_hooks.package_app_dependencies:main"
+
+[tool.setuptools]
+script-files = ["local_hooks/package_app_dependencies.sh"]

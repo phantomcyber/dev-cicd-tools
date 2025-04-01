@@ -1,36 +1,36 @@
 - id: build-docs
   name: build docs
   description: Builds and checks application documentation
-  entry: local-hooks/build_docs.py
+  entry: build-docs
   language: python
   pass_filenames: false
 - id: copyright
   name: update copyright headers
   description: Updates copyright headers for application files
-  entry: local-hooks/copyright.py
+  entry: copyright-updates
   language: python
   pass_filenames: false
 - id: package-app-dependencies
   name: package app dependencies
   description: Packages application dependencies
-  entry: local-hooks/package_app_dependencies.sh
-  language: script
+  entry: package_app_dependencies.sh
+  language: python
   files: '^requirements.txt$'
 - id: notice-file
   name: generate notice file
   description: Generates notice file based on app dependencies
-  entry: local-hooks/generate_notice.py
+  entry: generate_notice.sh
   language: python
   pass_filenames: false
 - id: release-notes
   name: update release notes
   description: Updates release notes for connector
   language: python
-  entry: local-hooks/release_notes.py
+  entry: release-notes
   pass_filenames: false
 - id: static-tests
   name: Run static tests
   description: Runs tests to validate app json, check code correctness, and detect security vulnerabilities
-  entry: local-hooks/static_tests.py
+  entry: static-tests
   language: python
   pass_filenames: false
