@@ -7,10 +7,3 @@ name = "local-hooks"
 version = "0.1.0"
 requires_python = "3.9"
 dependencies = ["jinja2", "mdformat", "jsonschema", "lxml", "django<5"]
-
-[project.scripts]
-build-docs = local-hooks.build_docs:main
-copyright-updates = local-hooks.copyright_updates:main
-generate-notice = local-hooks.generate_notice:main
-release-notes = local-hooks.release_notes:main
-static-tests: local-hooks.static_tests:main
