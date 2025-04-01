@@ -1,17 +1,11 @@
 import functools
+from pathlib import Path
 import re
-import inspect
 
 from traceback import format_exc
+from typing import Callable
 
 from app_tests.utils.app_parser import AppParser, ParserError
-from app_tests.utils.phantom_constants import (
-    SPLUNK_SUPPORTED,
-    DEVELOPER_SUPPORTED,
-)
-
-# Default tags for tests in all suites
-default_tags = [SPLUNK_SUPPORTED, DEVELOPER_SUPPORTED]
 
 
 class TestSuite:
@@ -22,28 +16,18 @@ class TestSuite:
     # Common method name prefixes for tests. Currently only used for tests' pretty names
     test_prefix = re.compile(r"^_?(check|phantom|test)_")
 
-    def __init__(self, app_repo_name, repo_location, **kwargs):
-        # Save args used for Robot suite conversion
-        self._kwargs = dict(kwargs)
-
-        self._app_repo_name = app_repo_name
+    def __init__(self, repo_location: Path):
         self._app_code_dir = repo_location
-
         self._parser = AppParser(self._app_code_dir)
         self._app_name = self._parser.app_json["name"].lower()
 
     @classmethod
-    def get_tests(cls, tags=None):
+    def get_tests(cls) -> list[Callable]:
         """
         Returns a list of test functions in this suite
         :return list of test functions in this suite
         """
-        if tags is None:
-            tags = []
-        all_tests = (getattr(cls, func) for func in dir(cls) if cls._is_test(func))
-        if tags:
-            return (test for test in all_tests if set(tags).intersection(test.tags))
-        return all_tests
+        return [getattr(cls, func) for func in dir(cls) if cls._is_test(func)]
 
     @classmethod
     def _is_test(cls, method):
@@ -58,25 +42,18 @@ class TestSuite:
             return False
 
     @staticmethod
-    def test(func=None, tags=None, critical=True, skip=False, remove_tags=None, fixable=False):
+    def test(func=None, critical=True, skip=False, fixable=False):
         """
         Decorator to tag a function in this class as a test
 
         :param function func: This decorator can be called with no arguments using this param
-        :param list tags: List of custom tags to add to this test case. Extends suite-level tags
         :param bool critical: Set to False for tests that should not fail Robot runs
         :param bool skip: Set to True for tests that are unstable or in development and should not be run
         """
-        if remove_tags is None:
-            remove_tags = []
-        if tags is None:
-            tags = []
         if func is None:
-            return functools.partial(
-                TestSuite.test, tags=tags, critical=critical, skip=skip, remove_tags=remove_tags
-            )
+            return functools.partial(TestSuite.test, critical=critical, skip=skip)
 
-        TestSuite._add_attrs_to_test(func, tags, critical, skip, remove_tags)
+        TestSuite._add_attrs_to_test(func, critical, skip)
 
         @functools.wraps(func)
         def decorator(*args, **kwargs):
@@ -110,42 +87,11 @@ class TestSuite:
         return decorator
 
     @staticmethod
-    def _add_attrs_to_test(func, tags, critical, skip, remove_tags):
+    def _add_attrs_to_test(func, critical, skip):
         func._is_test = True
         func.skip = skip
         func.critical = critical
         func.pretty_name = TestSuite.test_prefix.sub("", func.__name__)
 
-        # Handle all the tags for this test. Start with custom tags
-        func.tags = set(tag.lower() for tag in tags)
-
-        # Union with module's default tags if present, else TestSuite's default tags
-        module = inspect.getmodule(func)
-        try:
-            add_tags = module.default_tags
-        except AttributeError:
-            add_tags = default_tags
-        finally:
-            func.tags |= set(tag.lower() for tag in add_tags)
-
-        # Pull test type from module docstring if present and add it as a tag
-        try:
-            test_type = re.search(r"Test Type: (\w+)", module.__doc__).group(1)
-        except Exception:
-            pass
-        else:
-            func.tags.add(test_type.lower())
-
-        # Tag for non-criticality
-        if not func.critical:
-            func.tags.add("noncritical")
-
-        # Tag for skipping. Also, if skip, expand remove_tags to be essentially everything
         if func.skip:
-            func.tags.add("skipped")
-            # Have to create a new object here because Python reuses the memory address for remove_tags...
-            remove_tags = list(set(remove_tags) | {SPLUNK_SUPPORTED, DEVELOPER_SUPPORTED})
-            func.__doc__ = "TEST SKIPPED. " + func.__doc__.strip()
-
-        # Remove any tags found in remove_tags
-        func.tags -= set(tag.lower() for tag in remove_tags)
+            func.__doc__ = f"TEST SKIPPED. {func.__doc__.strip()}"

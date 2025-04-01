@@ -6,7 +6,6 @@ from jsonschema import exceptions
 from jsonschema.validators import Draft202012Validator as JsonSchemaValidator
 from app_tests.utils import create_test_result_response
 from app_tests.utils.phantom_constants import (
-    SPLUNK_SUPPORTED,
     TEST_PASS_MESSAGE,
     CURRENT_MIN_PHANTOM_VERSION,
     APPID_TO_NAME_FILEPATH,
@@ -80,17 +79,6 @@ class JSONTests(TestSuite):
             verbose=verbose,
         )
 
-    @TestSuite.test(remove_tags=[SPLUNK_SUPPORTED])
-    def check_communitiy_publisher(self):
-        """
-        Verifies the value of 'publisher' in the app JSON for developer supported apps.
-        """
-        if self._app_json.get("publisher") == "Splunk":
-            failure_message = "Publisher in app JSON should be 'Splunk Community' or third party."
-            return create_test_result_response(success=False, message=failure_message)
-
-        return create_test_result_response(success=True)
-
     @TestSuite.test
     def check_sequential_order(self):
         """
@@ -157,7 +145,7 @@ class JSONTests(TestSuite):
             verbose=verbose,
         )
 
-    @TestSuite.test(tags=["pre-release"])
+    @TestSuite.test
     def check_main_module(self):
         """
         Verifies that the main module field of the json is a valid connector filename
@@ -246,7 +234,7 @@ class JSONTests(TestSuite):
             success=not message, message=TEST_PASS_MESSAGE if not message else message
         )
 
-    @TestSuite.test(tags=["pre-release"])
+    @TestSuite.test
     def check_app_package_name(self):
         """
         Package name is unique

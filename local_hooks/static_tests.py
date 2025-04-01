@@ -1,10 +1,10 @@
 import argparse
+import dataclasses
 import json
+from pathlib import Path
 import time
-from app_tests.utils.phantom_constants import (
-    SPLUNK_SUPPORTED,
-    DEVELOPER_SUPPORTED,
-)
+from typing import Optional
+from collections.abc import Iterable
 from app_tests import get_test_suites, iterate_all_tests
 
 
@@ -13,23 +13,13 @@ class TestRunner:
     Controller for app testing. Handles selecting and running tests, formatting output, and commiting fixes and db updates
     """
 
-    def __init__(self, app_repo_name, **kwargs):
-        # Splunk-supported Test Options
+    def __init__(self, *, app_directory: Path, tests: Optional[Iterable[str]] = None):
         self.test_run_time = int(time.time())
 
         # General Test Options
-        self.mode = kwargs.pop("mode")
-        self._app_directory = kwargs.pop("app_directory")
-        self._app_name = app_repo_name
-        self._app_repo_name = app_repo_name
-        self._tags = kwargs.pop("tags", [])
-        self._test_options = kwargs.pop("tests", None)
+        self._app_directory = app_directory
+        self._test_options = set(tests) if tests else None
         self.results = {}
-
-        # Adding 'mode' parameter in the suite arguments to identify the mode and manage the test on the basis of mode
-        self._suite_args = {
-            "mode": self.mode,
-        }
 
     def log_result(self, test_name, result, console=True):
         self.results[test_name] = result
@@ -45,37 +35,22 @@ class TestRunner:
             message = "{} - {:<30}: {}".format(success, test_name, result.get("message", ""))
             print(message)
 
-    def _run_test_from_name(self, local_repo_location, method_name):
-        """
-        Looks for the location of a method using its name and runs the test
-        :param basestring method_name:
-        :return dict test_results:
-        """
-        for suite in self._get_suites(local_repo_location):
-            for test in suite.get_tests(self._tags):
-                if test.pretty_name == method_name:
-                    return test(suite)
-        raise AttributeError(f"Could not find method {method_name} anywhere!")
-
     def _get_suites(self, local_repo_location):
         for suite_cls in get_test_suites():
-            yield suite_cls(self._app_name, local_repo_location, **self._suite_args)
+            yield suite_cls(local_repo_location)
 
-    def _run_tests(self, local_repo_location):
-        # Run all tests that match our test tags
-        if not self._test_options:
-            # Old-style output
-            for suite in self._get_suites(local_repo_location):
-                for idx, test in enumerate(suite.get_tests(self._tags)):
-                    if idx == 0:
-                        print("{0}\n{1:^55}\n{0}".format("-" * 55, suite.__class__.__name__))
-                    return_dict = test(suite)
-                    self.log_result(test.pretty_name, return_dict)
+    def _run_tests(self, local_repo_location: Path) -> int:
+        # Run all tests that match our test options
+        for suite in self._get_suites(local_repo_location):
+            for idx, test in enumerate(suite.get_tests()):
+                if idx == 0:
+                    print("{0}\n{1:^55}\n{0}".format("-" * 55, suite.__class__.__name__))
 
-        else:
-            for test_name in self._test_options:
-                return_dict = self._run_test_from_name(local_repo_location, test_name)
-                self.log_result(test_name, return_dict)
+                if self._test_options and test.pretty_name not in self._test_options:
+                    continue
+
+                return_dict = test(suite)
+                self.log_result(test.pretty_name, return_dict)
 
         exit_code = 0
         for _, result in self.results.items():
@@ -84,14 +59,11 @@ class TestRunner:
 
         return exit_code
 
-    def run(self):
+    def run(self) -> tuple[int, dict]:
         exit_code = self._run_tests(self._app_directory)
 
-        # Auto-raise the merge request based on exit_code returned from the test runs
-        # and the flag auto_merge_request if set True
-
         metadata = {
-            "app_name": self._app_name,
+            "app_name": self._app_directory.name,
             "num_passed": 0,
             "num_failed": 0,
             "num_noncrit_failed": 0,
@@ -110,84 +82,38 @@ class TestRunner:
         return exit_code, self.results
 
 
-def create_cmdline_parser(add_help=True):
+@dataclasses.dataclass
+class StaticTestArgs:
+    app_directory: Path
+    tests: list[str] = dataclasses.field(default_factory=list)
+
+
+def parse_args(add_help: bool = True) -> StaticTestArgs:
     parser = argparse.ArgumentParser(
         description="Tests apps according to QA App Testing Template",
         add_help=add_help,
     )
 
-    subparsers = parser.add_subparsers(
-        title="Sub Commands",
-        description='Type of app under test. Ex: "python test_app.py phantom [options]"',
-        help='Help for each command can be viewed with "python test_app.py [COMMAND] --help"',
-    )
+    parser.add_argument("app_directory", type=Path, help="Location for app under test", default=".")
 
-    parser.add_argument("--debug", action="store_true", help=argparse.SUPPRESS)
-
-    # Splunk supported command options
-    splunk_supported_cmd = subparsers.add_parser(
-        SPLUNK_SUPPORTED, help="Use this command when testing a Splunk-supported app"
-    )
-    splunk_supported_cmd.set_defaults(mode=SPLUNK_SUPPORTED, func=run_tests)
-
-    _add_common_opts(splunk_supported_cmd, SPLUNK_SUPPORTED)
-
-    # Developer supported command options
-    dev_supported_cmd = subparsers.add_parser(
-        DEVELOPER_SUPPORTED, help="Use this command when testing a Developer-supported app"
-    )
-    dev_supported_cmd.set_defaults(mode=DEVELOPER_SUPPORTED, func=run_tests)
-
-    _add_common_opts(dev_supported_cmd, DEVELOPER_SUPPORTED)
-
-    return parser
-
-
-def _add_common_opts(cmd_parser, tag):
-    cmd_parser.add_argument("app_directory", type=str, help="Location for app under test")
-
-    cmd_parser.add_argument(
-        "--app-repo-name", help="Name of the app repository being tested", required=True
-    )
-
-    cmd_parser.add_argument(
-        "--test-tags",
-        dest="tags",
-        default=[tag],
-        nargs="+",
-        help=f'Test tags to run. Default is "{tag}"',
-    )
-
-    cmd_parser.add_argument(
-        "--allow-all-failures",
-        action="store_true",
-        help=(
-            "Pass this flag to make the script give a zero exit code if all tests ran, and a "
-            "non-zero exit code only in the case of uncaught exceptions (catastrophic failure)"
-        ),
-    )
-
-    group = cmd_parser.add_argument_group(
+    group = parser.add_argument_group(
         title="Test Options",
         description="Instead of running all tests, provide flags for test you want to run with flags below",
     )
-    for test in iterate_all_tests(tags=[tag]):
+    for test in iterate_all_tests():
         group.add_argument(
             f"--{test.pretty_name}",
             dest="tests",
             action="append_const",
             const=test.pretty_name,
-            help=test.__doc__.strip(),
+            help=(test.__doc__ or "").strip(),
         )
 
+    args = StaticTestArgs(**vars(parser.parse_args()))
+    if not args.app_directory.is_dir():
+        parser.error(f"App directory {args.app_directory} does not exist or is not a directory")
 
-def run_tests(options):
-    app_name = options["app_repo_name"]
-    print("Testing {} app: {}".format(options.get("mode"), app_name))
-
-    exit_code, results = TestRunner(**options).run()
-
-    return (0 if options["allow_all_failures"] else exit_code), results
+    return args
 
 
 def process_test_results(results):
@@ -214,14 +140,8 @@ def process_test_results(results):
 
 
 def main():
-    options = vars(create_cmdline_parser().parse_args())
-
-    if options["debug"]:
-        import pudb
-
-        pudb.set_trace()
-
-    exit_code, result = options.pop("func")(options)
+    args = parse_args()
+    exit_code, result = TestRunner(**dataclasses.asdict(args)).run()
 
     print_result = process_test_results(result)
     print(json.dumps(print_result, indent=4, sort_keys=True))

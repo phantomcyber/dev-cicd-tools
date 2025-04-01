@@ -281,7 +281,7 @@ class CodeTests(TestSuite):
             verbose=[param for param in context_visitor.unsafe_get_list],
         )
 
-    @TestSuite.test(tags=["pre-release"])
+    @TestSuite.test
     def check_light_and_dark_theme_logos(self):
         """
         Validates logos. Verifies both light and dark logos are valid SVG files
