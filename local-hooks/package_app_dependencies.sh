@@ -16,32 +16,16 @@ if ! jq --help &>/dev/null; then
 	exit 1
 fi
 
-app_json="$(find ./*.json ! -name '*.postman_collection.json' | head -n 1)"
-app_py_version="$(jq .python_version "$app_json")"
-if [[ $app_py_version == 'null' ]]; then
-	app_py_version='"2.7"'
-fi
-
-if [[ $app_py_version == '"2.7"' ]]; then
-	echo "Python 2 is no longer supported"
-	exit 1
-fi
-
-pip3_dependencies="$(jq .pip3_dependencies "$app_json")"
-if [[ $pip3_dependencies == 'null' ]]; then
-	pip3_dependencies_key='pip_dependencies'
-else
-	pip3_dependencies_key='pip3_dependencies'
-fi
-
 pip39_dependencies_key='pip39_dependencies'
+pip313_dependencies_key='pip313_dependencies'
 
 if [ "$IN_DOCKER" = true ]; then
 	/opt/python/cp39-cp39/bin/pip install pip-tools
 	/opt/python/cp39-cp39/bin/python "$SCRIPT_DIR"/package_app_dependencies.py \
-		. "/opt/python/cp39-cp39/bin/pip" "$pip3_dependencies_key" --repair_wheels
-	/opt/python/cp39-cp39/bin/python "$SCRIPT_DIR"/package_app_dependencies.py \
 		. "/opt/python/cp39-cp39/bin/pip" "$pip39_dependencies_key" --repair_wheels
+	/opt/python/cp313-cp313/bin/pip install pip-tools
+	/opt/python/cp313-cp313/bin/python "$SCRIPT_DIR"/package_app_dependencies.py \
+		. "/opt/python/cp313-cp313/bin/pip" "$pip313_dependencies_key" --repair_wheels
 	exit $?
 fi
 
@@ -75,9 +59,9 @@ function prepare_docker_image() {
 function package_py3_app_dependencies() {
 	PYTHON_VERSION_STRING=$1
 	PIP_DEPENDENCIES_KEY=$2
-	docker run --rm -v "$APP_DIR":/src -v "$SCRIPT_DIR":/pre-commit/ -w "$SCRIPT_DIR" \
+	docker run --rm -v "$APP_DIR":/src -v "$SCRIPT_DIR":/local-hooks/ -w "$SCRIPT_DIR" \
 		"$IMAGE" /bin/bash -c \
-		"/opt/python/cp39-cp39/bin/python /pre-commit/package_app_dependencies.py \
+		"/opt/python/cp313-cp313/bin/python /local-hooks/package_app_dependencies.py \
      /src /opt/python/$PYTHON_VERSION_STRING/bin/pip $PIP_DEPENDENCIES_KEY --repair_wheels"
 }
 
@@ -87,5 +71,5 @@ if ! docker info &>/dev/null; then
 fi
 
 prepare_docker_image
-package_py3_app_dependencies 'cp36-cp36m' $pip3_dependencies_key
+package_py3_app_dependencies 'cp313-cp313m' $pip313_dependencies_key
 package_py3_app_dependencies 'cp39-cp39' $pip39_dependencies_key

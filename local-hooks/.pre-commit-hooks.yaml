@@ -1,14 +1,14 @@
 - id: build-docs
   name: build docs
   description: Builds and checks application documentation
-  entry: pre-commit/build_docs.sh
-  language: script
+  entry: pre-commit/build_docs.py
+  language: python
   pass_filenames: false
 - id: copyright
   name: update copyright headers
   description: Updates copyright headers for application files
-  entry: pre-commit/copyright.sh
-  language: script
+  entry: pre-commit/copyright.py
+  language: python
   pass_filenames: false
 - id: package-app-dependencies
   name: package app dependencies
@@ -19,18 +19,18 @@
 - id: notice-file
   name: generate notice file
   description: Generates notice file based on app dependencies
-  entry: pre-commit/generate_notice.sh
-  language: script
+  entry: pre-commit/generate_notice.py
+  language: python
   pass_filenames: false
 - id: release-notes
   name: update release notes
   description: Updates release notes for connector
-  language: script
-  entry: pre-commit/release_notes.sh
+  language: python
+  entry: pre-commit/release_notes.py
   pass_filenames: false
 - id: static-tests
   name: Run static tests
   description: Runs tests to validate app json, check code correctness, and detect security vulnerabilities
-  entry: pre-commit/static_tests.sh
-  language: script
+  entry: pre-commit/static_tests.py
+  language: python
   pass_filenames: false

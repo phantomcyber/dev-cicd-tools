@@ -52,6 +52,8 @@ repos:
     rev: main
     hooks:
       - id: build-docs
+        language: python
+        additional_dependencies: ["./local-hooks", "jinja2, "]
       - id: copyright
       - id: package-app-dependencies
       - id: notice-file

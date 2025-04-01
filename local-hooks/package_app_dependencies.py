@@ -61,8 +61,7 @@ class PipDependency(Enum):
     Pip dependency keys in app JSON.
     """
 
-    ANY = "pip_dependencies"
-    PYTHON3 = "pip3_dependencies"
+    PYTHON3_13 = "pip313_dependencies"
     PYTHON3_9 = "pip39_dependencies"
 
 
@@ -74,10 +73,8 @@ class CPythonTag(Enum):
     NOTE: Definition order matters!
     """
 
-    PY2_PY3 = ("py2.py3", r"py2\.py3", "shared")
     PY39 = ("py39", r"cp39")
-    PY36 = ("py36", r"cp36")
-    PY3 = ("py3", r"cp3\d{0,2}")
+    PY313 = ("py313", r"cp313")
 
     def __init__(self, tag, pattern, wheels_dir=None):
         self._tag = tag
@@ -243,7 +240,7 @@ def _copy_new_wheels(new_wheels, new_wheels_dir, app_dir):
                 os.path.dirname(new_wheel_paths[-1]),
             )
 
-    # Make sure to write the new wheels under appropriate wheels/(py3|py36|py39|shared) sub paths
+    # Make sure to write the new wheels under appropriate wheels/(py39|py313) sub paths
     for path in iter(cp_tag.wheels_dir for cp_tag in CPythonTag):
         pathlib.Path(os.path.join(app_dir, "wheels", path)).mkdir(parents=True, exist_ok=True)
 
