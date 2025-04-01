@@ -5,5 +5,4 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "local-hooks"
 version = "0.1.0"
-requires_python = "3.9"
 dependencies = ["jinja2", "mdformat", "jsonschema", "lxml", "django<5"]
