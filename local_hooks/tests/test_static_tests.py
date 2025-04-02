@@ -36,7 +36,7 @@ def test_static_tests(app_dir: Path):
     expected_files = ["statictests.json", "__init__.py"]
 
     result = subprocess.run(
-        ["static-tests"],
+        ["static-tests", "."],
         cwd=app_dir,
         capture_output=True,
     )

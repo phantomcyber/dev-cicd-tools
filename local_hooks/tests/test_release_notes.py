@@ -33,7 +33,7 @@ def app_dir(request: pytest.FixtureRequest) -> Path:
 )
 def test_release_notes_passing(app_dir: Path):
     result = subprocess.run(
-        ["python", os.path.join(PRE_COMMIT_DIR, "release_notes.py")],
+        ["release-notes", "."],
         cwd=app_dir,
         capture_output=True,
     )
