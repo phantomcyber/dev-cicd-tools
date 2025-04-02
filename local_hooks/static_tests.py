@@ -7,10 +7,10 @@ from typing import Optional, TYPE_CHECKING
 from collections.abc import Iterator
 from collections.abc import Iterable
 
-from .app_tests import get_test_suites, iterate_all_tests
+from local_hooks.app_tests import get_test_suites, iterate_all_tests
 
 if TYPE_CHECKING:
-    from .app_tests.test_suite import TestSuite
+    from local_hooks.app_tests.test_suite import TestSuite
 
 
 class TestRunner:

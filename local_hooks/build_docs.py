@@ -19,7 +19,7 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from jinja2.ext import Extension
 from jinja2.lexer import Token, TokenStream
 
-from .build_docs_lib import get_app_json, generate_gh_fragment
+from local_hooks.build_docs_lib import get_app_json, generate_gh_fragment
 
 SCRIPT_DIR = Path(__file__).parent.resolve()
 TEMPLATE_DIR = SCRIPT_DIR / "templates"
