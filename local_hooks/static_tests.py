@@ -3,9 +3,14 @@ import dataclasses
 import json
 from pathlib import Path
 import time
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
+from collections.abc import Iterator
 from collections.abc import Iterable
-from app_tests import get_test_suites, iterate_all_tests
+
+from .app_tests import get_test_suites, iterate_all_tests
+
+if TYPE_CHECKING:
+    from .app_tests.test_suite import TestSuite
 
 
 class TestRunner:
@@ -35,7 +40,7 @@ class TestRunner:
             message = "{} - {:<30}: {}".format(success, test_name, result.get("message", ""))
             print(message)
 
-    def _get_suites(self, local_repo_location):
+    def _get_suites(self, local_repo_location: Path) -> Iterator["TestSuite"]:
         for suite_cls in get_test_suites():
             yield suite_cls(local_repo_location)
 
@@ -110,6 +115,7 @@ def parse_args(add_help: bool = True) -> StaticTestArgs:
         )
 
     args = StaticTestArgs(**vars(parser.parse_args()))
+    args.app_directory = args.app_directory.resolve()
     if not args.app_directory.is_dir():
         parser.error(f"App directory {args.app_directory} does not exist or is not a directory")
 

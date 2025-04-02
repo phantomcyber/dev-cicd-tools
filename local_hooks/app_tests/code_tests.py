@@ -1,12 +1,12 @@
 import ast
-from app_tests.test_suite import TestSuite
+from .test_suite import TestSuite
 import os
 import glob
 import traceback
-from app_tests.utils.phantom_constants import (
+from .utils.phantom_constants import (
     TEST_PASS_MESSAGE,
 )
-from app_tests.utils import create_test_result_response
+from .utils import create_test_result_response
 import re
 from lxml import etree
 from pathlib import Path
@@ -193,8 +193,8 @@ class ContextVisitor(ast.NodeVisitor):
 
 
 class CodeTests(TestSuite):
-    def __init__(self, app_repo_name, repo_location, **kwargs):
-        super().__init__(app_repo_name, repo_location, **kwargs)
+    def __init__(self, repo_location: Path) -> None:
+        super().__init__(repo_location)
         self._app_consts_fp = (glob.glob(os.path.join(self._app_code_dir, "*consts.py")) or [""])[0]
         self._app_connector_fp = self._parser.connector_filepath
 

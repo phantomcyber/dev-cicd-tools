@@ -1,11 +1,11 @@
-from app_tests.test_suite import TestSuite
+from .test_suite import TestSuite
 import json
 import textwrap
 from typing import Any
 from jsonschema import exceptions
 from jsonschema.validators import Draft202012Validator as JsonSchemaValidator
-from app_tests.utils import create_test_result_response
-from app_tests.utils.phantom_constants import (
+from .utils import create_test_result_response
+from .utils.phantom_constants import (
     TEST_PASS_MESSAGE,
     CURRENT_MIN_PHANTOM_VERSION,
     APPID_TO_NAME_FILEPATH,
@@ -20,8 +20,8 @@ from pathlib import Path
 
 
 class JSONTests(TestSuite):
-    def __init__(self, app_repo_name, repo_location, **kwargs):
-        super().__init__(app_repo_name, repo_location, **kwargs)
+    def __init__(self, repo_location: Path) -> None:
+        super().__init__(repo_location)
         self._app_json = self._parser.app_json
 
         self._app_is_certified = self._parser.app_json["publisher"] == "Splunk"

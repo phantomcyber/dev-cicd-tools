@@ -5,9 +5,7 @@ import re
 
 from distutils.version import LooseVersion
 
-from app_tests.utils.phantom_constants import (
-    APP_EXTS,
-)
+from .phantom_constants import APP_EXTS
 from functools import cached_property
 from pathlib import Path
 
@@ -17,14 +15,13 @@ class ParserError(Exception):
 
 
 class AppParser:
-    def __init__(self, local_repo_location):
+    def __init__(self, local_repo_location: Path) -> None:
         self._app_code_dir = local_repo_location
 
     @cached_property
     def excludes(self):
         try:
-            with open(os.path.join(self._app_code_dir, "exclude_files.txt")) as f:
-                lines = f.readlines()
+            lines = (self._app_code_dir / "exclude_files.txt").read_text().splitlines()
             return set(line.strip() for line in lines)
         except OSError:
             return set()
@@ -105,7 +102,7 @@ class AppParser:
 
     @property
     def _app_json_filepath(self) -> Path:
-        return Path(self._app_code_dir) / self.app_json_name
+        return self._app_code_dir / self.app_json_name
 
     @cached_property
     def app_json(self):
@@ -150,7 +147,7 @@ class AppParser:
             return os.path.join(self._app_code_dir, connector_filename)
 
         raise ParserError(
-            f'Expected to find connector file "{connector_filename}", but was not found in app files'
+            f'Expected to find connector file "{connector_filename}", but was not found in {self._app_code_dir}'
         )
 
     def _get_from_json(self, key):

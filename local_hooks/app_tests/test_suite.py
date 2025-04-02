@@ -5,7 +5,7 @@ import re
 from traceback import format_exc
 from typing import Callable
 
-from app_tests.utils.app_parser import AppParser, ParserError
+from .utils.app_parser import AppParser, ParserError
 
 
 class TestSuite:
@@ -16,7 +16,7 @@ class TestSuite:
     # Common method name prefixes for tests. Currently only used for tests' pretty names
     test_prefix = re.compile(r"^_?(check|phantom|test)_")
 
-    def __init__(self, repo_location: Path):
+    def __init__(self, repo_location: Path) -> None:
         self._app_code_dir = repo_location
         self._parser = AppParser(self._app_code_dir)
         self._app_name = self._parser.app_json["name"].lower()

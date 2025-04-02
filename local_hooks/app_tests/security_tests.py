@@ -1,13 +1,14 @@
-from app_tests.test_suite import TestSuite
+from pathlib import Path
+from .test_suite import TestSuite
 import re
-from app_tests.utils.phantom_constants import XSS_INJECTIONS, TEST_PASS_MESSAGE
-from app_tests.utils.django_renderer import render_template
-from app_tests.utils import create_test_result_response
+from .utils.phantom_constants import XSS_INJECTIONS, TEST_PASS_MESSAGE
+from .utils.django_renderer import render_template
+from .utils import create_test_result_response
 
 
 class SecurityTests(TestSuite):
-    def __init__(self, app_repo_name, repo_location, **kwargs):
-        super().__init__(app_repo_name, repo_location, **kwargs)
+    def __init__(self, repo_location: Path) -> None:
+        super().__init__(repo_location)
 
     @TestSuite.test
     def check_xss_custom_views(self):
