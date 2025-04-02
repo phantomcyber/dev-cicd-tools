@@ -58,6 +58,8 @@ repos:
         language: python
         additional_dependencies: ["local-hooks"]
       - id: package-app-dependencies
+        language: python
+        additional_dependencies: ["local-hooks"]
       - id: notice-file
         language: python
         additional_dependencies: ["local-hooks"]
