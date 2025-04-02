@@ -8,3 +8,8 @@ pyparsing==2.4.7
 pytest==6.2.4
 toml==0.10.2
 jsonschema
+jinja2
+mdformat
+jsonschema
+lxml
+django<5

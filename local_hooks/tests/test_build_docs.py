@@ -73,7 +73,7 @@ def test_build_docs(app_dir: Path, expected_new_files: list[str]):
 
     # README updates should be idempotent
     result = subprocess.run(
-        [os.path.join(PRE_COMMIT_DIR, "build_docs.sh")],
+        ["python", os.path.join(PRE_COMMIT_DIR, "build_docs.py")],
         cwd=app_dir,
         capture_output=True,
     )
