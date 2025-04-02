@@ -19,7 +19,7 @@
 - id: notice-file
   name: generate notice file
   description: Generates notice file based on app dependencies
-  entry: generate_notice.sh
+  entry: generate_notice.py
   language: python
   pass_filenames: false
 - id: release-notes
