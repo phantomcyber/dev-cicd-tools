@@ -9,7 +9,6 @@ from dataclasses import dataclass
 from typing import Optional
 import glob
 
-# We need base license files to track everything intractable to gather automatically.
 THIS_DIRECTORY = os.path.dirname(os.path.realpath(__file__))
 NOTICE_FILE_PATH = f"{THIS_DIRECTORY}/NOTICE"
 
@@ -209,9 +208,9 @@ def main():
         f.write(f"Splunk SOAR App: {app_name}\n{app_license}\n")
 
         # Get all python package dependencies
-        valid_packages = get_package_dependencies()
+        packages = get_package_dependencies()
         valid_packages = [
-            package for package in valid_packages if package not in EXCLUDED_PYTHON_PACKAGES
+            package for package in packages if package not in EXCLUDED_PYTHON_PACKAGES
         ]
         if valid_packages:
             f.write("Third Party Software Attributions:\n")
