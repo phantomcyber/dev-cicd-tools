@@ -61,6 +61,8 @@ class PipDependency(Enum):
     Pip dependency keys in app JSON.
     """
 
+    ANY = "pip_dependencies"
+    PYTHON3 = "pip3_dependencies"
     PYTHON3_13 = "pip313_dependencies"
     PYTHON3_9 = "pip39_dependencies"
 
