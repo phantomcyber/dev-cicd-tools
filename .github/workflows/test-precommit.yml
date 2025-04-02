@@ -16,7 +16,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r pre-commit/dev-requirements.txt
-          cd local_hooks
           pip install .
       - name: Run Tests
         working-directory: local_hooks
