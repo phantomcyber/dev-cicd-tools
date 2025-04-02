@@ -43,7 +43,7 @@ def test_build_docs(app_dir: Path, expected_new_files: list[str]):
     expected_readme = app_dir / "expected_readme.md"
 
     result = subprocess.run(
-        ["build_docs"],
+        ["build-docs", "."],
         cwd=app_dir,
         capture_output=True,
     )
@@ -73,7 +73,7 @@ def test_build_docs(app_dir: Path, expected_new_files: list[str]):
 
     # README updates should be idempotent
     result = subprocess.run(
-        ["build_docs"],
+        ["build-docs", "."],
         cwd=app_dir,
         capture_output=True,
     )

@@ -51,7 +51,7 @@ def test_release_notes_failing(app_dir: Path):
     expected_file = "release_notes/unreleased.md"
 
     result = subprocess.run(
-        ["release_notes"],
+        ["release_notes", "."],
         cwd=app_dir,
         capture_output=True,
     )

@@ -13,3 +13,4 @@ mdformat
 jsonschema
 lxml
 django<5
+jsondiff
