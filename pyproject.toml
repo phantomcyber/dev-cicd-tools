@@ -13,10 +13,6 @@ copyright-updates = "local_hooks.copyright_updates:main"
 generate-notice = "local_hooks.generate_notice:main"
 release-notes = "local_hooks.release_notes:main"
 static-tests = "local_hooks.static_tests:main"
-package_app_dependencies = "local_hooks.package_app_dependencies:main"
 
 [tool.setuptools]
-packages = ["local_hooks"]
-
-[tool.setuptools.package-data]
-local_hooks = ["scripts/*.sh"]
+script-files = ["local_hooks/package_app_dependencies.sh"]
