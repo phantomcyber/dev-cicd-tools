@@ -57,6 +57,7 @@ def test_app_with_pip_dependencies(flags, app_dir):
         cwd=app_dir,
         capture_output=True,
     )
+    print(result.stdout.decode())
     print(result.stderr.decode())
     assert result.returncode == 0
 
