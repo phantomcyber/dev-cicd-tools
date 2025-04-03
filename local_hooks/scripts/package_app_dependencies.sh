@@ -2,7 +2,7 @@
 set -euo pipefail
 
 APP_DIR=$(pwd)
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." &>/dev/null && pwd)"
 
 IN_DOCKER=false
 
@@ -24,12 +24,12 @@ pip313_dependencies_key='pip313_dependencies'
 
 if [ "$IN_DOCKER" = true ]; then
 	/opt/python/cp39-cp39/bin/pip install pip-tools
-	/opt/python/cp39-cp39/bin/python "$SCRIPT_DIR"/../package_app_dependencies.py \
+	/opt/python/cp39-cp39/bin/python "$SCRIPT_DIR"/package_app_dependencies.py \
 		. "/opt/python/cp39-cp39/bin/pip" "$pip3_dependencies_key" --repair_wheels
-	/opt/python/cp39-cp39/bin/python "$SCRIPT_DIR"/../package_app_dependencies.py \
+	/opt/python/cp39-cp39/bin/python "$SCRIPT_DIR"/package_app_dependencies.py \
 		. "/opt/python/cp39-cp39/bin/pip" "$pip39_dependencies_key" --repair_wheels
 	/opt/python/cp313-cp313/bin/pip install pip-tools
-	/opt/python/cp313-cp313/bin/python "$SCRIPT_DIR"/../package_app_dependencies.py \
+	/opt/python/cp313-cp313/bin/python "$SCRIPT_DIR"/package_app_dependencies.py \
 		. "/opt/python/cp313-cp313/bin/pip" "$pip313_dependencies_key" --repair_wheels
 	exit $?
 fi
@@ -66,7 +66,7 @@ function package_py3_app_dependencies() {
 	PIP_DEPENDENCIES_KEY=$2
 	docker run --rm -v "$APP_DIR":/src -v "$SCRIPT_DIR":/local-hooks -w "$SCRIPT_DIR" \
 		"$IMAGE" /bin/bash -c \
-		"/opt/python/cp39-cp39/bin/python $SCRIPT_DIR/../package_app_dependencies.py \
+		"/opt/python/cp39-cp39/bin/python $SCRIPT_DIR/package_app_dependencies.py \
      /src /opt/python/$PYTHON_VERSION_STRING/bin/pip $PIP_DEPENDENCIES_KEY --repair_wheels"
 }
 
@@ -75,7 +75,7 @@ function package_py39_app_dependencies() {
 	PIP_DEPENDENCIES_KEY=$2
 	docker run --rm -v "$APP_DIR":/src -v "$SCRIPT_DIR":/local-hooks -w "$SCRIPT_DIR" \
 		"$IMAGE" /bin/bash -c \
-		"/opt/python/cp39-cp39/bin/python $SCRIPT_DIR/../package_app_dependencies.py \
+		"/opt/python/cp39-cp39/bin/python $SCRIPT_DIR/package_app_dependencies.py \
      /src /opt/python/$PYTHON_VERSION_STRING/bin/pip $PIP_DEPENDENCIES_KEY --repair_wheels"
 }
 
@@ -84,7 +84,7 @@ function package_py313_app_dependencies() {
 	PIP_DEPENDENCIES_KEY=$2
 	docker run --rm -v "$APP_DIR":/src -v "$SCRIPT_DIR":/local-hooks -w "$SCRIPT_DIR" \
 		"$IMAGE" /bin/bash -c \
-		"/opt/python/cp313-cp313/bin/python $SCRIPT_DIR/../package_app_dependencies.py \
+		"/opt/python/cp313-cp313/bin/python $SCRIPT_DIR/package_app_dependencies.py \
      /src /opt/python/$PYTHON_VERSION_STRING/bin/pip $PIP_DEPENDENCIES_KEY --repair_wheels"
 }
 
