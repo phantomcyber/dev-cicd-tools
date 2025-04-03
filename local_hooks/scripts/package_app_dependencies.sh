@@ -24,14 +24,12 @@ pip313_dependencies_key='pip313_dependencies'
 
 if [ "$IN_DOCKER" = true ]; then
 	/opt/python/cp39-cp39/bin/pip install pip-tools
-	cd "$SCRIPT_DIR"
-	ls -lath
-	/opt/python/cp39-cp39/bin/python "$SCRIPT_DIR"/package_app_dependencies.py \
+	package_app_dependencies \
 		. "/opt/python/cp39-cp39/bin/pip" "$pip3_dependencies_key" --repair_wheels
-	/opt/python/cp39-cp39/bin/python "$SCRIPT_DIR"/package_app_dependencies.py \
+	package_app_dependencies \
 		. "/opt/python/cp39-cp39/bin/pip" "$pip39_dependencies_key" --repair_wheels
 	/opt/python/cp313-cp313/bin/pip install pip-tools
-	/opt/python/cp313-cp313/bin/python "$SCRIPT_DIR"/package_app_dependencies.py \
+	package_app_dependencies \
 		. "/opt/python/cp313-cp313/bin/pip" "$pip313_dependencies_key" --repair_wheels
 	exit $?
 fi
