@@ -10,7 +10,6 @@ a manylinux2014_x86_64 container https://github.com/pypa/manylinux
 import argparse
 import itertools
 import json
-import logging
 import os
 import pathlib
 import random
@@ -21,6 +20,15 @@ import subprocess
 import sys
 from collections import namedtuple
 from enum import Enum, unique
+
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="{levelname:8} - {message}",
+    style="{",
+)
+logger = logging.getLogger()
 
 PLATFORM = "manylinux_2_28_x86_64"
 REPAIRED_WHEELS_REL_PATH = "repaired-wheels"
@@ -112,7 +120,7 @@ def _load_app_json(app_dir):
 
     if len(json_files) != 1:
         error_msg = f"Expected a single json file in {app_dir} but got {json_files}"
-        logging.error(error_msg)
+        logger.error(error_msg)
         raise ValueError(error_msg)
 
     with open(os.path.join(app_dir, json_files[0])) as f:
@@ -129,7 +137,7 @@ def _repair_wheels(wheels_to_check, all_wheels, wheels_dir):
     https://github.com/pypa/auditwheel
     """
     if subprocess.run(["auditwheel", "-V"]).returncode != 0:
-        logging.warning(
+        logger.warning(
             "auditwheel is not installed or is not supported on the given platform. "
             "Skipping wheel repairs."
         )
@@ -138,16 +146,16 @@ def _repair_wheels(wheels_to_check, all_wheels, wheels_dir):
     repaired_wheels_dir = os.path.join(wheels_dir, REPAIRED_WHEELS_REL_PATH)
 
     for whl in wheels_to_check:
-        logging.info("Checking %s", whl)
+        logger.info("Checking %s", whl)
         whl_path = os.path.join(wheels_dir, whl.file_name)
         if subprocess.run(["auditwheel", "show", whl_path]).returncode != 0:
-            logging.info("Skipping non-platform wheel %s", whl)
+            logger.info("Skipping non-platform wheel %s", whl)
         else:
             repair_result = subprocess.run(
                 ["auditwheel", "repair", whl_path, "--plat", PLATFORM, "-w", repaired_wheels_dir]
             )
             if repair_result.returncode != 0:
-                logging.warning("Failed to repair platform wheel %s", whl)
+                logger.warning("Failed to repair platform wheel %s", whl)
                 continue
 
             # original wheel will be replaced by repaired wheels written to repaired-wheels/
@@ -181,7 +189,7 @@ def _remove_platform_wheels(all_built_wheels, new_wheels_dir, existing_app_json_
     existing_wheels_entries_to_keep = []
     for whl in list(all_built_wheels):
         if whl.platform != "any":
-            logging.info("Removing platform wheel %s", whl.file_name)
+            logger.info("Removing platform wheel %s", whl.file_name)
             all_built_wheels.remove(whl)
             os.remove(os.path.join(new_wheels_dir, whl.file_name))
 
@@ -189,7 +197,7 @@ def _remove_platform_wheels(all_built_wheels, new_wheels_dir, existing_app_json_
             # to avoid deleting it
             if whl.distribution in existing_wheels:
                 existing_whl_path = existing_wheels[whl.distribution].input_file
-                logging.info(
+                logger.info(
                     "Existing wheel for %s to be retained: %s", whl.distribution, existing_whl_path
                 )
                 existing_wheels_entries_to_keep.append(
@@ -236,10 +244,10 @@ def _copy_new_wheels(new_wheels, new_wheels_dir, app_dir):
         new_wheel_paths.append(os.path.join("wheels", dst_path))
         full_dst_path = os.path.join(app_dir, new_wheel_paths[-1])
         if not os.path.exists(full_dst_path):
-            logging.info("Writing new wheel %s --> %s", wheel_name, new_wheel_paths[-1])
+            logger.info("Writing new wheel %s --> %s", wheel_name, new_wheel_paths[-1])
             shutil.copyfile(src_fp, full_dst_path)
         else:
-            logging.info(
+            logger.info(
                 "Found wheel %s to already exist in %s",
                 wheel_name,
                 os.path.dirname(new_wheel_paths[-1]),
@@ -277,18 +285,20 @@ def _remove_unreferenced_wheel_paths(
     )
     for path in existing_wheel_paths:
         if path not in all_referenced_wheel_paths:
-            logging.info("Removing unreferenced wheel under path %s", path)
+            logger.info("Removing unreferenced wheel under path %s", path)
             path = os.path.join(app_dir, path)
             if not os.path.exists(path):
-                logging.warning("%s does not exist!", path)
+                logger.warning("%s does not exist!", path)
                 continue
             os.remove(os.path.join(app_dir, path))
 
 
-def main(args):
+def main():
     """
     Main entrypoint.
     """
+    args = parse_args()
+
     app_dir, pip_path, repair_wheels, pip_dependencies_key = (
         args.app_dir,
         args.pip_path,
@@ -298,7 +308,7 @@ def main(args):
 
     wheels_dir, requirements_file = f"{app_dir}/wheels", f"{app_dir}/requirements.txt"
     pathlib.Path(wheels_dir).mkdir(exist_ok=True)
-    logging.info(
+    logger.info(
         "Building wheels for %s from %s into %s",
         pip_dependencies_key,
         requirements_file,
@@ -318,7 +328,7 @@ def main(args):
         )
 
         if build_result.returncode != 0:
-            logging.error(
+            logger.error(
                 "Failed to build wheels from requirements.txt. "
                 "This typically occurs when you have a version conflict in requirements.txt or "
                 "you depend on a library requiring external development libraries (eg, python-ldap). "
@@ -353,7 +363,7 @@ def main(args):
         updated_app_json_wheel_entries = []
 
         if repair_wheels:
-            logging.info("Repairing new platform wheels...")
+            logger.info("Repairing new platform wheels...")
             wheels_to_repair, existing_wheel_file_names = (
                 [],
                 set(os.path.basename(p) for p in existing_wheel_paths),
@@ -364,7 +374,7 @@ def main(args):
 
             _repair_wheels(wheels_to_repair, all_built_wheels, temp_dir)
         else:
-            logging.warning("New platform wheels will not be repaired but removed.")
+            logger.warning("New platform wheels will not be repaired but removed.")
             # Remove any platform wheels for dependencies that we just built, but check for any
             # existing wheels for these given dependencies - we won't replace them
             existing_platform_wheel_entries = _remove_platform_wheels(
@@ -393,41 +403,38 @@ def main(args):
             wheel_entries_for_other_py_versions=wheels_for_other_py_versions,
         )
 
-        logging.info("Updating app json with latest dependencies...")
+        logger.info("Updating app json with latest dependencies...")
         for pair in zip(all_built_wheels, new_wheel_paths):
             updated_app_json_wheel_entries.append(AppJsonWheelEntry(pair[0].distribution, pair[1]))
         if sorted(updated_app_json_wheel_entries) == sorted(wheels_for_other_py_versions):
-            logging.info("Same wheels found for other python versions. Not introducing a new key.")
+            logger.info("Same wheels found for other python versions. Not introducing a new key.")
         else:
             _update_app_json(
                 app_json, pip_dependencies_key, updated_app_json_wheel_entries, app_dir
             )
     except Exception:
-        logging.exception("Unexpected error")
+        logger.exception("Unexpected error")
     finally:
         shutil.rmtree(temp_dir)
 
 
 def parse_args():
-    help_str = " ".join(line.strip() for line in __doc__.strip().splitlines())
+    help_str = " ".join(line.strip() for line in (__doc__.strip() or "").splitlines())
     parser = argparse.ArgumentParser(description=help_str)
-    (parser.add_argument("app_dir", help="Path to the target app directory"),)
+    parser.add_argument("app_dir", help="Path to the target app directory")
     parser.add_argument("pip_path", help="Path to the pip installation to use")
     parser.add_argument(
         "pip_dependencies_key",
         choices=[pip_dep.value for pip_dep in PipDependency],
         help="Key in the app JSON specifying pip dependencies",
     )
-    (
-        parser.add_argument(
-            "--repair_wheels",
-            action="store_true",
-            help="Whether to repair platform wheels with auditwheel",
-        ),
+    parser.add_argument(
+        "--repair-wheels",
+        action="store_true",
+        help="Whether to repair platform wheels with auditwheel",
     )
     return parser.parse_args()
 
 
 if __name__ == "__main__":
-    logging.getLogger().setLevel(logging.INFO)
-    sys.exit(main(parse_args()))
+    sys.exit(main())
