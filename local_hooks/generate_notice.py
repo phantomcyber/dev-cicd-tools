@@ -168,7 +168,7 @@ def get_app_json(connector_path: Path) -> tuple[str, str]:
     Get the app name and license from the app.json file.
     """
     logging.info("Looking for app JSON in: %s", connector_path)
-    json_files = glob.glob(os.path.join(THIS_DIRECTORY, "*.json"))
+    json_files = glob.glob(os.path.join(connector_path, "*.json"))
     # Exclude files with the pattern '*.postman_collection.json'
     filtered_json_files = [
         file for file in json_files if not file.endswith(".postman_collection.json")
