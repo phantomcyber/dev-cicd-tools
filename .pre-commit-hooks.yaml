@@ -16,7 +16,7 @@
   entry: package_app_dependencies.sh
   language: python
   files: '^requirements.txt$'
-- id: notice-file
+- id: generate-notice
   name: generate notice file
   description: Generates notice file based on app dependencies
   entry: generate-notice
