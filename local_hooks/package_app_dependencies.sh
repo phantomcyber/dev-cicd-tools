@@ -39,6 +39,8 @@ if ! python -c 'import local_hooks'; then
 	echo "where am I: $(dirname "$0")"
 	echo "site-packages: $(python -c 'import site; print(site.getsitepackages()[0])')"
 	echo "ls site-packages: $(ls -lah "$(python -c 'import site; print(site.getsitepackages()[0])')")"
+	echo "ls $(dirname "$0"): $(ls -lah "$(dirname "$0")")"
+	echo "ls $(dirname "$0")/../..: $(ls -lah "$(dirname "$0")/../..")"
 	pip install "$(dirname "$0")"
 	if ! python -c 'import local_hooks'; then
 		echo 'Something went wrong installing local_hooks. Python could not find if after installation. Aborting'
