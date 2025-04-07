@@ -30,6 +30,16 @@ fi
 
 export PATH="$PY39_BIN:$PY313_BIN:$PATH"
 
+# Sanity check: We can import local_hooks, right? If not, it's probably because we were already
+# running in a docker container and we didn't volume mount the site-packages directory
+if ! python -c 'import local_hooks'; then
+	pip install "$(dirname "$0")"
+	if ! python -c 'import local_hooks'; then
+		echo 'Something went wrong installing local_hooks. Python could not find if after installation. Aborting'
+		exit 1
+	fi
+fi
+
 # Remove any existing wheels in wheels/ and app json
 yum install jq -y
 if ! jq --help &>/dev/null; then
@@ -40,9 +50,6 @@ app_json="$(find ./*.json ! -name '*.postman_collection.json' | head -n 1)"
 jq --indent 4 'del(.pip_dependencies) | del(.pip3_dependencies) | del(.pip36_dependencies) | del(.pip39_dependencies)' "$app_json" >tmp.json
 mv tmp.json "$app_json"
 rm -rf wheels
-
-# Sanity check: We can import local_hooks, right?
-python -c 'import local_hooks'
 
 py39_deps='pip39_dependencies'
 py313_deps='pip313_dependencies'
