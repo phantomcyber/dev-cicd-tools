@@ -33,7 +33,7 @@ export PATH="$PY39_BIN:$PY313_BIN:$PATH"
 # Remove any existing wheels in wheels/ and app json
 yum install jq -y
 if ! jq --help &>/dev/null; then
-	echo 'Please ensure jq is installed (eg, brew install jq)'
+	echo 'Something went wrong installing jq. Could not find it on PATH after installation. Aborting'
 	exit 1
 fi
 app_json="$(find ./*.json ! -name '*.postman_collection.json' | head -n 1)"
