@@ -66,10 +66,6 @@ repos:
         language: python
         additional_dependencies: ["local-hooks"]
         args: ['.']
-      - id: notice-file
-        language: python
-        additional_dependencies: ["local-hooks"]
-        args: ['.']
       - id: release-notes
         language: python
         additional_dependencies: ["local-hooks"]

@@ -68,5 +68,5 @@ def test_app_with_pip_dependencies(flags, app_dir):
 
     assert actual == expected, f"Diff: {json.dumps(diff(expected, actual), indent=2)}"
 
-    for whl in actual["pip_dependencies"]["wheel"]:
+    for whl in actual["pip39_dependencies"]["wheel"]:
         assert os.path.exists(os.path.join(app_dir, whl["input_file"]))
