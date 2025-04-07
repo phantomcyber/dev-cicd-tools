@@ -38,7 +38,6 @@ if ! python -c 'import local_hooks'; then
 	echo "pwd: $(pwd)"
 	echo "where am I: $(dirname "$0")"
 	echo "site-packages: $(python -c 'import site; print(site.getsitepackages()[0])')"
-	echo "PYTHONPATH: $PYTHONPATH"
 	echo "ls site-packages: $(ls -lah "$(python -c 'import site; print(site.getsitepackages()[0])')")"
 	pip install "$(dirname "$0")"
 	if ! python -c 'import local_hooks'; then
