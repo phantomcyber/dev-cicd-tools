@@ -31,6 +31,7 @@ fi
 export PATH="$PY39_BIN:$PY313_BIN:$PATH"
 
 # Remove any existing wheels in wheels/ and app json
+apt-get install jq
 if ! jq --help &>/dev/null; then
 	echo 'Please ensure jq is installed (eg, brew install jq)'
 	exit 1
@@ -39,7 +40,6 @@ app_json="$(find ./*.json ! -name '*.postman_collection.json' | head -n 1)"
 jq --indent 4 'del(.pip_dependencies) | del(.pip3_dependencies) | del(.pip36_dependencies) | del(.pip39_dependencies)' "$app_json" >tmp.json
 mv tmp.json "$app_json"
 rm -rf wheels
-git add .
 
 # Sanity check: We can import local_hooks, right?
 python -c 'import local_hooks'
