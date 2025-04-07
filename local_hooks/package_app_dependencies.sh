@@ -33,6 +33,13 @@ export PATH="$PY39_BIN:$PY313_BIN:$PATH"
 # Sanity check: We can import local_hooks, right? If not, it's probably because we were already
 # running in a docker container and we didn't volume mount the site-packages directory
 if ! python -c 'import local_hooks'; then
+	echo "which python: $(which python)"
+	echo "which pip: $(which pip)"
+	echo "pwd: $(pwd)"
+	echo "where am I: $(dirname "$0")"
+	echo "site-packages: $(python -c 'import site; print(site.getsitepackages()[0])')"
+	echo "PYTHONPATH: $PYTHONPATH"
+	echo "ls site-packages: $(ls -lah "$(python -c 'import site; print(site.getsitepackages()[0])')")"
 	pip install "$(dirname "$0")"
 	if ! python -c 'import local_hooks'; then
 		echo 'Something went wrong installing local_hooks. Python could not find if after installation. Aborting'
