@@ -36,6 +36,8 @@ export PATH="$PY39_BIN:$PY313_BIN:$PATH"
 if ! python -c 'import local_hooks'; then
 	#shellcheck disable=SC2034,SC2046
 	PYTHONPATH="$($(dirname "$0")/python -c 'import site; print(site.getsitepackages()[0])')"
+	export PYTHONPATH
+	echo "$PYTHONPATH"
 	python -c 'import local_hooks'
 fi
 
