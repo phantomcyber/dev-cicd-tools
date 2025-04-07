@@ -32,20 +32,10 @@ export PATH="$PY39_BIN:$PY313_BIN:$PATH"
 
 # Sanity check: We can import local_hooks, right? If not, it's probably because we were already
 # running in a docker container and we didn't volume mount the site-packages directory
-if ! python -c 'import local_hooks'; then
-	echo "which python: $(which python)"
-	echo "which pip: $(which pip)"
-	echo "pwd: $(pwd)"
-	echo "where am I: $(dirname "$0")"
-	echo "site-packages: $(python -c 'import site; print(site.getsitepackages()[0])')"
-	echo "ls site-packages: $(ls -lah "$(python -c 'import site; print(site.getsitepackages()[0])')")"
-	echo "ls $(dirname "$0"): $(ls -lah "$(dirname "$0")")"
-	echo "ls $(dirname "$0")/../..: $(ls -lah "$(dirname "$0")/../..")"
-	pip install "$(dirname "$0")"
-	if ! python -c 'import local_hooks'; then
-		echo 'Something went wrong installing local_hooks. Python could not find if after installation. Aborting'
-		exit 1
-	fi
+if python -c 'import local_hooks'; then
+	SCRIPT="python -m local_hooks.package_app_dependencies"
+else
+	SCRIPT="package_app_dependencies"
 fi
 
 # Remove any existing wheels in wheels/ and app json
@@ -61,7 +51,6 @@ rm -rf wheels
 
 py39_deps='pip39_dependencies'
 py313_deps='pip313_dependencies'
-SCRIPT="python -m local_hooks.package_app_dependencies"
 
 pip3.9 install pip-tools
 ${SCRIPT} . "$(which pip3.9)" "$py39_deps" --repair-wheels
