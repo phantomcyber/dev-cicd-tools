@@ -31,7 +31,7 @@ fi
 export PATH="$PY39_BIN:$PY313_BIN:$PATH"
 
 # Remove any existing wheels in wheels/ and app json
-apt-get install jq
+yum install jq
 if ! jq --help &>/dev/null; then
 	echo 'Please ensure jq is installed (eg, brew install jq)'
 	exit 1
