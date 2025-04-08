@@ -13,9 +13,6 @@ import dataclasses
 import logging
 from pathlib import Path
 
-THIS_DIRECTORY = os.path.dirname(os.path.realpath(__file__))
-NOTICE_FILE_PATH = f"{THIS_DIRECTORY}/NOTICE"
-
 # pip-licenses is used to query all python packages for license information
 PYTHON_LICENSE_COMMAND = "pip-licenses"
 PYTHON_LICENSE_COMMAND_ARGS = (
@@ -137,6 +134,7 @@ def get_package_dependencies() -> list[str]:
         for line in reqs:
             if match := re.match(r"^(.*?)(?=[=<>])", line):
                 packages.append(match.group(0))
+                logging.info(f"Found package: {match.group(0)}")
             else:
                 print(f"ERROR extracting package from line: {line}")
     return packages
@@ -160,6 +158,7 @@ def get_python_license_info(packages: list[str]):
 
     for license_info in license_info_list:
         if license_info.get("Name") not in EXCLUDED_PYTHON_PACKAGES:
+            logging.info(f"Found license information for {license_info.get('Name')}")
             yield LicenseLine.make_from_pip_json(license_info)
 
 
@@ -184,14 +183,18 @@ def get_app_json(connector_path: Path) -> tuple[str, str]:
         app_name = app_keys["name"]
         app_license = app_keys["license"]
 
+    logging.info("Found app JSON: %s", json_file_path)
+    if not app_name or not app_license:
+        raise ValueError("App name or license not found in app.json")
     return app_name, app_license
 
 
-def remove_trailing_blank_lines():
+def remove_trailing_blank_lines(notice_file_path: Path):
     """
     Remove all trailing blank lines from the NOTICE
     """
-    with open(NOTICE_FILE_PATH) as f:
+    logging.info("Removing trailing blank lines from NOTICE file")
+    with open(notice_file_path) as f:
         lines = f.readlines()
 
     # Remove trailing blank lines
@@ -199,7 +202,7 @@ def remove_trailing_blank_lines():
         lines.pop()
 
     # Rewrite the file with cleaned content
-    with open(NOTICE_FILE_PATH, "w") as f:
+    with open(notice_file_path, "w") as f:
         f.writelines(lines)
 
 
@@ -214,8 +217,10 @@ def main():
     connector_path = Path(args.connector_path)
 
     app_name, app_license = get_app_json(connector_path)
+    notice_file_path = connector_path / "NOTICE"
+    logging.info("Creating NOTICE file at %s", Path(notice_file_path.resolve()))
 
-    with open(NOTICE_FILE_PATH, "w") as f:
+    with open(notice_file_path, "w") as f:
         # Write base license file
         f.write(f"Splunk SOAR App: {app_name}\n{app_license}\n")
 
@@ -233,7 +238,7 @@ def main():
         for item in get_python_license_info(packages=valid_packages):
             item.write_line(f)
 
-    remove_trailing_blank_lines()
+    remove_trailing_blank_lines(notice_file_path)
 
 
 def parse_args() -> BuildDocsArgs:
