@@ -530,6 +530,18 @@
       }
     },
     "then": {
-      "required": ["fips_compliant"]
+      "required": ["fips_compliant"],
+      "not": {
+        "anyOf": [
+          {"required": ["copied_from_id"]},
+          {"required": ["copied_from_version"]},
+          {"required": ["directory"]},
+          {"required": ["version"]},
+          {"required": ["appname"]},
+          {"required": ["executable"]},
+          {"required": ["disabled"]},
+          {"required": ["custom_made"]}
+        ]
+      }
     }
   }
