@@ -47,10 +47,6 @@ if ! jq --help &>/dev/null; then
 	echo 'Something went wrong installing jq. Could not find it on PATH after installation. Aborting'
 	exit 1
 fi
-app_json="$(find ./*.json ! -name '*.postman_collection.json' | head -n 1)"
-jq --indent 4 'del(.pip_dependencies) | del(.pip3_dependencies) | del(.pip36_dependencies) | del(.pip39_dependencies)' "$app_json" >tmp.json
-mv tmp.json "$app_json"
-rm -rf wheels
 
 py39_deps='pip39_dependencies'
 py313_deps='pip313_dependencies'
