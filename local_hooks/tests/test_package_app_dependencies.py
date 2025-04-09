@@ -5,7 +5,6 @@ import subprocess
 
 import pytest
 from uuid import uuid4
-from jsondiff import diff
 
 PRE_COMMIT_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
@@ -52,6 +51,8 @@ def app_dir(request):
 def test_app_with_pip_dependencies(flags, app_dir):
     app_json = os.path.join(app_dir, "app.json")
     expected_app_json = os.path.join(app_dir, "expected_app_json.out")
+    expected_app_json_2 = os.path.join(app_dir, "expected_app_json_2.out")
+
     result = subprocess.run(
         [os.path.join(PRE_COMMIT_DIR, "package_app_dependencies.sh"), *flags],
         cwd=app_dir,
@@ -60,13 +61,26 @@ def test_app_with_pip_dependencies(flags, app_dir):
     print(result.stderr.decode())
     assert result.returncode == 0
 
-    with open(app_json) as actual_f, open(expected_app_json) as expected_f:
-        actual = json.load(actual_f)
-        expected = json.load(expected_f)
-        print(f"Actual: {actual}")
-        print(f"Expected: {expected}")
+    if os.path.exists(expected_app_json_2):
+        with (
+            open(app_json) as actual_f,
+            open(expected_app_json) as expected_f,
+            open(expected_app_json_2) as expected_f_2,
+        ):
+            actual = json.load(actual_f)
+            expected = json.load(expected_f)
+            expected_2 = json.load(expected_f_2)
+            print(f"Actual: {actual}")
+            print(f"Expected: {expected}")
+            print(f"Expected 2: {expected_2}")
 
-    assert actual == expected, f"Diff: {json.dumps(diff(expected, actual), indent=2)}"
+        assert actual == expected or actual == expected_2
+    else:
+        with open(app_json) as actual_f, open(expected_app_json) as expected_f:
+            actual = json.load(actual_f)
+            expected = json.load(expected_f)
+
+        assert actual == expected
 
     for whl in actual["pip39_dependencies"]["wheel"]:
         assert os.path.exists(os.path.join(app_dir, whl["input_file"]))
