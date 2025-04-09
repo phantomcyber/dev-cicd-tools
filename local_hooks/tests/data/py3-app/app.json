@@ -1,6 +1,6 @@
 {
     "python_version": "3",
-    "pip313_dependencies": {
+    "pip39_dependencies": {
         "wheel": [
             {
                 "module": "beautifulsoup4",
