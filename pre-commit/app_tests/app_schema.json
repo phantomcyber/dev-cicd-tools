@@ -114,6 +114,24 @@
       "qa_metadata": {
         "type": "object"
       },
+      "custom_made": {
+        "type": "boolean"
+      },
+      "copied_from_id": {
+        "type": "integer"
+      },
+      "copied_from_version":{
+        "type": "string"
+      },
+      "directory": {
+        "type": "string"
+      },
+      "version": {
+        "type": "integer"
+      },
+      "appname": {
+        "type": "string"
+      },
       "contributors": {
         "type": "array",
         "items": {
@@ -530,6 +548,9 @@
       }
     },
     "then": {
-      "required": ["fips_compliant"]
+      "required": ["fips_compliant"],
+      "not": {
+        "required": ["copied_from_id", "copied_from_version", "directory", "version", "appname", "executable", "disabled", "custom_made"]
+      }
     }
   }
