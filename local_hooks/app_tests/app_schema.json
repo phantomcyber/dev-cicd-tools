@@ -522,18 +522,6 @@
       "publisher",
       "type"
     ],
-    "not": {
-      "anyOf": [
-        {"required": ["copied_from_id"]},
-        {"required": ["copied_from_version"]},
-        {"required": ["directory"]},
-        {"required": ["version"]},
-        {"required": ["appname"]},
-        {"required": ["executable"]},
-        {"required": ["disabled"]},
-        {"required": ["custom_made"]}
-      ]
-    },
     "if": {
       "properties": {
         "publisher": {

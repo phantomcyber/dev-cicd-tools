@@ -20,6 +20,7 @@
     "main_module": "statictests_connector.py",
     "min_phantom_version": "6.2.0",
     "app_wizard_version": "1.0.1",
+    "custom_made": true,
     "configuration": {
         "api_key": {
             "description": "Api key for cloud delivered FMC",

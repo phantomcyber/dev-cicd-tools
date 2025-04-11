@@ -12,6 +12,7 @@ from .utils.phantom_constants import (
     APPID_TO_PACKAGE_NAME_FILEPATH,
     MINIMAL_DATA_PATHS,
     PASSWORD_KEYS,
+    FIELDS_TO_REMOVE,
 )
 from operator import itemgetter
 import traceback
@@ -78,6 +79,28 @@ class JSONTests(TestSuite):
             message=message if not verbose else "Failed app json schema validation",
             verbose=verbose,
         )
+
+    @TestSuite.test(critical=False)
+    def check_extra_fields_app_json(self):
+        """
+        Makes sure certain fields are not in the app json
+        """
+
+        to_remove = []
+        msg = TEST_PASS_MESSAGE
+        verbose = []
+
+        to_remove = [field for field in self._app_json.keys() if field in FIELDS_TO_REMOVE]
+
+        for field in to_remove:
+            self._app_json.pop(field)
+            verbose.append(f"Removing {field} from app json")
+
+        if to_remove:
+            self._parser.update_app_json(self._app_json)
+            msg = f"The app json contains fields that should not be there. Modifying {self._parser.app_json_name}"
+
+        return create_test_result_response(success=not to_remove, message=msg, verbose=verbose)
 
     @TestSuite.test
     def check_sequential_order(self):

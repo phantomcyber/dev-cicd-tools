@@ -27,3 +27,13 @@ XSS_INJECTIONS = [
     ("<img src=x onerror=alert('1')>", "onerror=alert('1')"),
     ('script src="http://attacker/some.js"></script>', "http://attacker/some.js"),
 ]
+FIELDS_TO_REMOVE = {
+    "copied_from_id",
+    "copied_from_version",
+    "directory",
+    "version",
+    "appname",
+    "executable",
+    "disabled",
+    "custom_made",
+}
