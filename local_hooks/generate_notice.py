@@ -189,6 +189,22 @@ def get_app_json(connector_path: Path) -> tuple[str, str]:
     return app_name, app_license
 
 
+def remove_trailing_whitespace(notice_file_path: Path):
+    """
+    Remove all trailing whitespace from the NOTICE
+    """
+    logging.info("Removing trailing whitespace from NOTICE file")
+    with open(notice_file_path) as f:
+        lines = f.readlines()
+
+    # Strip trailing whitespace from each line
+    trimmed_lines = [line.rstrip() for line in lines]
+
+    # Write the cleaned lines back to the file
+    with open(notice_file_path, "w") as f:
+        f.write("\n".join(trimmed_lines))
+
+
 def remove_trailing_blank_lines(notice_file_path: Path):
     """
     Remove all trailing blank lines from the NOTICE
@@ -238,6 +254,7 @@ def main():
         for item in get_python_license_info(packages=valid_packages):
             item.write_line(f)
 
+    remove_trailing_whitespace(notice_file_path)
     remove_trailing_blank_lines(notice_file_path)
 
 
