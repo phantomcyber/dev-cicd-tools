@@ -219,7 +219,7 @@ def remove_trailing_blank_lines(notice_file_path: Path):
 
     # Rewrite the file with cleaned content
     with open(notice_file_path, "w") as f:
-        f.writelines(lines)
+        f.writelines(lines + "\n")
 
 
 def main():
