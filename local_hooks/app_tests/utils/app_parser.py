@@ -3,7 +3,7 @@ import json
 import os
 import re
 
-from distutils.version import LooseVersion
+from packaging.version import Version
 
 from .phantom_constants import APP_EXTS
 from functools import cached_property
@@ -30,7 +30,7 @@ class AppParser:
 
     @cached_property
     def min_phantom_version(self):
-        return LooseVersion(self._get_from_json("min_phantom_version"))
+        return Version(self._get_from_json("min_phantom_version"))
 
     @cached_property
     def filepaths(self):
