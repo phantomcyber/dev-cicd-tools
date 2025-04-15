@@ -16,7 +16,7 @@ from .utils.phantom_constants import (
 )
 from operator import itemgetter
 import traceback
-from distutils.version import LooseVersion
+from packaging.version import Version
 from pathlib import Path
 
 
@@ -201,8 +201,8 @@ class JSONTests(TestSuite):
         Checks that if pip packages are installed, phantom version > CURRENT_MIN_PHANTOM_VERSION
         """
         msg = TEST_PASS_MESSAGE
-        min_version = LooseVersion(self._app_json["min_phantom_version"])
-        if min_version < LooseVersion(CURRENT_MIN_PHANTOM_VERSION):
+        min_version = Version(self._app_json["min_phantom_version"])
+        if min_version < Version(CURRENT_MIN_PHANTOM_VERSION):
             msg = f'Min Phantom version in app json is too low. Found: "{min_version}" but expected >= "{CURRENT_MIN_PHANTOM_VERSION}". Modifying {self._parser.app_json_name}'
             # As apart of the CI migration we are not updating the min_phantom_version because it is considered a chore task so the following code is commented out
             # self._app_json["min_phantom_version"] = CURRENT_MIN_PHANTOM_VERSION
