@@ -12,6 +12,7 @@ dependencies = [
     "jsonschema",
     "lxml",
     "django<5",
+    "packaging>=24.2",
 ]
 
 [project.scripts]
