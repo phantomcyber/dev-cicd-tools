@@ -14,8 +14,10 @@ repos:
     hooks:
       - id: check-merge-conflict
       - id: end-of-file-fixer
+        exclude: ^NOTICE$
         exclude_types: [ markdown ]
       - id: trailing-whitespace
+        exclude: ^NOTICE$
         exclude_types: [ markdown ]
       - id: requirements-txt-fixer
       - id: check-json
@@ -49,7 +51,7 @@ repos:
         exclude: "README.md"
   # Central hooks
   - repo: https://github.com/phantomcyber/dev-cicd-tools
-    rev: main
+    rev: v2.0.0
     hooks:
       - id: build-docs
         language: python
