@@ -31,7 +31,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Upload Rules
-        run: ./semgrep/upload_private_rules.sh
+        run: ./pre-commit/semgrep/upload_private_rules.sh
         env:
           SEMGREP_DEPLOYMENT_ID: ${{ secrets.SEMGREP_DEPLOYMENT_ID }}
           SEMGREP_TOKEN: ${{ secrets.SEMGREP_TOKEN }}
