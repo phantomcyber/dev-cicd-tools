@@ -99,7 +99,9 @@ def parse_args(add_help: bool = True) -> StaticTestArgs:
         add_help=add_help,
     )
 
-    parser.add_argument("app_directory", type=Path, help="Location for app under test", default=".")
+    parser.add_argument(
+        "app_directory", type=Path, help="Location for app under test", default=".", nargs="?"
+    )
 
     group = parser.add_argument_group(
         title="Test Options",

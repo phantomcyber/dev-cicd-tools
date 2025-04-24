@@ -232,26 +232,27 @@ class JSONTests(TestSuite):
     @TestSuite.test
     def check_valid_app_name_and_guid(self):
         """
-        App Name and GUID must be unique, and GUID must be a lowercased string
+        App Name and GUID must be unique
         """
         app_name = self._app_json["name"]
-        app_guid = self._app_json["appid"].lower()
+        app_guid = self._app_json["appid"]
 
         with open(APPID_TO_NAME_FILEPATH) as file:
             app_guid_to_name = json.loads(file.read())
-            if app_guid_to_name.get(app_guid) == app_name:
-                return create_test_result_response(success=True, message=TEST_PASS_MESSAGE)
 
-            message = ""
-            if app_guid in app_guid_to_name:
-                message = f"Invalid GUID for app `{app_name}`: GUID `{app_guid}` already maps to app `{app_guid_to_name.get(app_guid)}`"
-            elif app_name in app_guid_to_name.values():
-                existing_guid = next(
-                    guid for guid, name in app_guid_to_name.items() if name == app_name
-                )
-                message = f"Invalid GUID in json for app `{app_name}`: Existing GUID `{existing_guid}` does not match GUID in json `{app_guid}`"
-            else:
-                message = f"GUID and app not listed in {APPID_TO_NAME_FILEPATH}"
+        if app_guid_to_name.get(app_guid) == app_name:
+            return create_test_result_response(success=True, message=TEST_PASS_MESSAGE)
+
+        message = ""
+        if app_guid in app_guid_to_name:
+            message = f"Invalid GUID for app `{app_name}`: GUID `{app_guid}` already maps to app `{app_guid_to_name.get(app_guid)}`"
+        elif app_name in app_guid_to_name.values():
+            existing_guid = next(
+                guid for guid, name in app_guid_to_name.items() if name == app_name
+            )
+            message = f"Invalid GUID in json for app `{app_name}`: Existing GUID `{existing_guid}` does not match GUID in json `{app_guid}`"
+        else:
+            message = f"GUID and app not listed in {APPID_TO_NAME_FILEPATH}"
 
         return create_test_result_response(
             success=not message, message=TEST_PASS_MESSAGE if not message else message
@@ -267,21 +268,20 @@ class JSONTests(TestSuite):
 
         with open(APPID_TO_PACKAGE_NAME_FILEPATH) as file:
             package_name_map = json.loads(file.read())
-            if package_name_map.get(app_guid) == package_name:
-                return create_test_result_response(success=True, message=TEST_PASS_MESSAGE)
 
-            message = ""
-            if app_guid in package_name_map:
-                message = f"Invalid GUID for package `{package_name}`: GUID `{app_guid}` already maps to package `{package_name_map.get(app_guid)}`"
-            elif package_name in package_name_map.values():
-                existing_guid = next(
-                    guid for guid, name in package_name_map.items() if name == package_name
-                )
-                message = f"Invalid GUID in json for package `{package_name}`: Existing GUID `{existing_guid}` does not match GUID in json `{app_guid}`"
-            else:
-                message = (
-                    f"GUID and app package name not listed in {APPID_TO_PACKAGE_NAME_FILEPATH}"
-                )
+        if package_name_map.get(app_guid) == package_name:
+            return create_test_result_response(success=True, message=TEST_PASS_MESSAGE)
+
+        message = ""
+        if app_guid in package_name_map:
+            message = f"Invalid GUID for package `{package_name}`: GUID `{app_guid}` already maps to package `{package_name_map.get(app_guid)}`"
+        elif package_name in package_name_map.values():
+            existing_guid = next(
+                guid for guid, name in package_name_map.items() if name == package_name
+            )
+            message = f"Invalid GUID in json for package `{package_name}`: Existing GUID `{existing_guid}` does not match GUID in json `{app_guid}`"
+        else:
+            message = f"GUID and app package name not listed in {APPID_TO_PACKAGE_NAME_FILEPATH}"
 
         return create_test_result_response(
             success=not message, message=TEST_PASS_MESSAGE if not message else message
