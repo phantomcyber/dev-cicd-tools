@@ -13,6 +13,7 @@ dependencies = [
     "lxml",
     "django<5",
     "packaging>=24.2",
+    "requests>=2.32.3",
 ]
 
 [project.scripts]
@@ -25,3 +26,6 @@ package-app-dependencies = "local_hooks.package_app_dependencies:main"
 
 [tool.setuptools]
 script-files = ["local_hooks/package_app_dependencies.sh"]
+
+[[tool.uv.index]]
+url = "https://pypi.python.org/simple"

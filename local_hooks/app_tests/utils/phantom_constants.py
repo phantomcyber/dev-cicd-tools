@@ -6,8 +6,12 @@ SPLUNK_SUPPORTED = "splunk_supported"
 DEVELOPER_SUPPORTED = "developer_supported"
 TEST_PASS_MESSAGE = "OK"
 CURRENT_MIN_PHANTOM_VERSION = "6.3.0"
+
 APPID_TO_NAME_FILEPATH = DIR / "data" / "appid_to_name.json"
+APPID_TO_NAME_URL = "https://raw.githubusercontent.com/phantomcyber/dev-cicd-tools/refs/heads/main/local_hooks/data/appid_to_name.json"
 APPID_TO_PACKAGE_NAME_FILEPATH = DIR / "data" / "appid_to_package_name.json"
+APPID_TO_PACKAGE_NAME_URL = "https://raw.githubusercontent.com/phantomcyber/dev-cicd-tools/refs/heads/main/local_hooks/data/appid_to_package_name.json"
+
 MINIMAL_DATA_PATHS = set(
     [
         ("action_result.status", "string"),

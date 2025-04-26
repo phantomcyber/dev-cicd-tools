@@ -1,3 +1,4 @@
+import requests
 from .test_suite import TestSuite
 import json
 import textwrap
@@ -6,9 +7,11 @@ from jsonschema import exceptions
 from jsonschema.validators import Draft202012Validator as JsonSchemaValidator
 from .utils import create_test_result_response
 from .utils.phantom_constants import (
+    APPID_TO_PACKAGE_NAME_URL,
     TEST_PASS_MESSAGE,
     CURRENT_MIN_PHANTOM_VERSION,
     APPID_TO_NAME_FILEPATH,
+    APPID_TO_NAME_URL,
     APPID_TO_PACKAGE_NAME_FILEPATH,
     MINIMAL_DATA_PATHS,
     PASSWORD_KEYS,
@@ -237,8 +240,14 @@ class JSONTests(TestSuite):
         app_name = self._app_json["name"]
         app_guid = self._app_json["appid"]
 
-        with open(APPID_TO_NAME_FILEPATH) as file:
-            app_guid_to_name = json.loads(file.read())
+        try:
+            # Download the latest registry from main
+            response = requests.get(APPID_TO_NAME_URL)
+            response.raise_for_status()
+            app_guid_to_name = response.json()
+        except Exception:
+            # Fall back to local file if download fails
+            app_guid_to_name = json.loads(APPID_TO_NAME_FILEPATH.read_text())
 
         if app_guid_to_name.get(app_guid) == app_name:
             return create_test_result_response(success=True, message=TEST_PASS_MESSAGE)
@@ -266,8 +275,14 @@ class JSONTests(TestSuite):
         package_name = self._app_json["package_name"]
         app_guid = self._app_json["appid"]
 
-        with open(APPID_TO_PACKAGE_NAME_FILEPATH) as file:
-            package_name_map = json.loads(file.read())
+        try:
+            # Download the latest registry from main
+            response = requests.get(APPID_TO_PACKAGE_NAME_URL)
+            response.raise_for_status()
+            package_name_map = response.json()
+        except Exception:
+            # Fall back to local file if download fails
+            package_name_map = json.loads(APPID_TO_PACKAGE_NAME_FILEPATH.read_text())
 
         if package_name_map.get(app_guid) == package_name:
             return create_test_result_response(success=True, message=TEST_PASS_MESSAGE)
