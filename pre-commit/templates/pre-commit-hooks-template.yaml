@@ -1,16 +1,20 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 
+# By default, run each hook only in the standard pre-commit stage
+default_install_hook_types: [pre-commit, commit-msg]
+default_stages: [pre-commit]
+
 # This is a template for connector pre-commit hooks
 repos:
   - repo: https://github.com/compilerla/conventional-pre-commit
-    rev: v4.0.0
+    rev: v4.1.0
     hooks:
       - id: conventional-pre-commit
         stages: [commit-msg]
         args: [--verbose]
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.2.0
+    rev: v5.0.0
     hooks:
       - id: check-merge-conflict
       - id: end-of-file-fixer
@@ -23,7 +27,7 @@ repos:
       - id: check-json
       - id: check-yaml
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.6
+    rev: v0.11.7
     hooks:
       - id: ruff
         args: [ "--fix", "--unsafe-fixes"] # Allow unsafe fixes (ruff pretty strict about what it can fix)
@@ -39,7 +43,7 @@ repos:
       - id: mdformat
         exclude: "release_notes/.*"
   - repo: https://github.com/returntocorp/semgrep
-    rev: v1.107.0
+    rev: v1.89.0
     hooks:
       - id: semgrep
   - repo: https://github.com/Yelp/detect-secrets
@@ -51,7 +55,7 @@ repos:
         exclude: "README.md"
   # Central hooks
   - repo: https://github.com/phantomcyber/dev-cicd-tools
-    rev: v2.0.0
+    rev: v2.0.3
     hooks:
       - id: build-docs
         language: python
