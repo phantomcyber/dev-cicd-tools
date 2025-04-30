@@ -1,6 +1,10 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 
+# By default, run each hook only in the standard pre-commit stage
+default_install_hook_types: [pre-commit, commit-msg]
+default_stages: [pre-commit]
+
 # This is a template for connector pre-commit hooks
 repos:
   - repo: https://github.com/compilerla/conventional-pre-commit
