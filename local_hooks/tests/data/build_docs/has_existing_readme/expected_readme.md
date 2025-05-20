@@ -1,6 +1,6 @@
 # QRadar
 
-Publisher: Splunk <br> 
+Publisher: Splunk <br>
 Connector Version: 2.1.2 <br>
 Product Vendor: IBM <br>
 Product Name: QRadar <br>
