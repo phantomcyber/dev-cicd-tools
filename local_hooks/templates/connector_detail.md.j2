@@ -1,9 +1,9 @@
 # {{connector.name}}
 
-Publisher: {{connector.publisher}} \
-Connector Version: {{connector.app_version}} \
-Product Vendor: {{connector.product_vendor}} \
-Product Name: {{connector.product_name}} \
+Publisher: {{connector.publisher}} <br>
+Connector Version: {{connector.app_version}} <br>
+Product Vendor: {{connector.product_vendor}} <br>
+Product Name: {{connector.product_name}} <br>
 Minimum Product Version: {{connector.min_phantom_version}}
 
 {{connector.description}}
@@ -28,7 +28,7 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 {% if connector.actions %}
 ### Supported Actions
 {% for action in connector.actions %}
-[{{action.action}}](#{{action.action | generate_action_heading_text | generate_gh_fragment}}) - {{action.description}}{% if not loop.last %} \{% endif %}
+[{{action.action}}](#{{action.action | generate_action_heading_text | generate_gh_fragment}}) - {{action.description}}{% if not loop.last %} <br>{% endif %}
 
 {% endfor %}
 
@@ -36,7 +36,7 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 ## {{action.action | generate_action_heading_text}}
 {{action.description}}
 
-Type: **{{action.type}}** \
+Type: **{{action.type}}** <br>
 Read only: **{{action.read_only}}**
 
 {% if action.verbose %}

@@ -1,9 +1,9 @@
 # QRadar
 
-Publisher: Splunk \
-Connector Version: 2.1.2 \
-Product Vendor: IBM \
-Product Name: QRadar \
+Publisher: Splunk <br>
+Connector Version: 2.1.2 <br>
+Product Vendor: IBM <br>
+Product Name: QRadar <br>
 Minimum Product Version: 4.9.39220
 
 This app supports generic, investigative, and ingestion actions on an IBM QRadar device
@@ -571,27 +571,27 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 
 ### Supported Actions
 
-[test connectivity](#action-test-connectivity) - Validate the asset configuration for connectivity. This action runs a quick query on the device to check the connection and credentials \
-[list offenses](#action-list-offenses) - Get a list of offenses \
-[list closing reasons](#action-list-closing-reasons) - Get a list of offense closing reasons \
-[get events](#action-get-events) - Get events belonging to an offense \
-[get flows](#action-get-flows) - Get flows that make up an offense for a particular IP \
-[offense details](#action-offense-details) - Get details about an offense \
-[alt manage ingestion](#action-alt-manage-ingestion) - Manage ingestion details \
-[run query](#action-run-query) - Execute an ariel query on the QRadar device \
-[add listitem](#action-add-listitem) - Add an item to a reference set in QRadar \
-[close offense](#action-close-offense) - Close an active offense, marking status=CLOSED \
-[update offense](#action-update-offense) - Attach a note to an offense \
-[assign user](#action-assign-user) - Assign the user to an offense \
-[get rule info](#action-get-rule-info) - Retrieve QRadar rule information \
-[list rules](#action-list-rules) - List all QRadar rules \
+[test connectivity](#action-test-connectivity) - Validate the asset configuration for connectivity. This action runs a quick query on the device to check the connection and credentials <br>
+[list offenses](#action-list-offenses) - Get a list of offenses <br>
+[list closing reasons](#action-list-closing-reasons) - Get a list of offense closing reasons <br>
+[get events](#action-get-events) - Get events belonging to an offense <br>
+[get flows](#action-get-flows) - Get flows that make up an offense for a particular IP <br>
+[offense details](#action-offense-details) - Get details about an offense <br>
+[alt manage ingestion](#action-alt-manage-ingestion) - Manage ingestion details <br>
+[run query](#action-run-query) - Execute an ariel query on the QRadar device <br>
+[add listitem](#action-add-listitem) - Add an item to a reference set in QRadar <br>
+[close offense](#action-close-offense) - Close an active offense, marking status=CLOSED <br>
+[update offense](#action-update-offense) - Attach a note to an offense <br>
+[assign user](#action-assign-user) - Assign the user to an offense <br>
+[get rule info](#action-get-rule-info) - Retrieve QRadar rule information <br>
+[list rules](#action-list-rules) - List all QRadar rules <br>
 [on poll](#action-on-poll) - Callback action for the on_poll ingest functionality
 
 ## action: 'test connectivity'
 
 Validate the asset configuration for connectivity. This action runs a quick query on the device to check the connection and credentials
 
-Type: **test** \
+Type: **test** <br>
 Read only: **True**
 
 #### Action Parameters
@@ -606,7 +606,7 @@ No Output
 
 Get a list of offenses
 
-Type: **investigate** \
+Type: **investigate** <br>
 Read only: **True**
 
 The default start_time is the past 5 days. The default end_time is now. The default count is 100 offenses.
@@ -673,7 +673,7 @@ summary.total_objects_successful | numeric | | 1 |
 
 Get a list of offense closing reasons
 
-Type: **investigate** \
+Type: **investigate** <br>
 Read only: **True**
 
 #### Action Parameters
@@ -703,7 +703,7 @@ summary.total_objects_successful | numeric | | 1 |
 
 Get events belonging to an offense
 
-Type: **investigate** \
+Type: **investigate** <br>
 Read only: **True**
 
 Use fields_filter parameter to restrict the events returned that match the filter. For e.g. destinationip='10.10.0.52' and protocolid='6'. For further details refer to the documentation section of the action in the README.
@@ -780,7 +780,7 @@ summary.total_objects_successful | numeric | | 1 |
 
 Get flows that make up an offense for a particular IP
 
-Type: **investigate** \
+Type: **investigate** <br>
 Read only: **True**
 
 Use the <b>fields_filter</b> parameter to restrict the flows returned. For e.g. protocolid='6'. For further details refer to the documentation section of the action in the README.
@@ -906,7 +906,7 @@ summary.total_objects_successful | numeric | | 1 |
 
 Get details about an offense
 
-Type: **investigate** \
+Type: **investigate** <br>
 Read only: **True**
 
 If the <b>ingest_offense</b> parameter is checked, then, it will ingest the events within the last N days (N - value in the <b>interval_days</b> parameter if given or value in the <b>interval_days</b> parameter in the app config or default 5 days) for the offense mentioned in the <b>offense_id</b> parameter. If the <b>ingest_offense</b> parameter is unchecked, it will fetch only the details of the provided offense ID in the <b>offense_id</b> parameter. The parameter <b>tenant_id</b> is used only when the <b>ingest_offense</b> parameter is checked.
@@ -976,7 +976,7 @@ summary.total_objects_successful | numeric | | 1 |
 
 Manage ingestion details
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **False**
 
 The general structure of the state file is {"app_version":"app_version", "last_saved_ingest_time":"epoch_time_last_fetched_offense", "last_ingested_events_data":{"offense_id":"epoch_time_last_fetched_event_for_offense_id"}}. <ul><li>There is no validation for values provided in the <b>offense_id</b> action parameter because this action does not make any API calls to the QRadar instance and it merely provides a way of manipulating the state file. It is requested to please confirm if the offense ID being provided as an input exists on the QRadar instance. Any wrong value provided in the <b>offense_id</b> parameter may corrupt the state file and the functionalities dependent on it.</li><li>No comma-separated values should be provided in any of the action input parameters or else it may corrupt the state file and the functionalities dependent on it.</li><li>The <b>set last saved offense ingest time</b> operation sets the epoch time of the provided value in the <b>datetime</b> parameter against the <b>last_saved_ingest_time</b> key in the state file.</li><li>The <b>set last saved events ingest time</b> operation sets the epoch time of the provided value in the <b>datetime</b> parameter against the key corresponding to the offense ID value provided in the <b>offense_id</b> in the dictionary structure against the key <b>last_ingested_events_data</b> in the state file. The format for the date string should match the formats 'YYYY-MM-DD HH:MM:SS.Z', 'YYYY-MM-DDTHH:MM:SS.Z', 'YYYY-MM-DD', or 'HH:MM:SS.Z'. Users can provide only date (time will be 00:00:00.000000) or only time (current date will be considered by default). The action considers that the provided value in the <b>datestring</b> parameter represents the date string in the timezone selected in the asset configuration parameter <b>timezone</b> and accordingly stores the epoch time into the state file.</li><li>The <b>delete last saved ingestion time data</b> operation deletes the entire last saved ingestion time data stored in the state file.</li><li>The <b>get last saved ingestion time data</b> operation fetches the entire last saved ingestion time data stored in the state file.</li><li>The parameter <b>offense_id</b> does not support comma-separated values. The user has to provide a single non-zero positive integer value of the corresponding Offense ID.</li><li>The parameter <b>offense_id</b> is mandatory for the operation <b>set last saved events ingest time</b>.</li></ul>
@@ -1026,7 +1026,7 @@ summary.total_objects_successful | numeric | | 2 |
 
 Execute an ariel query on the QRadar device
 
-Type: **investigate** \
+Type: **investigate** <br>
 Read only: **True**
 
 Use this action to execute queries using AQL on the QRadar device. AQL is a well documented (on the IBM website) query language with quite a few built-in functions.<br>Do note that this action could have a dynamic set of values returned in the data array since the query can specify the columns to return. This is the main reason for not listing the data paths.
@@ -1109,7 +1109,7 @@ summary.total_objects_successful | numeric | | 1 |
 
 Add an item to a reference set in QRadar
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **False**
 
 #### Action Parameters
@@ -1142,7 +1142,7 @@ summary.total_objects_successful | numeric | | 1 |
 
 Close an active offense, marking status=CLOSED
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **False**
 
 #### Action Parameters
@@ -1207,7 +1207,7 @@ summary.total_objects_successful | numeric | | 1 |
 
 Attach a note to an offense
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **False**
 
 #### Action Parameters
@@ -1234,7 +1234,7 @@ summary.total_objects_successful | numeric | | 1 |
 
 Assign the user to an offense
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **False**
 
 #### Action Parameters
@@ -1261,7 +1261,7 @@ summary.total_objects_successful | numeric | | 1 |
 
 Retrieve QRadar rule information
 
-Type: **investigate** \
+Type: **investigate** <br>
 Read only: **True**
 
 #### Action Parameters
@@ -1300,7 +1300,7 @@ summary.total_objects_successful | numeric | | 1 |
 
 List all QRadar rules
 
-Type: **investigate** \
+Type: **investigate** <br>
 Read only: **True**
 
 #### Action Parameters
@@ -1338,7 +1338,7 @@ summary.total_objects_successful | numeric | | 1 |
 
 Callback action for the on_poll ingest functionality
 
-Type: **ingest** \
+Type: **ingest** <br>
 Read only: **True**
 
 The default start_time is the past 5 days. The default end_time is now.
