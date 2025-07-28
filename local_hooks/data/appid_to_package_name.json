@@ -473,5 +473,6 @@
     "f657a38f-6649-4022-8d93-21fb69a51055": "phantom_specteropsbloodhound",
     "717277e0-8382-4562-9dc3-1917f38489d2": "phantom_ip2locationio",
     "299791c0-3565-4d73-b85d-ed6ef95edcb0": "phantom_automox",
-    "a4b0fb6e-70ea-40a6-9adb-6adc55f36f31": "phantom_google_threat_intelligence"
+    "a4b0fb6e-70ea-40a6-9adb-6adc55f36f31": "phantom_google_threat_intelligence",
+    "c6d3d4d5-5c2f-4f0d-a1b2-c3d4e5f6a7b8": "phantom_ciscomeraki"
 }
