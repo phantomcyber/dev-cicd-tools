@@ -480,5 +480,6 @@
     "e51a8b12-6699-40e3-a418-827be4fc852d": "CheckPhish",
     "f657a38f-6649-4022-8d93-21fb69a51055": "BloodHound Enterprise for Splunk SOAR",
     "299791c0-3565-4d73-b85d-ed6ef95edcb0": "Automox",
-    "a4b0fb6e-70ea-40a6-9adb-6adc55f36f31": "Google Threat Intelligence"
+    "a4b0fb6e-70ea-40a6-9adb-6adc55f36f31": "Google Threat Intelligence",
+    "c6d3d4d5-5c2f-4f0d-a1b2-c3d4e5f6a7b8": "Cisco Meraki"
 }
