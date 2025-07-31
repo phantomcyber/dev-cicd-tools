@@ -82,5 +82,12 @@ def test_app_with_pip_dependencies(flags, app_dir):
 
         assert actual == expected
 
-    for whl in actual["pip39_dependencies"]["wheel"]:
-        assert os.path.exists(os.path.join(app_dir, whl["input_file"]))
+    # Check that all wheel files exist for pip39_dependencies
+    if "pip39_dependencies" in actual:
+        for whl in actual["pip39_dependencies"]["wheel"]:
+            assert os.path.exists(os.path.join(app_dir, whl["input_file"]))
+
+    # Check that all wheel files exist for pip313_dependencies
+    if "pip313_dependencies" in actual:
+        for whl in actual["pip313_dependencies"]["wheel"]:
+            assert os.path.exists(os.path.join(app_dir, whl["input_file"]))
