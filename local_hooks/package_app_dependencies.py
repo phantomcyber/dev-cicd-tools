@@ -406,12 +406,7 @@ def main():
         logger.info("Updating app json with latest dependencies...")
         for pair in zip(all_built_wheels, new_wheel_paths):
             updated_app_json_wheel_entries.append(AppJsonWheelEntry(pair[0].distribution, pair[1]))
-        if sorted(updated_app_json_wheel_entries) == sorted(wheels_for_other_py_versions):
-            logger.info("Same wheels found for other python versions. Not introducing a new key.")
-        else:
-            _update_app_json(
-                app_json, pip_dependencies_key, updated_app_json_wheel_entries, app_dir
-            )
+        _update_app_json(app_json, pip_dependencies_key, updated_app_json_wheel_entries, app_dir)
     except Exception:
         logger.exception("Unexpected error")
     finally:
