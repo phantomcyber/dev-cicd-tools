@@ -521,7 +521,7 @@ class JSONTests(TestSuite):
             )
 
         # Check if requirements.txt exists and read its content
-        requirements_file = self._parser.repo_location / "requirements.txt"
+        requirements_file = self._app_code_dir / "requirements.txt"
         has_requirements = False
 
         if requirements_file.exists():
