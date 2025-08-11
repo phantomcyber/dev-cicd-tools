@@ -502,3 +502,67 @@ class JSONTests(TestSuite):
             else "Some configuration parameters may be secrets and should have password data types. Please review"
         )
         return create_test_result_response(success=not verbose, message=msg, verbose=verbose)
+
+    @TestSuite.test
+    def check_pip313_dependencies(self):
+        """
+        Ensures pip313_dependencies key exists and has appropriate content based on requirements.txt
+        """
+        verbose = []
+        message = TEST_PASS_MESSAGE
+
+        # Check if requirements.txt exists and read its content
+        requirements_file = self._app_code_dir / "requirements.txt"
+        has_requirements = False
+        requirements_file_exists = requirements_file.exists()
+
+        # If no requirements.txt file exists, we don't care about pip313_dependencies
+        if not requirements_file_exists:
+            return create_test_result_response(
+                success=True,
+                message=TEST_PASS_MESSAGE,
+                verbose=["No requirements.txt found - pip313_dependencies check skipped"],
+            )
+
+        # Read requirements.txt content
+        try:
+            requirements_content = requirements_file.read_text().strip()
+            # Check if requirements.txt has any non-empty, non-comment lines
+            has_requirements = any(
+                line.strip() and not line.strip().startswith("#")
+                for line in requirements_content.splitlines()
+            )
+        except Exception as e:
+            verbose.append(f"Error reading requirements.txt: {e}")
+            return create_test_result_response(
+                success=False, message="Could not read requirements.txt file", verbose=verbose
+            )
+
+        # Check if pip313_dependencies key exists in app json
+        if "pip313_dependencies" not in self._app_json:
+            verbose.append("Missing 'pip313_dependencies' key in app json")
+            return create_test_result_response(
+                success=False,
+                message="App json must contain 'pip313_dependencies' key when requirements.txt exists",
+                verbose=verbose,
+            )
+
+        pip313_deps = self._app_json["pip313_dependencies"]
+
+        # If requirements.txt is empty or has no real requirements
+        if not has_requirements:
+            # pip313_dependencies can be empty (but should still be a dict)
+            if not isinstance(pip313_deps, dict):
+                verbose.append("pip313_dependencies should be a dictionary")
+                message = "pip313_dependencies must be a dictionary structure"
+        else:
+            # If requirements.txt has content, pip313_dependencies should not be empty
+            if not pip313_deps or (isinstance(pip313_deps, dict) and not any(pip313_deps.values())):
+                verbose.append(
+                    "pip313_dependencies should not be empty when requirements.txt contains packages"
+                )
+                message = (
+                    "pip313_dependencies must have values when requirements.txt contains packages"
+                )
+
+        return create_test_result_response(success=not verbose, message=message, verbose=verbose)
