@@ -511,32 +511,41 @@ class JSONTests(TestSuite):
         verbose = []
         message = TEST_PASS_MESSAGE
 
+        # Check if requirements.txt exists and read its content
+        requirements_file = self._app_code_dir / "requirements.txt"
+        has_requirements = False
+        requirements_file_exists = requirements_file.exists()
+
+        # If no requirements.txt file exists, we don't care about pip313_dependencies
+        if not requirements_file_exists:
+            return create_test_result_response(
+                success=True,
+                message=TEST_PASS_MESSAGE,
+                verbose=["No requirements.txt found - pip313_dependencies check skipped"],
+            )
+
+        # Read requirements.txt content
+        try:
+            requirements_content = requirements_file.read_text().strip()
+            # Check if requirements.txt has any non-empty, non-comment lines
+            has_requirements = any(
+                line.strip() and not line.strip().startswith("#")
+                for line in requirements_content.splitlines()
+            )
+        except Exception as e:
+            verbose.append(f"Error reading requirements.txt: {e}")
+            return create_test_result_response(
+                success=False, message="Could not read requirements.txt file", verbose=verbose
+            )
+
         # Check if pip313_dependencies key exists in app json
         if "pip313_dependencies" not in self._app_json:
             verbose.append("Missing 'pip313_dependencies' key in app json")
             return create_test_result_response(
                 success=False,
-                message="App json must contain 'pip313_dependencies' key",
+                message="App json must contain 'pip313_dependencies' key when requirements.txt exists",
                 verbose=verbose,
             )
-
-        # Check if requirements.txt exists and read its content
-        requirements_file = self._app_code_dir / "requirements.txt"
-        has_requirements = False
-
-        if requirements_file.exists():
-            try:
-                requirements_content = requirements_file.read_text().strip()
-                # Check if requirements.txt has any non-empty, non-comment lines
-                has_requirements = any(
-                    line.strip() and not line.strip().startswith("#")
-                    for line in requirements_content.splitlines()
-                )
-            except Exception as e:
-                verbose.append(f"Error reading requirements.txt: {e}")
-                return create_test_result_response(
-                    success=False, message="Could not read requirements.txt file", verbose=verbose
-                )
 
         pip313_deps = self._app_json["pip313_dependencies"]
 
