@@ -60,7 +60,7 @@ repos:
         exclude: "README.md"
   # Central hooks
   - repo: https://github.com/phantomcyber/dev-cicd-tools
-    rev: v2.0.8
+    rev: v2.0.9
     hooks:
       - id: build-docs
         language: python
