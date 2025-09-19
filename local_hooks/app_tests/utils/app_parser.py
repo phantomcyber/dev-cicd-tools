@@ -103,12 +103,11 @@ class AppParser:
 
     @property
     def _app_json_filepath(self) -> Path:
-        non_sdk_app_path = self._app_code_dir / self.app_json_name
-        if non_sdk_app_path.exists():
-            return non_sdk_app_path
-        else:
-            # This is an SDK app
-            return self._app_code_dir / "sdk_app_manifest.json"
+        sdk_app_path = self._app_code_dir / "sdk_app_manifest.json"
+        if sdk_app_path.exists():
+            return sdk_app_path
+
+        return self._app_code_dir / self.app_json_name
 
     @cached_property
     def app_json(self):

@@ -11,8 +11,7 @@ PRE_COMMIT_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 logging.getLogger().setLevel(logging.INFO)
 
 
-@pytest.fixture(scope="function")
-def app_dir(request: pytest.FixtureRequest) -> Path:
+def copy_app_dir(request: pytest.FixtureRequest) -> Path:
     app_dir = Path(request.param)  # type: ignore
     app_dir_copy = Path(f"{app_dir}_copy")
 
@@ -24,6 +23,16 @@ def app_dir(request: pytest.FixtureRequest) -> Path:
     request.addfinalizer(remove_test_dir_copy)
 
     return app_dir_copy
+
+
+@pytest.fixture(scope="function")
+def app_dir(request: pytest.FixtureRequest) -> Path:
+    return copy_app_dir(request)
+
+
+@pytest.fixture(scope="function")
+def sdk_app_dir(request: pytest.FixtureRequest) -> Path:
+    return copy_app_dir(request)
 
 
 @pytest.mark.parametrize(
@@ -49,3 +58,20 @@ def test_static_tests(app_dir: Path):
 
         assert actual_path.exists(), f"Missing expected file {filename}"
         assert actual_path.read_text() == expected_path.read_text()
+
+
+@pytest.mark.parametrize(
+    "sdk_app_dir",
+    ["tests/data/static_tests/sdk_app_dir"],
+    indirect=["sdk_app_dir"],
+)
+def test_static_tests_sdkfied_app(sdk_app_dir: Path):
+    result = subprocess.run(
+        ["static-tests", "."],
+        cwd=sdk_app_dir,
+        capture_output=True,
+    )
+    print(result.stdout)
+    print(result.stderr)
+    print(result.stderr.decode())
+    assert result.returncode == 4
