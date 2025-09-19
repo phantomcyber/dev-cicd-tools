@@ -14,6 +14,8 @@ dependencies = [
     "django<5",
     "packaging>=24.2",
     "requests>=2.32.3",
+    "pip-licenses",
+    "toml",
 ]
 
 [project.scripts]

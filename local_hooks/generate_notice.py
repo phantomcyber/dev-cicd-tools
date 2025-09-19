@@ -12,6 +12,8 @@ import argparse
 import dataclasses
 import logging
 from pathlib import Path
+import toml
+
 
 # pip-licenses is used to query all python packages for license information
 PYTHON_LICENSE_COMMAND = "pip-licenses"
@@ -224,6 +226,35 @@ def remove_trailing_blank_lines(notice_file_path: Path):
         f.write("\n")
 
 
+def find_uv_lock_file(connector_path: Path) -> Optional[Path]:
+    """
+    Find uv.lock file in the connector_path or its subdirectories.
+    Returns the path to the uv.lock file if found, None otherwise.
+    """
+    # Check top level directory first
+    uv_lock_path = connector_path / "uv.lock"
+    if uv_lock_path.exists():
+        logging.info("Found uv.lock in top level directory: %s", uv_lock_path)
+        return uv_lock_path
+
+    # Check subdirectories
+    for uv_lock_path in connector_path.rglob("uv.lock"):
+        logging.info("Found uv.lock in subdirectory: %s", uv_lock_path)
+        return uv_lock_path
+
+    return None
+
+
+def get_sdkfied_app_dependencies(pyproject_toml_path: Path) -> list[str]:
+    """
+    Get the dependencies from the pyproject.toml file.
+    """
+    with open(pyproject_toml_path) as f:
+        toml_data = toml.load(f)
+
+    return toml_data.get("project", {}).get("dependencies", [])
+
+
 def main():
     """
     Generate a NOTICE file.
@@ -243,7 +274,11 @@ def main():
         f.write(f"Splunk SOAR App: {app_name}\n{app_license}\n")
 
         # Get all python package dependencies
-        packages = get_package_dependencies()
+        if uv_lock_path := find_uv_lock_file(connector_path):
+            uv_lock_dir = uv_lock_path.parent
+            packages = get_sdkfied_app_dependencies(uv_lock_dir / "pyproject.toml")
+        else:
+            packages = get_package_dependencies()
         valid_packages = [
             package for package in packages if package not in EXCLUDED_PYTHON_PACKAGES
         ]

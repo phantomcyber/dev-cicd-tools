@@ -8,6 +8,7 @@ from packaging.version import Version
 from .phantom_constants import APP_EXTS
 from functools import cached_property
 from pathlib import Path
+from typing import Optional
 
 
 class ParserError(Exception):
@@ -102,7 +103,12 @@ class AppParser:
 
     @property
     def _app_json_filepath(self) -> Path:
-        return self._app_code_dir / self.app_json_name
+        non_sdk_app_path = self._app_code_dir / self.app_json_name
+        if non_sdk_app_path.exists():
+            return non_sdk_app_path
+        else:
+            # This is an SDK app
+            return self._app_code_dir / "sdk_app_manifest.json"
 
     @cached_property
     def app_json(self):
@@ -132,6 +138,23 @@ class AppParser:
         return all_calldefs
 
     @cached_property
+    def uv_lock_file(self) -> Optional[Path]:
+        """
+        Find uv.lock file in the connector_path or its subdirectories.
+        Returns the path to the uv.lock file if found, None otherwise.
+        """
+        # Check top level directory first
+        uv_lock_path = self._app_code_dir / "uv.lock"
+        if uv_lock_path.exists():
+            return uv_lock_path
+
+        # Check subdirectories
+        for uv_lock_path in self._app_code_dir.rglob("uv.lock"):
+            return uv_lock_path
+
+        return None
+
+    @cached_property
     def connector_filepath(self):
         # Find the connector filename
         try:
@@ -142,6 +165,14 @@ class AppParser:
                     type(self.app_json["main_module"])
                 )
             ) from None
+
+        if not connector_filename.endswith(".py"):
+            # sdkfied app
+            if uv_lock_path := self.uv_lock_file:
+                path_to_main_module = connector_filename.split(":")[0]
+                full_path = "/".join(path_to_main_module.split("."))
+                full_path += ".py"
+                return uv_lock_path.parent / full_path
 
         if connector_filename in self.filenames:
             return os.path.join(self._app_code_dir, connector_filename)
