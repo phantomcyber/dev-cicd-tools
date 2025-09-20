@@ -292,7 +292,10 @@ class CodeTests(TestSuite):
         logos = {"Light": app_json.get("logo"), "Dark": app_json.get("logo_dark")}
 
         for logo_theme, logo_name in logos.items():
-            logo_path = os.path.join(self._app_code_dir, logo_name)
+            if self._parser.uv_lock_file:
+                logo_path = self._parser.uv_lock_file.parent / logo_name
+            else:
+                logo_path = os.path.join(self._app_code_dir, logo_name)
             # Make sure logo exists before checking other things
             if not logo_name:
                 # this will be throw as an error in json_tests
@@ -330,7 +333,8 @@ class CodeTests(TestSuite):
                     )
                     verbose.append(has_entities_verbose_message)
 
-            except Exception:
+            except Exception as e:
+                raise e
                 verbose.append(verbose_template.format("failed to parse as valid SVG"))
 
         msg = TEST_PASS_MESSAGE if not verbose else "There are problems with the logo files"
