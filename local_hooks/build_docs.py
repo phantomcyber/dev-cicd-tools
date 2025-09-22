@@ -229,7 +229,6 @@ def parse_args() -> BuildDocsArgs:
     help_str = " ".join(line.strip() for line in (__doc__ or "").strip().splitlines())
     parser = argparse.ArgumentParser(description=help_str)
     parser.add_argument("connector_path", help="Path to the connector", type=Path)
-    # prob have to build the manifest here instead of in a seperate hook
     parser.add_argument("--json-name", help="JSON file name")
     return BuildDocsArgs(**vars(parser.parse_args()))
 

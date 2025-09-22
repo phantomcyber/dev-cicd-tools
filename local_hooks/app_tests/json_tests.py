@@ -60,7 +60,7 @@ class JSONTests(TestSuite):
         """
         Validates the structure of the app json
         """
-        if self._parser.uv_lovk_filepath:
+        if self._parser.uv_lock_filepath:
             return SKIP_SDK_APP
 
         APP_TESTS_DIR = Path(__file__).parent.resolve()
@@ -93,7 +93,7 @@ class JSONTests(TestSuite):
         """
         Makes sure certain fields are not in the app json
         """
-        if self._parser.uv_lovk_filepath:
+        if self._parser.uv_lock_filepath:
             return SKIP_SDK_APP
 
         to_remove = []
@@ -119,7 +119,7 @@ class JSONTests(TestSuite):
         are sequential and zero-indexed
         """
 
-        if self._parser.uv_lovk_filepath:
+        if self._parser.uv_lock_filepath:
             return SKIP_SDK_APP
 
         def check_sequence(order_tuples):
@@ -186,7 +186,7 @@ class JSONTests(TestSuite):
         """
         Verifies that the main module field of the json is a valid connector filename
         """
-        if self._parser.uv_lovk_filepath:
+        if self._parser.uv_lock_filepath:
             return SKIP_SDK_APP
 
         app_json = self._app_json
@@ -320,7 +320,7 @@ class JSONTests(TestSuite):
         """
         Every parameter has an action_result.parameter associated with it
         """
-        if self._parser.uv_lovk_filepath:
+        if self._parser.uv_lock_filepath:
             return SKIP_SDK_APP
 
         app_json_actions = self._app_json.get("actions")
@@ -374,7 +374,7 @@ class JSONTests(TestSuite):
         """
         Every parameter for an action with contains has an action_result.parameter with the same contains
         """
-        if self._parser.uv_lovk_filepath:
+        if self._parser.uv_lock_filepath:
             return SKIP_SDK_APP
 
         action_list = [act for act in self._app_json["actions"]]
@@ -418,7 +418,7 @@ class JSONTests(TestSuite):
         """
         Checks to make sure each action includes the minimal required data paths
         """
-        if self._parser.uv_lovk_filepath:
+        if self._parser.uv_lock_filepath:
             return SKIP_SDK_APP
 
         app_json_actions = [act for act in self._app_json["actions"]]
@@ -530,7 +530,7 @@ class JSONTests(TestSuite):
         """
         Ensures pip313_dependencies key exists and has appropriate content based on requirements.txt
         """
-        if self._parser.uv_lovk_filepath:
+        if self._parser.uv_lock_filepath:
             return SKIP_SDK_APP
 
         verbose = []
