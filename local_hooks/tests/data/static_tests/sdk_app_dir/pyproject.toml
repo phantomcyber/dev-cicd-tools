@@ -1,0 +1,13 @@
+[project]
+name = "test"
+version = "4.0.0"
+description = "This is a test app"
+license = "Copyright (c) 2025 Splunk Inc."
+requires-python = ">=3.9, <3.14"
+authors = [
+]
+dependencies = [
+    "splunk-soar-sdk==1.6.0",
+    "validators",
+    "xmltodict",
+]

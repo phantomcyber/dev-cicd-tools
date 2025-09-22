@@ -13,6 +13,7 @@ import dataclasses
 import logging
 from pathlib import Path
 import toml
+from local_hooks.helpers import find_uv_lock_file
 
 
 # pip-licenses is used to query all python packages for license information
@@ -164,10 +165,18 @@ def get_python_license_info(packages: list[str]):
             yield LicenseLine.make_from_pip_json(license_info)
 
 
-def get_app_json(connector_path: Path) -> tuple[str, str]:
+def get_app_json(connector_path: Path, uv_lock_path: Optional[Path]) -> tuple[str, str]:
     """
     Get the app name and license from the app.json file.
     """
+
+    if uv_lock_path:
+        with open(uv_lock_path / "pyproject.toml") as f:
+            toml_data = toml.load(f)
+            app_name = toml_data.get("project", {}).get("name")
+            app_license = toml_data.get("project", {}).get("license")
+            return app_name, app_license
+
     logging.info("Looking for app JSON in: %s", connector_path)
     json_files = glob.glob(os.path.join(connector_path, "*.json"))
     # Exclude files with the pattern '*.postman_collection.json'
@@ -226,25 +235,6 @@ def remove_trailing_blank_lines(notice_file_path: Path):
         f.write("\n")
 
 
-def find_uv_lock_file(connector_path: Path) -> Optional[Path]:
-    """
-    Find uv.lock file in the connector_path or its subdirectories.
-    Returns the path to the uv.lock file if found, None otherwise.
-    """
-    # Check top level directory first
-    uv_lock_path = connector_path / "uv.lock"
-    if uv_lock_path.exists():
-        logging.info("Found uv.lock in top level directory: %s", uv_lock_path)
-        return uv_lock_path
-
-    # Check subdirectories
-    for uv_lock_path in connector_path.rglob("uv.lock"):
-        logging.info("Found uv.lock in subdirectory: %s", uv_lock_path)
-        return uv_lock_path
-
-    return None
-
-
 def get_sdkfied_app_dependencies(pyproject_toml_path: Path) -> list[str]:
     """
     Get the dependencies from the pyproject.toml file.
@@ -265,7 +255,8 @@ def main():
     args = parse_args()
     connector_path = Path(args.connector_path)
 
-    app_name, app_license = get_app_json(connector_path)
+    uv_lock_path = find_uv_lock_file(connector_path)
+    app_name, app_license = get_app_json(connector_path, uv_lock_path.parent)
     notice_file_path = connector_path / "NOTICE"
     logging.info("Creating NOTICE file at %s", Path(notice_file_path.resolve()))
 
@@ -274,7 +265,7 @@ def main():
         f.write(f"Splunk SOAR App: {app_name}\n{app_license}\n")
 
         # Get all python package dependencies
-        if uv_lock_path := find_uv_lock_file(connector_path):
+        if uv_lock_path:
             uv_lock_dir = uv_lock_path.parent
             packages = get_sdkfied_app_dependencies(uv_lock_dir / "pyproject.toml")
         else:

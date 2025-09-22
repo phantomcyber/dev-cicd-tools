@@ -21,6 +21,11 @@ import mdformat
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from jinja2.ext import Extension
 from jinja2.lexer import Token, TokenStream
+from local_hooks.helpers import (
+    find_uv_lock_file,
+    load_sdk_apps_enviornment,
+    generate_sdk_app_manifest,
+)
 
 SCRIPT_DIR = Path(__file__).parent.resolve()
 TEMPLATE_DIR = SCRIPT_DIR / "templates"
@@ -88,6 +93,20 @@ def escape_markdown(data: Any) -> Any:
 
 def get_app_json(app_json_dir, json_name):
     logging.info("Looking for app JSON in: %s", app_json_dir)
+
+    # Check if this is an SDK app and generate manifest if needed
+    if uv_lock_path := find_uv_lock_file(app_json_dir):
+        uv_lock_dir = uv_lock_path.parent
+        logging.info("SDK app detected, generating manifest: UV_LOCK_DIR=%s", uv_lock_dir)
+
+        # Install dependencies from pyproject.toml using uv
+        load_sdk_apps_enviornment(uv_lock_dir)
+
+        # Generate the SDK manifest in a temporary directory
+        logging.info("Generating SDK app manifest in temporary directory")
+        return generate_sdk_app_manifest(uv_lock_dir)
+
+    # Handle non-SDK apps - file-based JSON loading
     if not json_name:
         try:
             app_json_name = next(
@@ -210,6 +229,7 @@ def parse_args() -> BuildDocsArgs:
     help_str = " ".join(line.strip() for line in (__doc__ or "").strip().splitlines())
     parser = argparse.ArgumentParser(description=help_str)
     parser.add_argument("connector_path", help="Path to the connector", type=Path)
+    # prob have to build the manifest here instead of in a seperate hook
     parser.add_argument("--json-name", help="JSON file name")
     return BuildDocsArgs(**vars(parser.parse_args()))
 

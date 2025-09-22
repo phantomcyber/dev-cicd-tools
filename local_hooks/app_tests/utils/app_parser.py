@@ -9,6 +9,11 @@ from .phantom_constants import APP_EXTS
 from functools import cached_property
 from pathlib import Path
 from typing import Optional
+from local_hooks.helpers import (
+    find_uv_lock_file,
+    load_sdk_apps_enviornment,
+    generate_sdk_app_manifest,
+)
 
 
 class ParserError(Exception):
@@ -103,16 +108,24 @@ class AppParser:
 
     @property
     def _app_json_filepath(self) -> Path:
-        sdk_app_path = self._app_code_dir / "sdk_app_manifest.json"
-        if sdk_app_path.exists():
-            return sdk_app_path
-
         return self._app_code_dir / self.app_json_name
+
+    @cached_property
+    def sdk_app_json(self) -> Path:
+        uv_lock_dir = self.uv_lovk_filepath.parent
+        load_sdk_apps_enviornment(uv_lock_dir)
+        return generate_sdk_app_manifest(uv_lock_dir)
+
+    @cached_property
+    def uv_lovk_filepath(self) -> Optional[Path]:
+        return find_uv_lock_file(self._app_code_dir)
 
     @cached_property
     def app_json(self):
         # Gets the loaded json, preserving key order
         try:
+            if self.uv_lovk_filepath:
+                return self.sdk_app_json
             json_content = json.loads(self._app_json_filepath.read_text())
             return json_content
         except FileNotFoundError as e:

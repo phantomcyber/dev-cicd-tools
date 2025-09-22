@@ -2,6 +2,8 @@ import logging
 import os
 import shutil
 import subprocess
+import json
+from unittest.mock import patch
 
 import pytest
 from pathlib import Path
@@ -65,7 +67,30 @@ def test_static_tests(app_dir: Path):
     ["tests/data/static_tests/sdk_app_dir"],
     indirect=["sdk_app_dir"],
 )
-def test_static_tests_sdkfied_app(sdk_app_dir: Path):
+@patch("local_hooks.helpers.subprocess.run")
+def test_static_tests_sdkfied_app(mock_subprocess, sdk_app_dir: Path):
+    # Load the SDK manifest data for mocking
+    sdk_manifest_path = Path("tests/data/static_tests/sdk_app_dir/sdk_app_manifest.json")
+    with open(sdk_manifest_path) as f:
+        sdk_manifest_data = json.load(f)
+
+    def subprocess_side_effect(*args, **kwargs):
+        cmd = args[0] if args else kwargs.get("args", [])
+
+        if isinstance(cmd, list) and len(cmd) >= 2:
+            # Mock uv run soarapps (manifest generation)
+            if (
+                "manifests" in cmd and "create" in cmd
+            ):  # Find the output file path and write the mock data
+                output_path = cmd[5]
+                with open(output_path, "w") as f:
+                    json.dump(sdk_manifest_data, f, indent=2)
+                return subprocess.CompletedProcess(cmd, 0, "", "")
+            else:
+                return subprocess.CompletedProcess(cmd or [], 0, "", "")
+
+    mock_subprocess.side_effect = subprocess_side_effect
+
     result = subprocess.run(
         ["static-tests", "."],
         cwd=sdk_app_dir,
@@ -73,5 +98,4 @@ def test_static_tests_sdkfied_app(sdk_app_dir: Path):
     )
     print(result.stdout)
     print(result.stderr)
-    print(result.stderr.decode())
     assert result.returncode == 4

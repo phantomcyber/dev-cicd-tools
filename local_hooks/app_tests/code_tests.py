@@ -333,8 +333,7 @@ class CodeTests(TestSuite):
                     )
                     verbose.append(has_entities_verbose_message)
 
-            except Exception as e:
-                raise e
+            except Exception:
                 verbose.append(verbose_template.format("failed to parse as valid SVG"))
 
         msg = TEST_PASS_MESSAGE if not verbose else "There are problems with the logo files"

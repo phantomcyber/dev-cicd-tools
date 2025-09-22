@@ -22,6 +22,8 @@ import traceback
 from packaging.version import Version
 from pathlib import Path
 
+SKIP_SDK_APP = {"success": True, "message": "TEST SKIPPED - SDK app detected"}
+
 
 class JSONTests(TestSuite):
     def __init__(self, repo_location: Path) -> None:
@@ -29,12 +31,6 @@ class JSONTests(TestSuite):
         self._app_json = self._parser.app_json
 
         self._app_is_certified = self._parser.app_json["publisher"] == "Splunk"
-
-    def _skip_if_sdk_app(self):
-        """Helper method to skip tests for SDK apps"""
-        if self._parser.uv_lock_file is not None:
-            return {"success": True, "message": "TEST SKIPPED - SDK app detected"}
-        return None
 
     @staticmethod
     def format_as_index(indices: list[Any], container: str = "schema") -> str:
@@ -64,8 +60,8 @@ class JSONTests(TestSuite):
         """
         Validates the structure of the app json
         """
-        if skip_result := self._skip_if_sdk_app():
-            return skip_result
+        if self._parser.uv_lovk_filepath:
+            return SKIP_SDK_APP
 
         APP_TESTS_DIR = Path(__file__).parent.resolve()
         schema_path = APP_TESTS_DIR / "app_schema.json"
@@ -97,8 +93,8 @@ class JSONTests(TestSuite):
         """
         Makes sure certain fields are not in the app json
         """
-        if skip_result := self._skip_if_sdk_app():
-            return skip_result
+        if self._parser.uv_lovk_filepath:
+            return SKIP_SDK_APP
 
         to_remove = []
         msg = TEST_PASS_MESSAGE
@@ -123,8 +119,8 @@ class JSONTests(TestSuite):
         are sequential and zero-indexed
         """
 
-        if skip_result := self._skip_if_sdk_app():
-            return skip_result
+        if self._parser.uv_lovk_filepath:
+            return SKIP_SDK_APP
 
         def check_sequence(order_tuples):
             try:
@@ -190,8 +186,8 @@ class JSONTests(TestSuite):
         """
         Verifies that the main module field of the json is a valid connector filename
         """
-        if skip_result := self._skip_if_sdk_app():
-            return skip_result
+        if self._parser.uv_lovk_filepath:
+            return SKIP_SDK_APP
 
         app_json = self._app_json
         verbose = []
@@ -324,8 +320,8 @@ class JSONTests(TestSuite):
         """
         Every parameter has an action_result.parameter associated with it
         """
-        if skip_result := self._skip_if_sdk_app():
-            return skip_result
+        if self._parser.uv_lovk_filepath:
+            return SKIP_SDK_APP
 
         app_json_actions = self._app_json.get("actions")
 
@@ -378,8 +374,8 @@ class JSONTests(TestSuite):
         """
         Every parameter for an action with contains has an action_result.parameter with the same contains
         """
-        if skip_result := self._skip_if_sdk_app():
-            return skip_result
+        if self._parser.uv_lovk_filepath:
+            return SKIP_SDK_APP
 
         action_list = [act for act in self._app_json["actions"]]
         verbose = []
@@ -422,8 +418,8 @@ class JSONTests(TestSuite):
         """
         Checks to make sure each action includes the minimal required data paths
         """
-        if skip_result := self._skip_if_sdk_app():
-            return skip_result
+        if self._parser.uv_lovk_filepath:
+            return SKIP_SDK_APP
 
         app_json_actions = [act for act in self._app_json["actions"]]
         verbose = []
@@ -534,8 +530,8 @@ class JSONTests(TestSuite):
         """
         Ensures pip313_dependencies key exists and has appropriate content based on requirements.txt
         """
-        if skip_result := self._skip_if_sdk_app():
-            return skip_result
+        if self._parser.uv_lovk_filepath:
+            return SKIP_SDK_APP
 
         verbose = []
         message = TEST_PASS_MESSAGE
