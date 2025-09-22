@@ -67,35 +67,32 @@ def test_static_tests(app_dir: Path):
     ["tests/data/static_tests/sdk_app_dir"],
     indirect=["sdk_app_dir"],
 )
-@patch("local_hooks.helpers.subprocess.run")
-def test_static_tests_sdkfied_app(mock_subprocess, sdk_app_dir: Path):
-    # Load the SDK manifest data for mocking
+@patch("local_hooks.helpers.load_sdk_apps_enviornment")
+@patch("local_hooks.helpers.generate_sdk_app_manifest")
+def test_static_tests_sdkfied_app(mock_generate_manifest, mock_load_env, sdk_app_dir: Path):
     sdk_manifest_path = Path("tests/data/static_tests/sdk_app_dir/sdk_app_manifest.json")
     with open(sdk_manifest_path) as f:
         sdk_manifest_data = json.load(f)
 
-    def subprocess_side_effect(*args, **kwargs):
-        cmd = args[0] if args else kwargs.get("args", [])
+    # Mock the helper functions
+    mock_load_env.return_value = None
+    mock_generate_manifest.return_value = sdk_manifest_data
 
-        if isinstance(cmd, list) and len(cmd) >= 2:
-            # Mock uv run soarapps (manifest generation)
-            if (
-                "manifests" in cmd and "create" in cmd
-            ):  # Find the output file path and write the mock data
-                output_path = cmd[5]
-                with open(output_path, "w") as f:
-                    json.dump(sdk_manifest_data, f, indent=2)
-                return subprocess.CompletedProcess(cmd, 0, "", "")
-            else:
-                return subprocess.CompletedProcess(cmd or [], 0, "", "")
+    # Import and run static tests directly instead of subprocess
+    from local_hooks.static_tests import main
+    import sys
 
-    mock_subprocess.side_effect = subprocess_side_effect
+    # Save original args and cwd
+    original_argv = sys.argv
+    original_cwd = os.getcwd()
 
-    result = subprocess.run(
-        ["static-tests", "."],
-        cwd=sdk_app_dir,
-        capture_output=True,
-    )
-    print(result.stdout)
-    print(result.stderr)
-    assert result.returncode == 4
+    try:
+        sys.argv = ["static-tests", "."]
+        os.chdir(sdk_app_dir)
+        exit_code = main()
+
+    finally:
+        sys.argv = original_argv
+        os.chdir(original_cwd)
+
+    assert exit_code == 4
