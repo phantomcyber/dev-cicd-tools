@@ -22,6 +22,8 @@ import traceback
 from packaging.version import Version
 from pathlib import Path
 
+SKIP_SDK_APP = {"success": True, "message": "TEST SKIPPED - SDK app detected"}
+
 
 class JSONTests(TestSuite):
     def __init__(self, repo_location: Path) -> None:
@@ -58,6 +60,9 @@ class JSONTests(TestSuite):
         """
         Validates the structure of the app json
         """
+        if self._parser.uv_lock_filepath:
+            return SKIP_SDK_APP
+
         APP_TESTS_DIR = Path(__file__).parent.resolve()
         schema_path = APP_TESTS_DIR / "app_schema.json"
         verbose = []
@@ -88,6 +93,8 @@ class JSONTests(TestSuite):
         """
         Makes sure certain fields are not in the app json
         """
+        if self._parser.uv_lock_filepath:
+            return SKIP_SDK_APP
 
         to_remove = []
         msg = TEST_PASS_MESSAGE
@@ -111,6 +118,9 @@ class JSONTests(TestSuite):
         Checks whether order of configuration parameters, action parameters, and action output columns
         are sequential and zero-indexed
         """
+
+        if self._parser.uv_lock_filepath:
+            return SKIP_SDK_APP
 
         def check_sequence(order_tuples):
             try:
@@ -176,6 +186,9 @@ class JSONTests(TestSuite):
         """
         Verifies that the main module field of the json is a valid connector filename
         """
+        if self._parser.uv_lock_filepath:
+            return SKIP_SDK_APP
+
         app_json = self._app_json
         verbose = []
         main_module = app_json["main_module"]
@@ -307,6 +320,9 @@ class JSONTests(TestSuite):
         """
         Every parameter has an action_result.parameter associated with it
         """
+        if self._parser.uv_lock_filepath:
+            return SKIP_SDK_APP
+
         app_json_actions = self._app_json.get("actions")
 
         message = TEST_PASS_MESSAGE
@@ -358,6 +374,9 @@ class JSONTests(TestSuite):
         """
         Every parameter for an action with contains has an action_result.parameter with the same contains
         """
+        if self._parser.uv_lock_filepath:
+            return SKIP_SDK_APP
+
         action_list = [act for act in self._app_json["actions"]]
         verbose = []
         for index, action in enumerate(action_list):
@@ -399,6 +418,9 @@ class JSONTests(TestSuite):
         """
         Checks to make sure each action includes the minimal required data paths
         """
+        if self._parser.uv_lock_filepath:
+            return SKIP_SDK_APP
+
         app_json_actions = [act for act in self._app_json["actions"]]
         verbose = []
         message = TEST_PASS_MESSAGE
@@ -508,6 +530,9 @@ class JSONTests(TestSuite):
         """
         Ensures pip313_dependencies key exists and has appropriate content based on requirements.txt
         """
+        if self._parser.uv_lock_filepath:
+            return SKIP_SDK_APP
+
         verbose = []
         message = TEST_PASS_MESSAGE
 

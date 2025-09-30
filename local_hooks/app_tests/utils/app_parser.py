@@ -8,6 +8,12 @@ from packaging.version import Version
 from .phantom_constants import APP_EXTS
 from functools import cached_property
 from pathlib import Path
+from typing import Optional
+from local_hooks.helpers import (
+    find_uv_lock_file,
+    load_sdk_apps_enviornment,
+    generate_sdk_app_manifest,
+)
 
 
 class ParserError(Exception):
@@ -105,9 +111,21 @@ class AppParser:
         return self._app_code_dir / self.app_json_name
 
     @cached_property
+    def sdk_app_json(self) -> Path:
+        uv_lock_dir = self.uv_lock_filepath.parent
+        load_sdk_apps_enviornment(uv_lock_dir)
+        return generate_sdk_app_manifest(uv_lock_dir)
+
+    @cached_property
+    def uv_lock_filepath(self) -> Optional[Path]:
+        return find_uv_lock_file(self._app_code_dir)
+
+    @cached_property
     def app_json(self):
         # Gets the loaded json, preserving key order
         try:
+            if self.uv_lock_filepath:
+                return self.sdk_app_json
             json_content = json.loads(self._app_json_filepath.read_text())
             return json_content
         except FileNotFoundError as e:
@@ -142,6 +160,14 @@ class AppParser:
                     type(self.app_json["main_module"])
                 )
             ) from None
+
+        if not connector_filename.endswith(".py"):
+            # sdkfied app
+            if self.uv_lock_filepath:
+                path_to_main_module = connector_filename.split(":")[0]
+                full_path = "/".join(path_to_main_module.split("."))
+                full_path += ".py"
+                return self.uv_lock_filepath.parent / full_path
 
         if connector_filename in self.filenames:
             return os.path.join(self._app_code_dir, connector_filename)

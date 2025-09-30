@@ -292,7 +292,10 @@ class CodeTests(TestSuite):
         logos = {"Light": app_json.get("logo"), "Dark": app_json.get("logo_dark")}
 
         for logo_theme, logo_name in logos.items():
-            logo_path = os.path.join(self._app_code_dir, logo_name)
+            if self._parser.uv_lock_filepath:
+                logo_path = self._parser.uv_lock_filepath.parent / logo_name
+            else:
+                logo_path = os.path.join(self._app_code_dir, logo_name)
             # Make sure logo exists before checking other things
             if not logo_name:
                 # this will be throw as an error in json_tests
@@ -364,13 +367,18 @@ class CodeTests(TestSuite):
                 return val
         return None
 
+    def _get_src_dir(self):
+        main_module_path = self._parser.sdk_app_json.get("main_module").split(":")[0].split(".")
+        main_module_path.pop()
+        return self._parser.uv_lock_filepath.parent / "/".join(main_module_path)
+
     @TestSuite.test
     def check_python_package(self):
         """
         Checks for an __init__.py existing in app directory toplevel
         """
         msg = TEST_PASS_MESSAGE
-        app_dir = Path(self._app_code_dir)
+        app_dir = self._get_src_dir() if self._parser.uv_lock_filepath else Path(self._app_code_dir)
         if not (init_py := app_dir / "__init__.py").is_file():
             msg = "App repo does not have an `__init__.py` at toplevel. Not a python module. Adding to app directory."
             init_py.touch()
