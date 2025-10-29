@@ -255,11 +255,10 @@ def main():
     args = parse_args()
     connector_path = Path(args.connector_path)
 
-    if uv_lock_path := find_uv_lock_file(connector_path):
-        app_name, app_license = get_app_json(connector_path, uv_lock_path.parent)
-    else:
-        app_name, app_license = get_app_json(connector_path)
-
+    uv_lock_path = find_uv_lock_file(connector_path)
+    app_name, app_license = get_app_json(
+        connector_path, uv_lock_path.parent if uv_lock_path else None
+    )
     notice_file_path = connector_path / "NOTICE"
     logging.info("Creating NOTICE file at %s", Path(notice_file_path.resolve()))
 
