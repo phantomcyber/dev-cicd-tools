@@ -51,6 +51,7 @@ repos:
     rev: v1.136.0
     hooks:
       - id: semgrep
+        additional_dependencies: ["setuptools"]
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.5.0
     hooks:

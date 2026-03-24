@@ -23,7 +23,7 @@ jobs:
         run: pip install -r pre-commit/semgrep/dev-requirements.txt
       - name: Run Tests
         run: |
-          semgrep --test semgrep/rules
+          semgrep --test pre-commit/semgrep/rules
   upload-rules:
     needs: run-tests
     if: github.ref_name == 'main'
