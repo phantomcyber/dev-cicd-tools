@@ -12,6 +12,7 @@ import argparse
 import dataclasses
 import logging
 from pathlib import Path
+from packaging.version import Version
 import toml
 from local_hooks.helpers import find_uv_lock_file
 
@@ -165,18 +166,10 @@ def get_python_license_info(packages: list[str]):
             yield LicenseLine.make_from_pip_json(license_info)
 
 
-def get_app_json(connector_path: Path, uv_lock_path: Optional[Path]) -> tuple[str, str]:
+def get_app_json(connector_path: Path) -> tuple[str, str]:
     """
     Get the app name and license from the app.json file.
     """
-
-    if uv_lock_path:
-        with open(uv_lock_path / "pyproject.toml") as f:
-            toml_data = toml.load(f)
-            app_name = toml_data.get("project", {}).get("name")
-            app_license = toml_data.get("project", {}).get("license")
-            return app_name, app_license
-
     logging.info("Looking for app JSON in: %s", connector_path)
     json_files = glob.glob(os.path.join(connector_path, "*.json"))
     # Exclude files with the pattern '*.postman_collection.json'
@@ -235,14 +228,18 @@ def remove_trailing_blank_lines(notice_file_path: Path):
         f.write("\n")
 
 
-def get_sdkfied_app_dependencies(pyproject_toml_path: Path) -> list[str]:
+def get_sdk_version_from_lock(uv_lock_path: Path) -> Optional[Version]:
     """
-    Get the dependencies from the pyproject.toml file.
+    Return the resolved version of splunk-soar-sdk from the uv.lock file,
+    or None if it is not present.
     """
-    with open(pyproject_toml_path) as f:
-        toml_data = toml.load(f)
+    with open(uv_lock_path) as f:
+        lock_data = toml.load(f)
 
-    return toml_data.get("project", {}).get("dependencies", [])
+    for package in lock_data.get("package", []):
+        if package.get("name") == "splunk-soar-sdk":
+            return Version(package["version"])
+    return None
 
 
 def main():
@@ -256,9 +253,26 @@ def main():
     connector_path = Path(args.connector_path)
 
     uv_lock_path = find_uv_lock_file(connector_path)
-    app_name, app_license = get_app_json(
-        connector_path, uv_lock_path.parent if uv_lock_path else None
-    )
+
+    if uv_lock_path:
+        sdk_version = get_sdk_version_from_lock(uv_lock_path)
+        if sdk_version is None or sdk_version < Version("3.20.0"):
+            found = str(sdk_version) if sdk_version else "not installed"
+            raise RuntimeError(
+                f"splunk-soar-sdk >= 3.20.0 is required for NOTICE generation in SDK apps "
+                f"(found: {found}). Please upgrade your SDK."
+            )
+        logging.info(
+            "splunk-soar-sdk %s >= 3.20.0, delegating NOTICE generation to SDK", sdk_version
+        )
+        subprocess.run(
+            ["uv", "run", "soarapps", "manifests", "create-notice"],
+            cwd=uv_lock_path.parent,
+            check=True,
+        )
+        return
+
+    app_name, app_license = get_app_json(connector_path)
     notice_file_path = connector_path / "NOTICE"
     logging.info("Creating NOTICE file at %s", Path(notice_file_path.resolve()))
 
@@ -267,11 +281,7 @@ def main():
         f.write(f"Splunk SOAR App: {app_name}\n{app_license}\n")
 
         # Get all python package dependencies
-        if uv_lock_path:
-            uv_lock_dir = uv_lock_path.parent
-            packages = get_sdkfied_app_dependencies(uv_lock_dir / "pyproject.toml")
-        else:
-            packages = get_package_dependencies()
+        packages = get_package_dependencies()
         valid_packages = [
             package for package in packages if package not in EXCLUDED_PYTHON_PACKAGES
         ]
