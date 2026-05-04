@@ -111,6 +111,14 @@ AppJson = namedtuple("AppJson", ["file_name", "content"])
 APP_JSON_INDENT = 4
 
 
+def _subprocess_env_without_pythonpath():
+    """Return a child-process environment without PYTHONPATH leakage."""
+
+    env = os.environ.copy()
+    env.pop("PYTHONPATH", None)
+    return env
+
+
 def _load_app_json(app_dir):
     json_files = [
         f
@@ -324,7 +332,8 @@ def main():
             local_wheel_dirs.extend(["-f", os.path.join(wheels_dir, sub_dir)])
 
         build_result = subprocess.run(
-            [pip_path, "wheel", "-w", temp_dir, "-r", requirements_file, *local_wheel_dirs]
+            [pip_path, "wheel", "-w", temp_dir, "-r", requirements_file, *local_wheel_dirs],
+            env=_subprocess_env_without_pythonpath(),
         )
 
         if build_result.returncode != 0:

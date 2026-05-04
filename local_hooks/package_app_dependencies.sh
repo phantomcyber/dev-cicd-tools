@@ -30,16 +30,21 @@ fi
 
 export PATH="$PY39_BIN:$PY313_BIN:$PATH"
 
+HOOKS_PYTHONPATH="${PYTHONPATH:-}"
+
 # Sanity check: We can import local_hooks, right? If not, it's probably because we were already
 # running in a docker container and we didn't volume mount the site-packages directory
 # If that's the case, try to import local_hooks from pre-commit Python's site-packages
 if ! python -c 'import local_hooks'; then
 	#shellcheck disable=SC2034,SC2046
-	PYTHONPATH="$($(dirname "$0")/python -c 'import site; print(site.getsitepackages()[0])')"
-	export PYTHONPATH
-	echo "$PYTHONPATH"
+	HOOKS_PYTHONPATH="$($(dirname "$0")/python -c 'import site; print(site.getsitepackages()[0])')"
+	export PYTHONPATH="$HOOKS_PYTHONPATH"
 	python -c 'import local_hooks'
 fi
+
+# The mounted pre-commit site-packages may contain host pip code from a newer Python version.
+# Limit that path to local_hooks imports so container pip3.9/pip3.13 use their own interpreter-local pip.
+unset PYTHONPATH
 
 # Remove any existing wheels in wheels/ and app json
 yum install jq -y
@@ -52,10 +57,19 @@ py39_deps='pip39_dependencies'
 py313_deps='pip313_dependencies'
 SCRIPT="python -m local_hooks.package_app_dependencies"
 
-pip3.9 install pip-tools
-${SCRIPT} . "$(which pip3.9)" "$py39_deps" --repair-wheels
+# Restore the hook import path only for the packager itself; child pip processes clear it again.
+run_packager() {
+	if [[ -n "${HOOKS_PYTHONPATH:-}" ]]; then
+		PYTHONPATH="$HOOKS_PYTHONPATH" ${SCRIPT} "$@"
+	else
+		${SCRIPT} "$@"
+	fi
+}
 
-pip3.13 install pip-tools
-${SCRIPT} . "$(which pip3.13)" "$py313_deps" --repair-wheels
+env -u PYTHONPATH pip3.9 install pip-tools
+run_packager . "$(which pip3.9)" "$py39_deps" --repair-wheels
+
+env -u PYTHONPATH pip3.13 install pip-tools
+run_packager . "$(which pip3.13)" "$py313_deps" --repair-wheels
 
 exit $?
