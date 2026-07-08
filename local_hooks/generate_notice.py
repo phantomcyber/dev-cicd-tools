@@ -11,17 +11,24 @@ import glob
 import argparse
 import dataclasses
 import logging
+import shutil
+import sys
 from pathlib import Path
 from packaging.version import Version
+from packaging.utils import canonicalize_name
 import toml
 from local_hooks.helpers import find_uv_lock_file
 
 
 # pip-licenses is used to query all python packages for license information
 PYTHON_LICENSE_COMMAND = "pip-licenses"
-PYTHON_LICENSE_COMMAND_ARGS = (
-    "--format=json --with-license-file --no-license-path --with-urls --with-notice-file"
-)
+PYTHON_LICENSE_COMMAND_ARGS = [
+    "--format=json",
+    "--with-license-file",
+    "--no-license-path",
+    "--with-urls",
+    "--with-notice-file",
+]
 
 # A set of python packages that we've either already covered in the base
 # license files, or don't actually use.
@@ -124,17 +131,12 @@ class LicenseLine:
             f.write(line)
 
 
-def get_package_dependencies() -> list[str]:
+def get_package_dependencies(requirements_path: Path) -> list[str]:
     """
-    Enter the virtual environment for the current project.
-
-    This is necessary to ensure that the correct python packages are
-    being used.
+    Extract package names from the app requirements file.
     """
-    subprocess.run(["pip", "install", "pip-licenses"], capture_output=True).stdout
-    subprocess.run(["pip", "install", "-r", "requirements.txt"], capture_output=True).stdout
     packages = []
-    with open("requirements.txt") as reqs:
+    with open(requirements_path) as reqs:
         for line in reqs:
             if match := re.match(r"^(.*?)(?=[=<>])", line):
                 packages.append(match.group(0))
@@ -144,7 +146,91 @@ def get_package_dependencies() -> list[str]:
     return packages
 
 
-def get_python_license_info(packages: list[str]):
+def get_uv_tool_command() -> Optional[list[str]]:
+    if shutil.which("uvx"):
+        return ["uvx"]
+    if shutil.which("uv"):
+        return ["uv", "tool", "run"]
+    return None
+
+
+def run_command(command: list[str]) -> subprocess.CompletedProcess[str]:
+    logging.debug("Running command: %s", shlex.join(command))
+    return subprocess.run(command, capture_output=True, text=True)
+
+
+def load_license_info(command: list[str]) -> list[dict]:
+    result = run_command(command)
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"Command failed with exit code {result.returncode}: {shlex.join(command)}"
+        )
+    return json.loads(result.stdout)
+
+
+def load_license_info_with_uvx(packages: list[str], requirements_path: Path) -> list[dict]:
+    uv_tool_command = get_uv_tool_command()
+    if uv_tool_command is None:
+        raise FileNotFoundError("uvx or uv is not available")
+
+    return load_license_info(
+        [
+            *uv_tool_command,
+            "--with-requirements",
+            str(requirements_path),
+            PYTHON_LICENSE_COMMAND,
+            *PYTHON_LICENSE_COMMAND_ARGS,
+            "--packages",
+            *packages,
+        ]
+    )
+
+
+def load_license_info_with_pip(packages: list[str], requirements_path: Path) -> list[dict]:
+    pip_check = run_command([sys.executable, "-m", "pip", "--version"])
+    if pip_check.returncode != 0:
+        raise RuntimeError(
+            f"uvx/uv is not available and pip is not importable from {sys.executable}"
+        )
+
+    install_command = [
+        sys.executable,
+        "-m",
+        "pip",
+        "install",
+        "pip-licenses",
+        "-r",
+        str(requirements_path),
+    ]
+    install_result = run_command(install_command)
+    if install_result.returncode != 0:
+        raise RuntimeError(
+            f"Command failed with exit code {install_result.returncode}: "
+            f"{shlex.join(install_command)}"
+        )
+
+    return load_license_info(
+        [
+            sys.executable,
+            "-m",
+            "piplicenses",
+            *PYTHON_LICENSE_COMMAND_ARGS,
+            "--packages",
+            *packages,
+        ]
+    )
+
+
+def get_license_info_list(packages: list[str], requirements_path: Path) -> list[dict]:
+    try:
+        return load_license_info_with_uvx(packages, requirements_path)
+    except (FileNotFoundError, RuntimeError) as uv_error:
+        logging.warning("uvx pip-licenses failed; falling back to pip: %s", uv_error)
+
+    return load_license_info_with_pip(packages, requirements_path)
+
+
+def get_python_license_info(packages: list[str], requirements_path: Path):
     """
     Generate a series of LicenseLine objects describing every python dependency
     in the current environment.
@@ -152,13 +238,15 @@ def get_python_license_info(packages: list[str]):
     This uses the tool pip-licenses to automatically collect all package
     information by grabbing all packages in the current environment.
     """
-    command = shlex.split(
-        f"{PYTHON_LICENSE_COMMAND} {PYTHON_LICENSE_COMMAND_ARGS} --packages {' '.join(packages)}"
-    )
-    license_info_proc = subprocess.run(command, capture_output=True).stdout
-
     # A very large json array is returned. Missing values are marked 'UNKNOWN'
-    license_info_list = json.loads(license_info_proc)
+    license_info_list = get_license_info_list(packages, requirements_path)
+    found_packages = {canonicalize_name(info.get("Name", "")) for info in license_info_list}
+    missing_packages = {canonicalize_name(package) for package in packages} - found_packages
+    if missing_packages:
+        raise RuntimeError(
+            "pip-licenses did not return license information for: "
+            f"{', '.join(sorted(missing_packages))}"
+        )
 
     for license_info in license_info_list:
         if license_info.get("Name") not in EXCLUDED_PYTHON_PACKAGES:
@@ -281,7 +369,8 @@ def main():
         f.write(f"Splunk SOAR App: {app_name}\n{app_license}\n")
 
         # Get all python package dependencies
-        packages = get_package_dependencies()
+        requirements_path = connector_path / "requirements.txt"
+        packages = get_package_dependencies(requirements_path)
         valid_packages = [
             package for package in packages if package not in EXCLUDED_PYTHON_PACKAGES
         ]
@@ -291,7 +380,9 @@ def main():
             return
 
         # Get license info for all package dependencies
-        for item in get_python_license_info(packages=valid_packages):
+        for item in get_python_license_info(
+            packages=valid_packages, requirements_path=requirements_path
+        ):
             item.write_line(f)
 
     remove_trailing_whitespace(notice_file_path)
