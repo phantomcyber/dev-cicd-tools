@@ -1,3 +1,4 @@
+{
   "00a4cb00-19a1-46f6-9923-f502a3dd346b": "GitLab",
   "00b3dc3a-ea6e-47a8-82a5-036f05d83863": "Canary for SOAR",
   "00eb093b-1864-460e-b1a9-c4156b735889": "Big Query",
@@ -503,5 +504,4 @@
   "ff116964-86f7-4e29-8763-4462ce0d39a7": "Git",
   "ff79d26f-590e-4158-ad33-1dd073ec10a5": "Koodous",
   "ff83fcea-737a-498c-ba81-09b0b097097d": "Infoblox NIOS",
-{
 }
