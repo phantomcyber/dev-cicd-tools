@@ -465,7 +465,7 @@
   "f091ded1-3d9e-4402-aaa2-1f92fae51e96": "phantom_googledrive",
   "f09b65f2-3ce5-4b57-8cb3-e269e11d20f7": "phantom_tanium",
   "f0e0c6ca-32fa-4011-b399-78b114b712ed": "phantom_titaniumcloud",
-  "f1351a77-3d1f-4e1e-af9c-7cddb9bec48b": "phantom_cyberintpremiumioc"
+  "f1351a77-3d1f-4e1e-af9c-7cddb9bec48b": "phantom_cyberintpremiumioc",
   "f18b7ef9-0cbd-4dbb-b8ed-ce62e17f0603": "phantom_domaintools_iris",
   "f202eac5-41f1-463a-a282-40cba2c454d0": "phantom_secureapplication",
   "f274cc94-80c8-4aa3-ae0e-545a2aee5fde": "phantom_awswafv2",
@@ -496,5 +496,5 @@
   "fecc12e1-1a5c-43ed-b081-774522f20650": "phantom_symantecmessaginggateway",
   "ff116964-86f7-4e29-8763-4462ce0d39a7": "phantom_git",
   "ff79d26f-590e-4158-ad33-1dd073ec10a5": "phantom_koodous",
-  "ff83fcea-737a-498c-ba81-09b0b097097d": "phantom_infoblox_nios",
+  "ff83fcea-737a-498c-ba81-09b0b097097d": "phantom_infoblox_nios"
 }
