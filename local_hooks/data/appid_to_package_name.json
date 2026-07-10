@@ -389,6 +389,7 @@
   "c7f3e2a1-8b9d-4e5f-a6b2-1d3c4e5f6789": "phantom_socradarincidents",
   "c8aa785f-84d8-4528-a123-763b5a243902": "phantom_mxtoolbox",
   "c939c73f-cb0a-478e-9e47-148d982495db": "phantom_alienvaultotx",
+  "c9772bd2-317b-460c-b542-ff8361e1debf": "phantom_microsoftonedrivev2",
   "cbf7052e-1566-4bb0-8486-28965cff1f5b": "phantom_aws",
   "cc942f43-e2b0-4a39-b6c6-e26741cf0c26": "phantom_kennasecurity",
   "ccbfef59-4c04-46fb-9a9b-f7a999105630": "phantom_redseal",
@@ -464,6 +465,7 @@
   "f091ded1-3d9e-4402-aaa2-1f92fae51e96": "phantom_googledrive",
   "f09b65f2-3ce5-4b57-8cb3-e269e11d20f7": "phantom_tanium",
   "f0e0c6ca-32fa-4011-b399-78b114b712ed": "phantom_titaniumcloud",
+  "f1351a77-3d1f-4e1e-af9c-7cddb9bec48b": "phantom_cyberintpremiumioc"
   "f18b7ef9-0cbd-4dbb-b8ed-ce62e17f0603": "phantom_domaintools_iris",
   "f202eac5-41f1-463a-a282-40cba2c454d0": "phantom_secureapplication",
   "f274cc94-80c8-4aa3-ae0e-545a2aee5fde": "phantom_awswafv2",
@@ -495,5 +497,4 @@
   "ff116964-86f7-4e29-8763-4462ce0d39a7": "phantom_git",
   "ff79d26f-590e-4158-ad33-1dd073ec10a5": "phantom_koodous",
   "ff83fcea-737a-498c-ba81-09b0b097097d": "phantom_infoblox_nios",
-  "f1351a77-3d1f-4e1e-af9c-7cddb9bec48b": "phantom_cyberintpremiumioc"
 }
