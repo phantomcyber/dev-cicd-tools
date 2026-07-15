@@ -58,7 +58,7 @@ def find_uv_lock_file(connector_path: Path) -> Optional[Path]:
         return uv_lock_path
 
 
-def load_sdk_apps_enviornment(uv_lock_dir: Path):
+def load_sdk_apps_environment(uv_lock_dir: Path):
     """
     Load the SDK app's environment.
     """

@@ -23,7 +23,7 @@ from jinja2.ext import Extension
 from jinja2.lexer import Token, TokenStream
 from local_hooks.helpers import (
     find_uv_lock_file,
-    load_sdk_apps_enviornment,
+    load_sdk_apps_environment,
     generate_sdk_app_manifest,
 )
 
@@ -100,7 +100,7 @@ def get_app_json(app_json_dir, json_name):
         logging.info("SDK app detected, generating manifest: UV_LOCK_DIR=%s", uv_lock_dir)
 
         # Install dependencies from pyproject.toml using uv
-        load_sdk_apps_enviornment(uv_lock_dir)
+        load_sdk_apps_environment(uv_lock_dir)
 
         # Generate the SDK manifest in a temporary directory
         logging.info("Generating SDK app manifest in temporary directory")
