@@ -70,8 +70,8 @@ def test_static_tests(app_dir: Path):
     ["tests/data/static_tests/sdk_app_dir"],
     indirect=["sdk_app_dir"],
 )
-@patch("local_hooks.helpers.load_sdk_apps_enviornment")
-@patch("local_hooks.helpers.generate_sdk_app_manifest")
+@patch("local_hooks.app_tests.utils.app_parser.load_sdk_apps_enviornment")
+@patch("local_hooks.app_tests.utils.app_parser.generate_sdk_app_manifest")
 def test_static_tests_sdkfied_app(mock_generate_manifest, mock_load_env, sdk_app_dir: Path):
     sdk_manifest_path = Path("tests/data/static_tests/sdk_app_dir/sdk_app_manifest.json")
     with open(sdk_manifest_path) as f:
