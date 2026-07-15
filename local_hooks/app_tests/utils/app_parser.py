@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Optional
 from local_hooks.helpers import (
     find_uv_lock_file,
-    load_sdk_apps_enviornment,
+    load_sdk_apps_environment,
     generate_sdk_app_manifest,
 )
 
@@ -113,7 +113,7 @@ class AppParser:
     @cached_property
     def sdk_app_json(self) -> Path:
         uv_lock_dir = self.uv_lock_filepath.parent
-        load_sdk_apps_enviornment(uv_lock_dir)
+        load_sdk_apps_environment(uv_lock_dir)
         return generate_sdk_app_manifest(uv_lock_dir)
 
     @cached_property

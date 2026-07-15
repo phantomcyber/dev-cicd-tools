@@ -3,10 +3,13 @@ import os
 import shutil
 import subprocess
 import json
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
 from pathlib import Path
+
+from local_hooks.app_tests.json_tests import JSONTests
 
 PRE_COMMIT_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
@@ -67,8 +70,8 @@ def test_static_tests(app_dir: Path):
     ["tests/data/static_tests/sdk_app_dir"],
     indirect=["sdk_app_dir"],
 )
-@patch("local_hooks.helpers.load_sdk_apps_enviornment")
-@patch("local_hooks.helpers.generate_sdk_app_manifest")
+@patch("local_hooks.app_tests.utils.app_parser.load_sdk_apps_environment")
+@patch("local_hooks.app_tests.utils.app_parser.generate_sdk_app_manifest")
 def test_static_tests_sdkfied_app(mock_generate_manifest, mock_load_env, sdk_app_dir: Path):
     sdk_manifest_path = Path("tests/data/static_tests/sdk_app_dir/sdk_app_manifest.json")
     with open(sdk_manifest_path) as f:
@@ -96,3 +99,31 @@ def test_static_tests_sdkfied_app(mock_generate_manifest, mock_load_env, sdk_app
         os.chdir(original_cwd)
 
     assert exit_code == 4
+
+
+def test_pip313_dependencies_allows_empty_generated_wheel_set(tmp_path: Path):
+    """SOAR-provided requirements do not need redundant bundled wheels."""
+    (tmp_path / "requirements.txt").write_text("beautifulsoup4==4.12.2\n")
+    suite = JSONTests.__new__(JSONTests)
+    suite._app_code_dir = tmp_path
+    suite._parser = SimpleNamespace(uv_lock_filepath=None)
+    suite._app_json = {"pip313_dependencies": {"wheel": []}}
+
+    result = suite.check_pip313_dependencies()
+
+    assert result["success"] is True
+
+
+def test_pip313_dependencies_still_requires_generated_key(tmp_path: Path):
+    (tmp_path / "requirements.txt").write_text("beautifulsoup4==4.12.2\n")
+    suite = JSONTests.__new__(JSONTests)
+    suite._app_code_dir = tmp_path
+    suite._parser = SimpleNamespace(uv_lock_filepath=None)
+    suite._app_json = {}
+
+    result = suite.check_pip313_dependencies()
+
+    assert result["success"] is False
+    assert result["message"] == (
+        "App json must contain 'pip313_dependencies' key when requirements.txt exists"
+    )
