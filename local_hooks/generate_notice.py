@@ -161,6 +161,10 @@ def get_package_dependencies(requirements_path: Path) -> list[str]:
     """
     Extract package names from the app requirements file.
     """
+    if not requirements_path.is_file():
+        logging.info("No requirements file found at %s", requirements_path)
+        return []
+
     packages = []
     with open(requirements_path) as reqs:
         for line in reqs:
