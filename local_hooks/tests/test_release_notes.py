@@ -43,6 +43,20 @@ def test_release_notes_passing(app_dir: Path):
 
 @pytest.mark.parametrize(
     "app_dir",
+    ["tests/data/release_notes/release_notes_empty"],
+    indirect=["app_dir"],
+)
+def test_header_only_release_notes_passes(app_dir: Path):
+    result = subprocess.run(
+        ["release-notes", "."],
+        cwd=app_dir,
+        capture_output=True,
+    )
+    assert result.returncode == 0
+
+
+@pytest.mark.parametrize(
+    "app_dir",
     ["tests/data/release_notes/release_notes_failing/actual"],
     indirect=["app_dir"],
 )
