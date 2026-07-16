@@ -15,6 +15,7 @@ import shutil
 import sys
 from pathlib import Path
 from packaging.version import Version
+from packaging.requirements import InvalidRequirement, Requirement
 from packaging.utils import canonicalize_name
 import toml
 from local_hooks.helpers import find_uv_lock_file
@@ -131,6 +132,31 @@ class LicenseLine:
             f.write(line)
 
 
+LEGACY_VCS_NAME = re.compile(r"\s+#(?P<name>[A-Za-z0-9_.-]+)=[^\s]+\s*$")
+VCS_EGG_NAME = re.compile(r"[#&]egg=(?P<name>[A-Za-z0-9_.-]+)(?:&|$)")
+
+
+def get_requirement_name(line: str) -> Optional[str]:
+    """Return the distribution name represented by one requirements line."""
+    requirement_text = line.strip()
+    if not requirement_text or requirement_text.startswith("#"):
+        return None
+
+    if legacy_match := LEGACY_VCS_NAME.search(line):
+        return canonicalize_name(legacy_match.group("name"))
+    if egg_match := VCS_EGG_NAME.search(requirement_text):
+        return canonicalize_name(egg_match.group("name"))
+
+    # Whitespace starts an inline comment in requirements files. Preserve URL
+    # fragments by only splitting on whitespace followed by '#'.
+    requirement_text = re.split(r"\s+#", requirement_text, maxsplit=1)[0].strip()
+    try:
+        return canonicalize_name(Requirement(requirement_text).name)
+    except InvalidRequirement:
+        logging.error("Unable to extract package from requirement: %s", line.rstrip())
+        return None
+
+
 def get_package_dependencies(requirements_path: Path) -> list[str]:
     """
     Extract package names from the app requirements file.
@@ -138,11 +164,9 @@ def get_package_dependencies(requirements_path: Path) -> list[str]:
     packages = []
     with open(requirements_path) as reqs:
         for line in reqs:
-            if match := re.match(r"^(.*?)(?=[=<>])", line):
-                packages.append(match.group(0))
-                logging.info(f"Found package: {match.group(0)}")
-            else:
-                print(f"ERROR extracting package from line: {line}")
+            if package := get_requirement_name(line):
+                packages.append(package)
+                logging.info("Found package: %s", package)
     return packages
 
 
