@@ -28,6 +28,33 @@ def completed(command: list[str], stdout: str = "", returncode: int = 0):
     return subprocess.CompletedProcess(command, returncode, stdout=stdout, stderr="")
 
 
+@pytest.mark.parametrize(
+    ("line", "expected"),
+    [
+        (
+            "git+https://github.com/phantomcyber/convert-outlook-msg-file.git@0.1.0 "
+            "#outlookmsgfile=0.1.0",
+            "outlookmsgfile",
+        ),
+        (
+            "outlookmsgfile @ "
+            "git+https://github.com/phantomcyber/convert-outlook-msg-file.git@0.1.0",
+            "outlookmsgfile",
+        ),
+        (
+            "git+https://github.com/example/project.git@1.0#egg=Example_Project",
+            "example-project",
+        ),
+        ("lxml==5.4.0", "lxml"),
+        ("Requests>=2.32 # runtime HTTP client", "requests"),
+        ("", None),
+        ("# comment", None),
+    ],
+)
+def test_get_requirement_name(line: str, expected):
+    assert generate_notice.get_requirement_name(line) == expected
+
+
 def test_get_python_license_info_prefers_uvx(monkeypatch, tmp_path: Path):
     requirements_path = tmp_path / "requirements.txt"
     requirements_path.write_text("demo-package==1.0.0\n")
