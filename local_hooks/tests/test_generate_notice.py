@@ -55,6 +55,10 @@ def test_get_requirement_name(line: str, expected):
     assert generate_notice.get_requirement_name(line) == expected
 
 
+def test_get_package_dependencies_allows_missing_requirements(tmp_path: Path):
+    assert generate_notice.get_package_dependencies(tmp_path / "requirements.txt") == []
+
+
 def test_get_python_license_info_prefers_uvx(monkeypatch, tmp_path: Path):
     requirements_path = tmp_path / "requirements.txt"
     requirements_path.write_text("demo-package==1.0.0\n")
