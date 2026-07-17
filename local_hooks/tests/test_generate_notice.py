@@ -34,7 +34,7 @@ def completed(command: list[str], stdout: str = "", returncode: int = 0):
         (
             "git+https://github.com/phantomcyber/convert-outlook-msg-file.git@0.1.0 "
             "#outlookmsgfile=0.1.0",
-            "outlookmsgfile",
+            "convert-outlook-msg-file",
         ),
         (
             "outlookmsgfile @ "
