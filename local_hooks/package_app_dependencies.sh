@@ -46,13 +46,6 @@ fi
 # Limit that path to local_hooks imports so container pip3.9/pip3.13 use their own interpreter-local pip.
 unset PYTHONPATH
 
-# Remove any existing wheels in wheels/ and app json
-yum install jq -y
-if ! jq --help &>/dev/null; then
-	echo 'Something went wrong installing jq. Could not find it on PATH after installation. Aborting'
-	exit 1
-fi
-
 py39_deps='pip39_dependencies'
 py313_deps='pip313_dependencies'
 SCRIPT="python -m local_hooks.package_app_dependencies"
