@@ -10,9 +10,11 @@ from typing import Optional
 import glob
 import argparse
 import dataclasses
+import io
 import logging
 import shutil
 import sys
+import tempfile
 from pathlib import Path
 from packaging.version import Version
 from packaging.requirements import InvalidRequirement, Requirement
@@ -416,29 +418,34 @@ def main():
     notice_file_path = connector_path / "NOTICE"
     logging.info("Creating NOTICE file at %s", Path(notice_file_path.resolve()))
 
-    with open(notice_file_path, "w") as f:
-        # Write base license file
-        f.write(f"Splunk SOAR App: {app_name}\n{app_license}\n")
+    requirements_path = connector_path / "requirements.txt"
+    packages = get_package_dependencies(requirements_path)
+    valid_packages = [package for package in packages if package not in EXCLUDED_PYTHON_PACKAGES]
+    license_lines = (
+        list(get_python_license_info(packages=valid_packages, requirements_path=requirements_path))
+        if valid_packages
+        else []
+    )
 
-        # Get all python package dependencies
-        requirements_path = connector_path / "requirements.txt"
-        packages = get_package_dependencies(requirements_path)
-        valid_packages = [
-            package for package in packages if package not in EXCLUDED_PYTHON_PACKAGES
-        ]
-        if valid_packages:
-            f.write("Third Party Software Attributions:\n")
-        else:
-            return
+    rendered = io.StringIO()
+    rendered.write(f"Splunk SOAR App: {app_name}\n{app_license}\n")
+    if license_lines:
+        rendered.write("Third Party Software Attributions:\n")
+        for item in license_lines:
+            item.write_line(rendered)
+    content = "\n".join(line.rstrip() for line in rendered.getvalue().splitlines()).rstrip() + "\n"
 
-        # Get license info for all package dependencies
-        for item in get_python_license_info(
-            packages=valid_packages, requirements_path=requirements_path
-        ):
-            item.write_line(f)
-
-    remove_trailing_whitespace(notice_file_path)
-    remove_trailing_blank_lines(notice_file_path)
+    temporary_path = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w", dir=connector_path, prefix=".NOTICE.", delete=False
+        ) as temporary:
+            temporary.write(content)
+            temporary_path = Path(temporary.name)
+        temporary_path.replace(notice_file_path)
+    finally:
+        if temporary_path and temporary_path.exists():
+            temporary_path.unlink()
 
 
 def parse_args() -> BuildDocsArgs:

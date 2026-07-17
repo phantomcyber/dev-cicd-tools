@@ -209,3 +209,29 @@ def test_notice_cleanup_is_idempotent(tmp_path: Path):
         generate_notice.remove_trailing_whitespace(notice_path)
         generate_notice.remove_trailing_blank_lines(notice_path)
         assert notice_path.read_bytes() == b"first line\nlast line\n"
+
+
+def test_notice_is_unchanged_when_license_collection_fails(monkeypatch, tmp_path: Path):
+    manifest = {
+        "name": "Example",
+        "license": "Copyright (c) 2026 Splunk Inc.",
+    }
+    (tmp_path / "example.json").write_text(json.dumps(manifest))
+    (tmp_path / "requirements.txt").write_text("demo-package==1.0.0\n")
+    notice_path = tmp_path / "NOTICE"
+    notice_path.write_text("existing notice\n")
+    monkeypatch.setattr(
+        generate_notice,
+        "get_python_license_info",
+        lambda **_kwargs: (_ for _ in ()).throw(RuntimeError("license failure")),
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["generate_notice.py", str(tmp_path)],
+    )
+
+    with pytest.raises(RuntimeError, match="license failure"):
+        generate_notice.main()
+
+    assert notice_path.read_text() == "existing notice\n"
