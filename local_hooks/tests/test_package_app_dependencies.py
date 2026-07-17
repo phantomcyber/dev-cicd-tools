@@ -2,11 +2,19 @@ import json
 import os
 import shutil
 import subprocess
+from pathlib import Path
 
 import pytest
 from uuid import uuid4
 
 PRE_COMMIT_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+
+
+def test_package_wrapper_does_not_install_os_packages():
+    wrapper = Path(PRE_COMMIT_DIR, "package_app_dependencies.sh").read_text()
+
+    assert "yum install" not in wrapper
+    assert "dnf install" not in wrapper
 
 
 @pytest.fixture(
