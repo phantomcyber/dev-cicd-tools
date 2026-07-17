@@ -136,14 +136,37 @@ LEGACY_VCS_NAME = re.compile(r"\s+#(?P<name>[A-Za-z0-9_.-]+)=[^\s]+\s*$")
 VCS_EGG_NAME = re.compile(r"[#&]egg=(?P<name>[A-Za-z0-9_.-]+)(?:&|$)")
 
 
+def get_legacy_vcs_distribution_name(line: str) -> Optional[str]:
+    """Infer the installed distribution name from a legacy VCS URL.
+
+    The trailing ``#module=version`` marker used by older connector
+    requirements describes the import module, not necessarily the installed
+    distribution.  ``pip-licenses --packages`` filters on the distribution
+    name, which is conventionally the VCS repository basename.
+    """
+    requirement_text = re.split(r"\s+#", line, maxsplit=1)[0].strip()
+    if "/" not in requirement_text:
+        return None
+
+    repository = requirement_text.rsplit("/", maxsplit=1)[-1]
+    if ".git@" in repository:
+        repository = repository.split(".git@", maxsplit=1)[0]
+    else:
+        repository = repository.rsplit("@", maxsplit=1)[0]
+        if repository.endswith(".git"):
+            repository = repository[:-4]
+
+    return canonicalize_name(repository) if repository else None
+
+
 def get_requirement_name(line: str) -> Optional[str]:
     """Return the distribution name represented by one requirements line."""
     requirement_text = line.strip()
     if not requirement_text or requirement_text.startswith("#"):
         return None
 
-    if legacy_match := LEGACY_VCS_NAME.search(line):
-        return canonicalize_name(legacy_match.group("name"))
+    if LEGACY_VCS_NAME.search(line):
+        return get_legacy_vcs_distribution_name(line)
     if egg_match := VCS_EGG_NAME.search(requirement_text):
         return canonicalize_name(egg_match.group("name"))
 
