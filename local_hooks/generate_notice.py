@@ -337,11 +337,12 @@ def remove_trailing_blank_lines(notice_file_path: Path):
     while lines and lines[-1].strip() == "":
         lines.pop()
 
-    # Rewrite the file with cleaned content
+    # Rewrite the file with cleaned content and exactly one terminal newline.
+    # The preceding whitespace pass can leave the final content line already
+    # newline-terminated, so writelines() followed by write("\n") would create
+    # a blank line and make the hook non-idempotent.
     with open(notice_file_path, "w") as f:
-        f.writelines(lines)
-        # Ensure there's a single newline at the end of the file
-        f.write("\n")
+        f.write("".join(lines).rstrip("\n") + "\n")
 
 
 def get_sdk_version_from_lock(uv_lock_path: Path) -> Optional[Version]:
