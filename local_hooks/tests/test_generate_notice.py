@@ -199,3 +199,13 @@ def test_get_python_license_info_fails_when_license_rows_are_missing(monkeypatch
 
     with pytest.raises(RuntimeError, match="demo-package"):
         list(generate_notice.get_python_license_info(["demo-package"], requirements_path))
+
+
+def test_notice_cleanup_is_idempotent(tmp_path: Path):
+    notice_path = tmp_path / "NOTICE"
+    notice_path.write_text("first line  \nlast line\n\n")
+
+    for _ in range(2):
+        generate_notice.remove_trailing_whitespace(notice_path)
+        generate_notice.remove_trailing_blank_lines(notice_path)
+        assert notice_path.read_bytes() == b"first line\nlast line\n"
