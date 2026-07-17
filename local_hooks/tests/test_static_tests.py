@@ -127,3 +127,20 @@ def test_pip313_dependencies_still_requires_generated_key(tmp_path: Path):
     assert result["message"] == (
         "App json must contain 'pip313_dependencies' key when requirements.txt exists"
     )
+
+
+def test_connector_template_skips_published_identity_registry_checks():
+    suite = JSONTests.__new__(JSONTests)
+    suite._app_json = {
+        "appid": "ffffffff-ffff-4fff-afff-ffffffffffff",
+        "name": "Example App Name",
+        "package_name": "phantom_template",
+    }
+
+    name_result = suite.check_valid_app_name_and_guid()
+    package_result = suite.check_app_package_name()
+
+    assert name_result["success"] is True
+    assert name_result["message"] == "TEST SKIPPED - connector template placeholder detected"
+    assert package_result["success"] is True
+    assert package_result["message"] == name_result["message"]

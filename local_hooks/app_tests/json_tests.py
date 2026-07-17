@@ -23,6 +23,11 @@ from packaging.version import Version
 from pathlib import Path
 
 SKIP_SDK_APP = {"success": True, "message": "TEST SKIPPED - SDK app detected"}
+CONNECTOR_TEMPLATE_APPID = "ffffffff-ffff-4fff-afff-ffffffffffff"
+SKIP_CONNECTOR_TEMPLATE = {
+    "success": True,
+    "message": "TEST SKIPPED - connector template placeholder detected",
+}
 
 
 class JSONTests(TestSuite):
@@ -31,6 +36,14 @@ class JSONTests(TestSuite):
         self._app_json = self._parser.app_json
 
         self._app_is_certified = self._parser.app_json["publisher"] == "Splunk"
+
+    def _is_connector_template(self):
+        """Return whether the manifest uses the template's intentional placeholder identity."""
+        return (
+            self._app_json.get("appid") == CONNECTOR_TEMPLATE_APPID
+            and self._app_json.get("name") == "Example App Name"
+            and self._app_json.get("package_name") == "phantom_template"
+        )
 
     @staticmethod
     def format_as_index(indices: list[Any], container: str = "schema") -> str:
@@ -250,6 +263,9 @@ class JSONTests(TestSuite):
         """
         App Name and GUID must be unique
         """
+        if self._is_connector_template():
+            return SKIP_CONNECTOR_TEMPLATE
+
         app_name = self._app_json["name"]
         app_guid = self._app_json["appid"]
 
@@ -285,6 +301,9 @@ class JSONTests(TestSuite):
         """
         Package name is unique
         """
+        if self._is_connector_template():
+            return SKIP_CONNECTOR_TEMPLATE
+
         package_name = self._app_json["package_name"]
         app_guid = self._app_json["appid"]
 
