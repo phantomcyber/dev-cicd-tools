@@ -7,6 +7,8 @@ from pathlib import Path
 import pytest
 from uuid import uuid4
 
+from local_hooks.package_app_dependencies import AppJsonWheelEntry, _existing_wheel_constraints
+
 PRE_COMMIT_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 
@@ -15,6 +17,17 @@ def test_package_wrapper_does_not_install_os_packages():
 
     assert "yum install" not in wrapper
     assert "dnf install" not in wrapper
+
+
+def test_committed_wheels_constrain_normal_dependency_packaging():
+    constraints = _existing_wheel_constraints(
+        [
+            AppJsonWheelEntry("PyNaCl", "wheels/py36/PyNaCl-1.5.0-cp36-abi3-manylinux.whl"),
+            AppJsonWheelEntry("pycparser", "wheels/py3/pycparser-2.22-py3-none-any.whl"),
+        ]
+    )
+
+    assert constraints == ["PyNaCl==1.5.0", "pycparser==2.22"]
 
 
 @pytest.fixture(

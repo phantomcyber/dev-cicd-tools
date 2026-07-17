@@ -22,6 +22,7 @@ from collections import namedtuple
 from enum import Enum, unique
 
 import logging
+from packaging.utils import parse_wheel_filename
 
 logging.basicConfig(
     level=logging.INFO,
@@ -241,6 +242,25 @@ def _parse_pip_dependency_wheels(app_json, pip_dependency_key):
     ]
 
 
+def _existing_wheel_constraints(wheel_entries):
+    """Return exact constraints represented by an app's committed wheel manifest.
+
+    A routine pre-commit run must not silently upgrade transitive dependencies just
+    because a newer version is available from an index.  The existing manifest is
+    the resolved dependency set until a caller explicitly requests a wheel refresh.
+    """
+
+    constraints = set()
+    for wheel_entry in wheel_entries:
+        try:
+            _, version, _, _ = parse_wheel_filename(os.path.basename(wheel_entry.input_file))
+        except Exception:
+            logger.warning("Unable to constrain malformed wheel path %s", wheel_entry.input_file)
+            continue
+        constraints.add(f"{wheel_entry.module}=={version}")
+    return sorted(constraints)
+
+
 def _copy_new_wheels(new_wheels, new_wheels_dir, app_dir):
     """
     Copies new wheels to the wheels/ directory of the app dir.
@@ -327,12 +347,33 @@ def main():
     os.mkdir(temp_dir)
 
     try:
+        app_json = _load_app_json(app_dir)
+        existing_app_json_wheel_entries = _parse_pip_dependency_wheels(
+            app_json, pip_dependencies_key
+        )
         local_wheel_dirs = []
         for sub_dir in os.listdir(wheels_dir):
             local_wheel_dirs.extend(["-f", os.path.join(wheels_dir, sub_dir)])
 
+        constraint_args = []
+        if not args.refresh_wheels:
+            constraints = _existing_wheel_constraints(existing_app_json_wheel_entries)
+            if constraints:
+                constraints_file = os.path.join(temp_dir, "committed-wheel-constraints.txt")
+                pathlib.Path(constraints_file).write_text("\n".join(constraints) + "\n")
+                constraint_args = ["--constraint", constraints_file]
+
         build_result = subprocess.run(
-            [pip_path, "wheel", "-w", temp_dir, "-r", requirements_file, *local_wheel_dirs],
+            [
+                pip_path,
+                "wheel",
+                "-w",
+                temp_dir,
+                "-r",
+                requirements_file,
+                *local_wheel_dirs,
+                *constraint_args,
+            ],
             env=_subprocess_env_without_pythonpath(),
         )
 
@@ -350,11 +391,6 @@ def main():
 
         # Some apps may have different dependencies for Python3 versions, and
         # we don't want to override the wheels for the Python version we aren't building for
-        app_json = _load_app_json(app_dir)
-
-        existing_app_json_wheel_entries = _parse_pip_dependency_wheels(
-            app_json, pip_dependencies_key
-        )
         existing_wheel_paths = set(w.input_file for w in existing_app_json_wheel_entries)
 
         wheel_file_names = set(os.listdir(temp_dir))
@@ -436,6 +472,11 @@ def parse_args():
         "--repair-wheels",
         action="store_true",
         help="Whether to repair platform wheels with auditwheel",
+    )
+    parser.add_argument(
+        "--refresh-wheels",
+        action="store_true",
+        help="Allow an intentional dependency resolution refresh instead of constraining to committed wheels",
     )
     return parser.parse_args()
 
