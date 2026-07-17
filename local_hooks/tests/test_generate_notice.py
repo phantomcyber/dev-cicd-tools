@@ -235,3 +235,21 @@ def test_notice_is_unchanged_when_license_collection_fails(monkeypatch, tmp_path
         generate_notice.main()
 
     assert notice_path.read_text() == "existing notice\n"
+
+
+def test_notice_is_unchanged_when_license_collection_is_empty(monkeypatch, tmp_path: Path):
+    manifest = {
+        "name": "Example",
+        "license": "Copyright (c) 2026 Splunk Inc.",
+    }
+    (tmp_path / "example.json").write_text(json.dumps(manifest))
+    (tmp_path / "requirements.txt").write_text("demo-package==1.0.0\n")
+    notice_path = tmp_path / "NOTICE"
+    notice_path.write_text("existing notice\n")
+    monkeypatch.setattr(generate_notice, "get_python_license_info", lambda **_kwargs: iter(()))
+    monkeypatch.setattr(sys, "argv", ["generate_notice.py", str(tmp_path)])
+
+    with pytest.raises(RuntimeError, match="Unable to collect license metadata"):
+        generate_notice.main()
+
+    assert notice_path.read_text() == "existing notice\n"

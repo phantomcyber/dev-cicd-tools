@@ -426,6 +426,8 @@ def main():
         if valid_packages
         else []
     )
+    if valid_packages and not license_lines:
+        raise RuntimeError("Unable to collect license metadata for connector dependencies")
 
     rendered = io.StringIO()
     rendered.write(f"Splunk SOAR App: {app_name}\n{app_license}\n")
