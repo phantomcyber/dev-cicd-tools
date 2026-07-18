@@ -127,3 +127,33 @@ def test_pip313_dependencies_still_requires_generated_key(tmp_path: Path):
     assert result["message"] == (
         "App json must contain 'pip313_dependencies' key when requirements.txt exists"
     )
+
+
+def test_connector_template_placeholder_skips_registry_checks(tmp_path: Path):
+    suite = JSONTests.__new__(JSONTests)
+    suite._app_code_dir = tmp_path / "connector-template"
+    suite._app_json = {
+        "appid": "ffffffff-ffff-4fff-afff-ffffffffffff",
+        "name": "Example App Name",
+        "package_name": "phantom_template",
+    }
+
+    with patch("local_hooks.app_tests.json_tests.requests.get") as mock_get:
+        name_result = suite.check_valid_app_name_and_guid()
+        package_result = suite.check_app_package_name()
+
+    assert name_result["success"] is True
+    assert package_result["success"] is True
+    mock_get.assert_not_called()
+
+
+def test_connector_template_exemption_requires_exact_placeholder(tmp_path: Path):
+    suite = JSONTests.__new__(JSONTests)
+    suite._app_code_dir = tmp_path / "connector-template"
+    suite._app_json = {
+        "appid": "ffffffff-ffff-4fff-afff-ffffffffffff",
+        "name": "A Real App",
+        "package_name": "phantom_template",
+    }
+
+    assert suite._is_connector_template_placeholder() is False
