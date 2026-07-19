@@ -7,6 +7,8 @@ from pathlib import Path
 import pytest
 from uuid import uuid4
 
+from local_hooks.package_app_dependencies import _should_package_pip_dependency_key
+
 PRE_COMMIT_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 
@@ -15,6 +17,21 @@ def test_package_wrapper_does_not_install_os_packages():
 
     assert "yum install" not in wrapper
     assert "dnf install" not in wrapper
+
+
+def test_package_wrapper_respects_explicit_python_runtime(tmp_path):
+    wrapper = Path(PRE_COMMIT_DIR, "package_app_dependencies.sh").read_text()
+    legacy_app_dir = os.path.join(PRE_COMMIT_DIR, "tests/data/py3-app")
+    python313_app_dir = tmp_path / "python313-app"
+    python313_app_dir.mkdir()
+    (python313_app_dir / "app.json").write_text('{"python_version": "3.13"}\n')
+
+    assert _should_package_pip_dependency_key(legacy_app_dir, "pip39_dependencies")
+    assert _should_package_pip_dependency_key(legacy_app_dir, "pip313_dependencies")
+    assert not _should_package_pip_dependency_key(python313_app_dir, "pip39_dependencies")
+    assert _should_package_pip_dependency_key(python313_app_dir, "pip313_dependencies")
+    assert 'package_dependencies "$py39_deps"' in wrapper
+    assert 'package_dependencies "$py313_deps"' in wrapper
 
 
 @pytest.fixture(

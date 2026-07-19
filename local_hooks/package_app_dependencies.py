@@ -135,6 +135,27 @@ def _load_app_json(app_dir):
         return AppJson(json_files[0], json.load(f))
 
 
+def _should_package_pip_dependency_key(app_dir, pip_dependencies_key):
+    """Return whether a runtime-specific dependency section should be packaged.
+
+    Generic Python 3 apps retain the historical behavior of building both
+    supported runtime sections, even when one is not yet present in the
+    manifest. An app that explicitly declares a single supported runtime only
+    builds the corresponding dependency section.
+    """
+
+    app_json = _load_app_json(app_dir).content
+    if pip_dependencies_key in app_json:
+        return True
+
+    python_version = str(app_json.get("python_version", "3"))
+    runtime_dependency_keys = {
+        "3.9": PipDependency.PYTHON3_9.value,
+        "3.13": PipDependency.PYTHON3_13.value,
+    }
+    return runtime_dependency_keys.get(python_version, pip_dependencies_key) == pip_dependencies_key
+
+
 def _repair_wheels(wheels_to_check, all_wheels, wheels_dir):
     """
     Uses auditwheel to 1) check for platform wheels depending on external binary dependencies

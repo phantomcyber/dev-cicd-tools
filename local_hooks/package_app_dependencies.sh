@@ -59,10 +59,32 @@ run_packager() {
 	fi
 }
 
-env -u PYTHONPATH pip3.9 install pip-tools
-run_packager . "$(which pip3.9)" "$py39_deps" --repair-wheels
+has_pip_dependency_key() {
+	local dependency_key="$1"
+	local check_dependency_key
+	check_dependency_key='from local_hooks.package_app_dependencies import _should_package_pip_dependency_key; import sys; sys.exit(not _should_package_pip_dependency_key(".", sys.argv[1]))'
 
-env -u PYTHONPATH pip3.13 install pip-tools
-run_packager . "$(which pip3.13)" "$py313_deps" --repair-wheels
+	if [[ -n "${HOOKS_PYTHONPATH:-}" ]]; then
+		PYTHONPATH="$HOOKS_PYTHONPATH" python -c "$check_dependency_key" "$dependency_key"
+	else
+		python -c "$check_dependency_key" "$dependency_key"
+	fi
+}
+
+package_dependencies() {
+	local dependency_key="$1"
+	local pip_path="$2"
+
+	if ! has_pip_dependency_key "$dependency_key"; then
+		echo "Skipping $dependency_key because it is not declared in the app manifest"
+		return
+	fi
+
+	env -u PYTHONPATH "$pip_path" install pip-tools
+	run_packager . "$pip_path" "$dependency_key" --repair-wheels
+}
+
+package_dependencies "$py39_deps" "$(which pip3.9)"
+package_dependencies "$py313_deps" "$(which pip3.13)"
 
 exit $?
