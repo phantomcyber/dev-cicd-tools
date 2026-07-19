@@ -177,6 +177,53 @@ def test_get_python_license_info_falls_back_to_current_python_pip(monkeypatch, t
     ]
 
 
+def test_pip_fallback_uses_bundled_connector_wheels(monkeypatch, tmp_path: Path):
+    requirements_path = tmp_path / "requirements.txt"
+    requirements_path.write_text("demo-package==1.0.0\n")
+    wheel_root = tmp_path / "wheels"
+    wheel_directories = [
+        wheel_root / "py3",
+        wheel_root / f"py{sys.version_info.major}{sys.version_info.minor}",
+        wheel_root / "shared",
+    ]
+    for wheel_directory in wheel_directories:
+        wheel_directory.mkdir(parents=True, exist_ok=True)
+
+    commands = []
+    monkeypatch.setattr(generate_notice.shutil, "which", lambda _command: None)
+
+    def fake_run(command: list[str]):
+        commands.append(command)
+        if command == [sys.executable, "-m", "pip", "--version"]:
+            return completed(command, "pip 1.0\n")
+        if command[:4] == [sys.executable, "-m", "pip", "install"]:
+            return completed(command)
+        if command[:3] == [sys.executable, "-m", "piplicenses"]:
+            return completed(command, license_rows("demo-package"))
+        raise AssertionError(f"Unexpected command: {command}")
+
+    monkeypatch.setattr(generate_notice, "run_command", fake_run)
+
+    rows = list(generate_notice.get_python_license_info(["demo-package"], requirements_path))
+
+    assert [row.package_name for row in rows] == ["demo-package"]
+    assert commands[1] == [
+        sys.executable,
+        "-m",
+        "pip",
+        "install",
+        "pip-licenses",
+        "--find-links",
+        str(wheel_directories[0]),
+        "--find-links",
+        str(wheel_directories[1]),
+        "--find-links",
+        str(wheel_directories[2]),
+        "-r",
+        str(requirements_path),
+    ]
+
+
 def test_get_python_license_info_fails_without_uv_or_pip(monkeypatch, tmp_path: Path):
     requirements_path = tmp_path / "requirements.txt"
     requirements_path.write_text("demo-package==1.0.0\n")
