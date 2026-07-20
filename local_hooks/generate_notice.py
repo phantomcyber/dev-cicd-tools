@@ -252,9 +252,17 @@ def load_license_info_with_pip(packages: list[str], requirements_path: Path) -> 
         "pip",
         "install",
         "pip-licenses",
-        "-r",
-        str(requirements_path),
     ]
+    wheel_root = requirements_path.parent / "wheels"
+    wheel_directories = (
+        wheel_root / "py3",
+        wheel_root / f"py{sys.version_info.major}{sys.version_info.minor}",
+        wheel_root / "shared",
+    )
+    for wheel_directory in wheel_directories:
+        if wheel_directory.is_dir():
+            install_command.extend(("--find-links", str(wheel_directory)))
+    install_command.extend(("-r", str(requirements_path)))
     install_result = run_command(install_command)
     if install_result.returncode != 0:
         raise RuntimeError(
