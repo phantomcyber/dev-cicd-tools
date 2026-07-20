@@ -23,6 +23,11 @@ from packaging.version import Version
 from pathlib import Path
 
 SKIP_SDK_APP = {"success": True, "message": "TEST SKIPPED - SDK app detected"}
+CONNECTOR_TEMPLATE_IDENTITY = {
+    "appid": "ffffffff-ffff-4fff-afff-ffffffffffff",
+    "name": "Example App Name",
+    "package_name": "phantom_template",
+}
 
 
 class JSONTests(TestSuite):
@@ -31,6 +36,13 @@ class JSONTests(TestSuite):
         self._app_json = self._parser.app_json
 
         self._app_is_certified = self._parser.app_json["publisher"] == "Splunk"
+
+    def _is_connector_template_placeholder(self) -> bool:
+        """Return whether this is the canonical connector-template placeholder app."""
+        return self._app_code_dir.name == "connector-template" and all(
+            self._app_json.get(field) == value
+            for field, value in CONNECTOR_TEMPLATE_IDENTITY.items()
+        )
 
     @staticmethod
     def format_as_index(indices: list[Any], container: str = "schema") -> str:
@@ -250,6 +262,9 @@ class JSONTests(TestSuite):
         """
         App Name and GUID must be unique
         """
+        if self._is_connector_template_placeholder():
+            return create_test_result_response(success=True, message=TEST_PASS_MESSAGE)
+
         app_name = self._app_json["name"]
         app_guid = self._app_json["appid"]
 
@@ -285,6 +300,9 @@ class JSONTests(TestSuite):
         """
         Package name is unique
         """
+        if self._is_connector_template_placeholder():
+            return create_test_result_response(success=True, message=TEST_PASS_MESSAGE)
+
         package_name = self._app_json["package_name"]
         app_guid = self._app_json["appid"]
 
