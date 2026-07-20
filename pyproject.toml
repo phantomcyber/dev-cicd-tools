@@ -17,6 +17,7 @@ dependencies = [
     "pip-licenses",
     "toml",
     "splunk-soar-sdk",
+    "uv>=0.8",
 ]
 
 [project.scripts]

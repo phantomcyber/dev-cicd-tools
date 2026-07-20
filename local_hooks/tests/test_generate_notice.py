@@ -1,11 +1,21 @@
 import json
 import subprocess
 import sys
+from importlib.metadata import PackageNotFoundError, distribution
 from pathlib import Path
 
 import pytest
 
 from local_hooks import generate_notice
+
+
+def test_local_hooks_declares_uv_runtime_dependency():
+    try:
+        requirements = distribution("local-hooks").requires or []
+    except PackageNotFoundError:
+        pytest.fail("local-hooks distribution metadata is unavailable")
+
+    assert any(requirement.startswith("uv>=") for requirement in requirements)
 
 
 def license_rows(*names: str) -> str:
