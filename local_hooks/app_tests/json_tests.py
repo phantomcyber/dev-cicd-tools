@@ -355,7 +355,13 @@ class JSONTests(TestSuite):
             action_output = self._get_data_paths(action, parameters=True)
             action_output_path_values = set(action_output.keys())
 
-            for param_name in action_parameters:
+            nonsecret_parameters = {
+                name
+                for name, options in action_parameters.items()
+                if options.get("data_type") != "password"
+            }
+
+            for param_name in nonsecret_parameters:
                 formatted_param = f"action_result.parameter.{param_name}"
                 if formatted_param not in action_output_path_values:
                     # if this check fails that means the validate_json_schema test will also fail which is why it's fine to do this
@@ -367,9 +373,9 @@ class JSONTests(TestSuite):
                         self._app_json["actions"][index]["output"].append(new_output_param)
                         verbose.append(f"Missing action result output for {formatted_param}")
 
-            parameters_formatted = set(
-                f"action_result.parameter.{name}" for name in action_parameters
-            )
+            parameters_formatted = {
+                f"action_result.parameter.{name}" for name in nonsecret_parameters
+            }
             action_output_to_remove = []
             for data_path, idx_param in action_output.items():
                 if data_path not in parameters_formatted:
