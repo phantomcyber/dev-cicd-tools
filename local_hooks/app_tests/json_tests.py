@@ -358,7 +358,7 @@ class JSONTests(TestSuite):
             nonsecret_parameters = {
                 name
                 for name, options in action_parameters.items()
-                if options.get("data_type") != "password"
+                if options.get("data_type") not in {"password", "encrypted"}
             }
 
             for param_name in nonsecret_parameters:

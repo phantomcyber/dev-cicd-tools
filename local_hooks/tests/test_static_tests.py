@@ -159,7 +159,8 @@ def test_connector_template_exemption_requires_exact_placeholder(tmp_path: Path)
     assert suite._is_connector_template_placeholder() is False
 
 
-def test_action_param_prefixes_does_not_publish_password_parameters():
+@pytest.mark.parametrize("secret_data_type", ["password", "encrypted"])
+def test_action_param_prefixes_does_not_publish_secret_parameters(secret_data_type):
     suite = JSONTests.__new__(JSONTests)
     suite._parser = SimpleNamespace(
         uv_lock_filepath=None,
@@ -171,7 +172,7 @@ def test_action_param_prefixes_does_not_publish_password_parameters():
             {
                 "action": "run query",
                 "parameters": {
-                    "credentials": {"data_type": "password"},
+                    "credentials": {"data_type": secret_data_type},
                     "query": {"data_type": "string"},
                 },
                 "output": [
@@ -190,7 +191,8 @@ def test_action_param_prefixes_does_not_publish_password_parameters():
     suite._parser.update_app_json.assert_not_called()
 
 
-def test_action_param_prefixes_removes_password_parameter_outputs():
+@pytest.mark.parametrize("secret_data_type", ["password", "encrypted"])
+def test_action_param_prefixes_removes_secret_parameter_outputs(secret_data_type):
     suite = JSONTests.__new__(JSONTests)
     suite._parser = SimpleNamespace(
         uv_lock_filepath=None,
@@ -201,11 +203,11 @@ def test_action_param_prefixes_removes_password_parameter_outputs():
         "actions": [
             {
                 "action": "run query",
-                "parameters": {"credentials": {"data_type": "password"}},
+                "parameters": {"credentials": {"data_type": secret_data_type}},
                 "output": [
                     {
                         "data_path": "action_result.parameter.credentials",
-                        "data_type": "password",
+                        "data_type": secret_data_type,
                     }
                 ],
             }
