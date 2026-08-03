@@ -4,7 +4,7 @@ import shutil
 import subprocess
 import json
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 from pathlib import Path
@@ -157,3 +157,65 @@ def test_connector_template_exemption_requires_exact_placeholder(tmp_path: Path)
     }
 
     assert suite._is_connector_template_placeholder() is False
+
+
+@pytest.mark.parametrize("secret_data_type", ["password", "encrypted"])
+def test_action_param_prefixes_does_not_publish_secret_parameters(secret_data_type):
+    suite = JSONTests.__new__(JSONTests)
+    suite._parser = SimpleNamespace(
+        uv_lock_filepath=None,
+        app_json_name="app.json",
+        update_app_json=Mock(),
+    )
+    suite._app_json = {
+        "actions": [
+            {
+                "action": "run query",
+                "parameters": {
+                    "credentials": {"data_type": secret_data_type},
+                    "query": {"data_type": "string"},
+                },
+                "output": [
+                    {
+                        "data_path": "action_result.parameter.query",
+                        "data_type": "string",
+                    }
+                ],
+            }
+        ]
+    }
+
+    result = suite.check_action_param_prefixes()
+
+    assert result["success"] is True
+    suite._parser.update_app_json.assert_not_called()
+
+
+@pytest.mark.parametrize("secret_data_type", ["password", "encrypted"])
+def test_action_param_prefixes_removes_secret_parameter_outputs(secret_data_type):
+    suite = JSONTests.__new__(JSONTests)
+    suite._parser = SimpleNamespace(
+        uv_lock_filepath=None,
+        app_json_name="app.json",
+        update_app_json=Mock(),
+    )
+    suite._app_json = {
+        "actions": [
+            {
+                "action": "run query",
+                "parameters": {"credentials": {"data_type": secret_data_type}},
+                "output": [
+                    {
+                        "data_path": "action_result.parameter.credentials",
+                        "data_type": secret_data_type,
+                    }
+                ],
+            }
+        ]
+    }
+
+    result = suite.check_action_param_prefixes()
+
+    assert result["success"] is False
+    assert suite._app_json["actions"][0]["output"] == []
+    suite._parser.update_app_json.assert_called_once_with(suite._app_json)
