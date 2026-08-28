@@ -19,6 +19,25 @@ def test_package_wrapper_does_not_install_os_packages():
     assert "dnf install" not in wrapper
 
 
+def test_package_wrapper_runs_local_hooks_with_python313():
+    """The hook package must not be imported by the container's CPython 3.9."""
+    wrapper = Path(PRE_COMMIT_DIR, "package_app_dependencies.sh").read_text()
+
+    assert 'PACKAGER_PYTHON="${PY313_BIN}/python"' in wrapper
+    assert 'SCRIPT=("$PACKAGER_PYTHON" -m local_hooks.package_app_dependencies)' in wrapper
+    assert "\"$PACKAGER_PYTHON\" -c 'import local_hooks'" in wrapper
+    assert 'PYTHONPATH="$HOOKS_PYTHONPATH" "$PACKAGER_PYTHON" -c "$check_dependency_key"' in wrapper
+
+
+def test_package_wrapper_mounts_source_as_importable_local_hooks_package():
+    """The source mount must retain the ``/srv/local_hooks`` package layout."""
+    wrapper = Path(PRE_COMMIT_DIR, "package_app_dependencies.sh").read_text()
+
+    assert '-v "$(dirname "$0")":/srv/local_hooks' in wrapper
+    assert '-e "PYTHONPATH=/srv:/site-packages"' in wrapper
+    assert '/bin/bash -c "/srv/local_hooks/$script_name"' in wrapper
+
+
 def test_package_wrapper_respects_explicit_python_runtime(tmp_path):
     wrapper = Path(PRE_COMMIT_DIR, "package_app_dependencies.sh").read_text()
     legacy_app_dir = os.path.join(PRE_COMMIT_DIR, "tests/data/py3-app")

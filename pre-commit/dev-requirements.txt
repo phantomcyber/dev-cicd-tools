@@ -12,5 +12,5 @@ jinja2
 mdformat
 jsonschema
 lxml
-django<5
+django>=5.2.16,<5.3
 jsondiff
