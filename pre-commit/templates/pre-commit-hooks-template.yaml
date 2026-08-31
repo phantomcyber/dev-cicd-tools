@@ -64,24 +64,30 @@ repos:
     hooks:
       - id: build-docs
         language: python
+        language_version: python3.13
         additional_dependencies: ["local-hooks"]
         args: ['.']
       - id: copyright
         language: python
+        language_version: python3.13
         additional_dependencies: ["local-hooks"]
         args: ['.']
       - id: package-app-dependencies
         language: python
+        language_version: python3.13
         additional_dependencies: ["local-hooks"]
       - id: notice-file
         language: python
+        language_version: python3.13
         additional_dependencies: ["local-hooks"]
         args: ['.']
       - id: release-notes
         language: python
+        language_version: python3.13
         additional_dependencies: ["local-hooks"]
         args: ['.']
       - id: static-tests
         language: python
+        language_version: python3.13
         additional_dependencies: ["local-hooks"]
         args: ['.']

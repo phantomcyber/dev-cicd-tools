@@ -4,19 +4,19 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "local-hooks"
-requires-python = ">= 3.9"
+requires-python = ">=3.13,<3.14"
 version = "0.1.0"
 dependencies = [
     "jinja2",
     "mdformat",
     "jsonschema",
     "lxml",
-    "django<5",
+    "django>=5.2.16,<5.3",
     "packaging>=24.2",
-    "requests>=2.32.4",
+    "requests>=2.33.0",
     "pip-licenses",
     "toml",
-    "splunk-soar-sdk",
+    "splunk-soar-sdk>=3.29.0",
     "uv>=0.8",
 ]
 
@@ -30,13 +30,6 @@ package-app-dependencies = "local_hooks.package_app_dependencies:main"
 
 [tool.setuptools]
 script-files = ["local_hooks/package_app_dependencies.sh"]
-
-[tool.uv]
-constraint-dependencies = [
-    "idna>=3.15",
-    "setuptools>=83.0.0",
-    "soupsieve>=2.8.4",
-]
 
 [[tool.uv.index]]
 url = "https://pypi.python.org/simple"
