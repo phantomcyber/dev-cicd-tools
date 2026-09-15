@@ -7,6 +7,7 @@ from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 import pytest
+from jsonschema.validators import Draft202012Validator
 from pathlib import Path
 
 from local_hooks.app_tests.json_tests import JSONTests
@@ -14,6 +15,18 @@ from local_hooks.app_tests.json_tests import JSONTests
 PRE_COMMIT_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 logging.getLogger().setLevel(logging.INFO)
+
+
+def test_python_script_is_valid_asset_configuration_type():
+    schema_path = Path(__file__).parents[1] / "app_tests" / "app_schema.json"
+    app_schema = json.loads(schema_path.read_text())
+    configuration_schema = app_schema["properties"]["configuration"]
+
+    errors = Draft202012Validator(configuration_schema).iter_errors(
+        {"parser": {"data_type": "python_script"}}
+    )
+
+    assert list(errors) == []
 
 
 def copy_app_dir(request: pytest.FixtureRequest) -> Path:

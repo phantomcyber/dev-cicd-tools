@@ -147,6 +147,7 @@
                 "ph",
                 "timezone",
                 "file",
+                "python_script",
                 "object",
                 "array"
               ]
