@@ -25,7 +25,10 @@ jobs:
           node-version: "lts/*"
 
       - name: Install semantic-release dependencies
-        run: npm install --global semantic-release conventional-changelog-conventionalcommits
+        run: |
+          npm install --global \
+            semantic-release@25 \
+            conventional-changelog-conventionalcommits@9
 
       - name: Run semantic-release
         env:
