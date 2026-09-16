@@ -1,67 +1,64 @@
-import logging
-import os
-import shutil
+from pathlib import Path
 import subprocess
 
 import pytest
-from pathlib import Path
 
-PRE_COMMIT_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-
-logging.getLogger().setLevel(logging.INFO)
+from local_hooks.release_notes import UNRELEASED_MD_HEADER, check_release_notes
 
 
-@pytest.fixture(scope="function")
-def app_dir(request: pytest.FixtureRequest) -> Path:
-    app_dir = Path(request.param)  # type: ignore
-    app_dir_copy = Path(f"{app_dir}_copy")
-
-    shutil.copytree(app_dir, app_dir_copy)
-
-    def remove_test_dir_copy():
-        shutil.rmtree(app_dir_copy, ignore_errors=True)
-
-    request.addfinalizer(remove_test_dir_copy)
-
-    return app_dir_copy
+def write_release_notes(app_dir: Path, content: str) -> None:
+    release_notes_dir = app_dir / "release_notes"
+    release_notes_dir.mkdir()
+    (release_notes_dir / "unreleased.md").write_text(content)
 
 
 @pytest.mark.parametrize(
-    "app_dir",
-    ["tests/data/release_notes/release_notes_passing"],
-    indirect=["app_dir"],
+    "content",
+    [
+        "**Unreleased**\n* Updated dependencies.\n",
+        "**Unreleased**\n\n* Updated dependencies.\n",
+        "**Unreleased**\n\n* Updated `urllib3`.\n* Fixed request handling.\n",
+    ],
 )
-def test_release_notes_passing(app_dir: Path):
-    result = subprocess.run(
-        ["release-notes", "."],
-        cwd=app_dir,
-        capture_output=True,
-    )
-    print(result.stderr.decode())
+def test_release_notes_accepts_top_level_bullets(tmp_path: Path, content: str):
+    write_release_notes(tmp_path, content)
+
+    check_release_notes(str(tmp_path))
+
+
+def test_release_notes_command_accepts_canonical_content(tmp_path: Path):
+    write_release_notes(tmp_path, "**Unreleased**\n\n* Updated dependencies.\n")
+
+    result = subprocess.run(["release-notes", "."], cwd=tmp_path, capture_output=True)
+
     assert result.returncode == 0
 
 
 @pytest.mark.parametrize(
-    "app_dir",
-    ["tests/data/release_notes/release_notes_failing/actual"],
-    indirect=["app_dir"],
+    ("content", "error"),
+    [
+        ("**Unreleased**\n\n* Parent note.\n    * Nested note.\n", "top-level"),
+        ("**Unreleased**\n\n* - Updated dependency.\n", "repeated list markers"),
+        (
+            "**Unreleased**\n\n* Updated first dependency.\n\n* Updated second dependency.\n",
+            "top-level",
+        ),
+        ("**Unreleased**\n\nUpdated dependencies.\n", "top-level"),
+        ("**Unreleased**\n\n* \n", "top-level"),
+    ],
 )
-def test_release_notes_failing(app_dir: Path):
-    expected_dir = Path("tests/data/release_notes/release_notes_failing/expected")
-    expected_file = "release_notes/unreleased.md"
+def test_release_notes_rejects_noncanonical_content(tmp_path: Path, content: str, error: str):
+    write_release_notes(tmp_path, content)
 
-    result = subprocess.run(
-        ["release-notes", "."],
-        cwd=app_dir,
-        capture_output=True,
-    )
-    assert result.returncode == 0
+    with pytest.raises(ValueError, match=error):
+        check_release_notes(str(tmp_path))
 
-    actual_path = app_dir / expected_file
-    expected_path = expected_dir / expected_file
 
-    assert actual_path.exists(), f"Missing expected file {expected_file}"
-    print(actual_path.read_text())
-    assert actual_path.read_text() == expected_path.read_text(), (
-        f"Release note file {expected_file} did not match expectations!"
-    )
+def test_missing_release_notes_file_is_created_and_rejected(tmp_path: Path):
+    release_notes_dir = tmp_path / "release_notes"
+    release_notes_dir.mkdir()
+
+    with pytest.raises(ValueError, match="empty"):
+        check_release_notes(str(tmp_path))
+
+    assert (release_notes_dir / "unreleased.md").read_text() == f"{UNRELEASED_MD_HEADER}\n"
