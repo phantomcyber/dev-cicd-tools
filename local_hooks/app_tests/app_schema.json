@@ -76,19 +76,8 @@
         "type": "boolean"
       },
       "python_version": {
-        "oneOf": [
-          {
-            "type": "string",
-            "pattern": "^3(\\.\\d+)?(,\\s*3(\\.\\d+)?)*$"
-          },
-          {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "pattern": "^3(\\.\\d+)?$"
-            }
-          }
-        ]
+        "type": "string",
+        "pattern": "^3(\\.\\d+)?(,\\s*3(\\.\\d+)?)*$"
       },
       "latest_tested_versions": {
         "type": "array",

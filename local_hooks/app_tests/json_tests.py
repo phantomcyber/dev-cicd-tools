@@ -44,6 +44,29 @@ class JSONTests(TestSuite):
             for field, value in CONNECTOR_TEMPLATE_IDENTITY.items()
         )
 
+    @TestSuite.test(critical=False)
+    def check_python_version_format(self):
+        """Normalizes Python versions to the string format accepted by Splunkbase"""
+        if self._parser.uv_lock_filepath:
+            return SKIP_SDK_APP
+
+        python_version = self._app_json.get("python_version")
+        if not isinstance(python_version, list) or not all(
+            isinstance(version, str) for version in python_version
+        ):
+            return create_test_result_response(success=True, message=TEST_PASS_MESSAGE)
+
+        self._app_json["python_version"] = ", ".join(python_version)
+        self._parser.update_app_json(self._app_json)
+        return create_test_result_response(
+            success=False,
+            message=(
+                f'Converted "python_version" to the Splunkbase-compatible string format in '
+                f"{self._parser.app_json_name}"
+            ),
+            fixed=True,
+        )
+
     @staticmethod
     def format_as_index(indices: list[Any], container: str = "schema") -> str:
         """

@@ -11,10 +11,38 @@ from jsonschema.validators import Draft202012Validator
 from pathlib import Path
 
 from local_hooks.app_tests.json_tests import JSONTests
+from local_hooks.app_tests.utils.app_parser import AppParser
 
 PRE_COMMIT_DIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 logging.getLogger().setLevel(logging.INFO)
+
+
+def test_python_version_array_is_rewritten_for_splunkbase(tmp_path: Path):
+    app_json_path = tmp_path / "app.json"
+    app_json_path.write_text(json.dumps({"python_version": ["3.9", "3.13"]}) + "\n")
+    suite = JSONTests.__new__(JSONTests)
+    suite._parser = AppParser(tmp_path)
+    suite._app_json = suite._parser.app_json
+
+    result = suite.check_python_version_format()
+
+    assert result["success"] is False
+    assert result["fixed"] is True
+    assert json.loads(app_json_path.read_text())["python_version"] == "3.9, 3.13"
+
+
+def test_python_version_string_is_unchanged(tmp_path: Path):
+    app_json_path = tmp_path / "app.json"
+    app_json_path.write_text(json.dumps({"python_version": "3.9, 3.13"}) + "\n")
+    suite = JSONTests.__new__(JSONTests)
+    suite._parser = AppParser(tmp_path)
+    suite._app_json = suite._parser.app_json
+
+    result = suite.check_python_version_format()
+
+    assert result["success"] is True
+    assert app_json_path.read_text() == '{"python_version": "3.9, 3.13"}\n'
 
 
 def test_python_script_is_valid_asset_configuration_type():
