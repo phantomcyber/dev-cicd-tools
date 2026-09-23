@@ -55,7 +55,6 @@ IGNORED_WHEELS = [
     "charset_normalizer",
     "idna",
     "urllib3",
-    "sh",
     "xmltodict",
 ]
 
