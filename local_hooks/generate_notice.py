@@ -55,7 +55,6 @@ EXCLUDED_PYTHON_PACKAGES = set(
         "charset_normalizer",
         "idna",
         "urllib3",
-        "sh",
         "xmltodict",
     ]
 )
