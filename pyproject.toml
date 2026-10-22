@@ -34,6 +34,9 @@ script-files = ["local_hooks/package_app_dependencies.sh"]
 [tool.uv]
 constraint-dependencies = [
     "click>=8.3.3",
+    "pyjwt==2.15.0",
+    "soupsieve==2.9",
+    "urllib3==2.7.0",
 ]
 
 [[tool.uv.index]]
